@@ -1,4 +1,4 @@
-# (Back-end) 일진 전자전표 시스템
+# (Back-end) 일진 전자입찰 시스템
 ## 사전요건
 * git 설치
 * java : zulu 8 64bit
