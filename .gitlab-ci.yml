@@ -1,0 +1,47 @@
+stages:
+  - Stop the service
+  - Build
+  - Copy
+  - Start the service
+
+job 1:
+  stage: Stop the service
+  only:
+    - master
+  script:
+    - sudo systemctl stop ijap-eacct-back.service
+
+
+job 2:
+  stage: Build
+  only:
+    - master
+  cache:
+    paths:
+      - build/*
+  script:
+    - gradle pathingJar
+    - gradle bootJar
+
+job 3:
+  stage: Copy
+  only:
+    - master
+  cache:
+    paths:
+      - build/*
+  script:
+     - sudo rm -rf /data/apps/ijap-eacct/eacct-back.jar
+     - sudo rm -rf /data/apps/ijap-eacct/eacct-back-pathing.jar
+     - sudo cp ./build/libs/api.jar /data/apps/ijap-eacct/eacct-back.jar
+     - sudo cp ./build/libs/api-pathing.jar /data/apps/ijap-eacct/eacct-back-pathing.jar
+
+job 4:
+  stage: Start the service
+  only:
+    - master
+  cache:
+    paths:
+      - build/*
+  script:
+    - sudo systemctl start ijap-eacct-back.service

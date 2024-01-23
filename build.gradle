@@ -1,0 +1,113 @@
+plugins {
+    id 'org.springframework.boot' version '2.3.1.RELEASE'
+    id 'io.spring.dependency-management' version '1.0.9.RELEASE'
+    id 'java'
+}
+
+group = 'iljin'
+version = '0.0.1'
+description = 'iljin-framework'
+
+sourceCompatibility = '1.8'
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    flatDir{
+        dirs('libs')
+    }
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
+    implementation 'org.springframework.boot:spring-boot-configuration-processor'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+    implementation 'com.auth0:java-jwt:3.10.3'
+    implementation 'org.springframework.boot:spring-boot-starter-mustache'
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.apache.commons:commons-lang3:3.8.1'
+    implementation 'org.apache.poi:poi-ooxml:4.1.2'
+    implementation 'org.modelmapper:modelmapper:2.3.2'
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
+    testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testCompile group: 'junit', name: 'junit', version: '4.13'
+    implementation 'org.mariadb.jdbc:mariadb-java-client'
+    implementation 'org.springframework.session:spring-session-jdbc'
+    implementation 'org.jetbrains:annotations:19.0.0'
+    implementation 'org.javassist:javassist:3.23.1-GA'
+    implementation 'com.google.code.gson:gson:2.8.5'
+    implementation 'com.google.firebase:firebase-admin:6.8.1'
+    implementation 'com.querydsl:querydsl-jpa:4.2.1'
+    implementation 'com.querydsl:querydsl-apt:4.2.1'
+    implementation 'com.querydsl:querydsl-core:4.2.1'
+    implementation 'io.springfox:springfox-swagger-ui:2.9.2'
+    implementation 'io.springfox:springfox-swagger2:2.9.2'
+    implementation 'io.springfox:springfox-core:2.9.2'
+    implementation 'com.google.guava:guava:27.1-jre'
+    implementation 'org.bgee.log4jdbc-log4j2:log4jdbc-log4j2-jdbc4.1:1.16'
+    implementation 'org.qlrm:qlrm:2.1.1'
+    implementation 'commons-httpclient:commons-httpclient:3.1'
+    implementation 'commons-beanutils:commons-beanutils:1.9.3'
+    implementation 'javax.xml.bind:jaxb-api:2.3.1'
+    implementation 'de.codecentric:spring-boot-admin-starter-client:2.2.1'
+    runtimeOnly 'org.springframework.boot:spring-boot-devtools'
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+task pathingJar(type: Jar) {
+    dependsOn configurations.runtime
+    appendix = "pathing"
+
+    doFirst {
+        manifest {
+            attributes "Class-Path": configurations.runtime.files.collect {
+                it.toURI().toString().replaceFirst(/file:\/+/, '/')
+            }.join(' ')
+        }
+    }
+
+    extension = "jar"
+    archiveFileName = "api-pathing.$extension"
+}
+
+bootJar {
+    extension = "jar"
+    archiveFileName = "api.$extension"
+}
+
+bootRun {
+    dependsOn pathingJar
+    doFirst {
+        main = bootJar.mainClassName
+        classpath = files("./build/classes/java/main", "./build/resources/main", pathingJar.archivePath)
+    }
+}
+
+test {
+    useJUnitPlatform()
+}
