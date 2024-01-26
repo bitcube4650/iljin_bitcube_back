@@ -17,7 +17,15 @@ public class TestController {
      * Front에서 오류 메시지 없애기 위해 
      */
     @GetMapping("/dashboard/{compCd}/{loginId}")
-    public ResponseEntity<String> getComboBox(@PathVariable String compCd, @PathVariable String loginId) {
+    public ResponseEntity<String> dashboard(@PathVariable String compCd, @PathVariable String loginId) {
+		return new ResponseEntity<>("", HttpStatus.OK);
+    }
+
+    /**
+     * Front에서 오류 메시지 없애기 위해 
+     */
+    @GetMapping("/emp/{loginId}")
+    public ResponseEntity<String> emp(@PathVariable String loginId) {
 		return new ResponseEntity<>("", HttpStatus.OK);
     }
 
