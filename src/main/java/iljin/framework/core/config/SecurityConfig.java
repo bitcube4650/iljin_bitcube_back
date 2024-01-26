@@ -102,4 +102,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     public AuthenticationManager authenticationManagerBean() throws Exception {
         return super.authenticationManagerBean();
     }
+    
+    public static void main(String [] args) {
+    	BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+    	String str = encoder.encode("1111");
+    	System.out.println(str);
+    }
 }
