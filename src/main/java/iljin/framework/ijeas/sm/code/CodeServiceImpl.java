@@ -72,7 +72,6 @@ public class CodeServiceImpl implements CodeService {
 	public ResponseEntity<String> saveCodeLists(CodeHeaderDetials codeHeaderDetials) {
 		User loginUser = util.getLoginUser();
 		String loginId = loginUser.getLoginId();
-		String compCd = loginUser.getCompCd();
 
 		List<CodeDto> codeHeaders = codeHeaderDetials.getCodeHeader();
 		List<CodeDto> codeDetails = codeHeaderDetials.getCodeDetail();
@@ -121,7 +120,6 @@ public class CodeServiceImpl implements CodeService {
 		* Desc. 해당 회사코드/그룹코드로 전체 삭제 후 새로 추가
 		* */
 		String detailGroupCd = codeDetails.get(0).groupCd;
-		codeDetailRepository.deleteByCompCdAndGroupCd(compCd, detailGroupCd);
 		for(CodeDto detail : codeDetails) {
 			CodeDetail c = new CodeDetail();
 			try {

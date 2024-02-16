@@ -61,8 +61,5 @@ public class RoleServiceImpl implements RoleService{
     public void addRole(UserDto dto) {
         List<UserRole> newRoles = new ArrayList<>();
 
-        userRepository.findById(dto.getId()).ifPresent(
-                c -> c.setRoles(newRoles)
-        );
     }
 }

@@ -62,23 +62,13 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<UserDto> getUsers() {
         List<User> users = userRepository.findAll();
-        return users.stream()
-                .map(user -> new UserDto(
-                        user.id,
-                        user.loginId,
-                        "******",
-                        user.userName,
-                        user.enableFlag,
-                        "",
-                        user.getRoles().stream().map(
-                                roles -> roles.getRole().toString()
-                        ).collect(toList())
-                )).collect(toList());
+        return null;
     }
 
     @Override
     public Optional<User> getUser(Long id) {
-        return userRepository.findById(id);
+//        return userRepository.findById(id);
+        return null;
     }
 
     @Override
@@ -93,27 +83,8 @@ public class UserServiceImpl implements UserService {
             User newUser = new User();
             newUser.loginId = dto.loginId;
             newUser.loginPw = dto.loginPw;
-            newUser.userName = dto.userName;
-            newUser.enableFlag = dto.enableFlag;
-            newUser.compCd = dto.compCd;
-            newUser.deptCd = dto.deptCd;
             userRepository.save(newUser);
 
-            userRepository.findByLoginId(dto.loginId).ifPresent(c -> {
-                List<UserRole> newRoles = new ArrayList<>();
-                UserRole newRole = new UserRole();
-                newRole.setId(c.getId());
-                newRole.setCompCd(c.getCompCd());
-                newRole.setRole((dto.role));
-                newRole.setUser(c);
-                /*newRole.setRole(dto.role);
-                newRole.setUser(c);*/
-                userRoleRepository.save(newRole);
-
-                newRoles.add(newRole);
-                c.setRoles(newRoles);
-                userRepository.save(c);
-            });
 
             return new ResponseEntity<>(dto, HttpStatus.OK);
         } catch (DataIntegrityViolationException ex) {
@@ -128,8 +99,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ResponseEntity<User> updateUser(Long id, UserDto dto) {
-        Optional<User> userData = userRepository.findById(id);
+    public ResponseEntity<User> updateUser(String id, UserDto dto) {
+        Optional<User> userData = userRepository.findByLoginId(id);
 
         if (userData.isPresent()) {
             User modifiedUser = userData.get();
@@ -140,7 +111,6 @@ public class UserServiceImpl implements UserService {
             }
 
             modifiedUser.userName = dto.userName;
-            modifiedUser.enableFlag = dto.enableFlag;
 
             List<UserRole> modifiedRoles = new ArrayList<>();
 
@@ -154,7 +124,6 @@ public class UserServiceImpl implements UserService {
                 c.setRole(dto.role);
                 userRoleRepository.save(c);
                 modifiedRoles.add(c);
-                modifiedUser.setRoles(modifiedRoles);
             });
             userRepository.save(modifiedUser);
             return new ResponseEntity<>(userRepository.save(modifiedUser), HttpStatus.OK);
@@ -214,7 +183,6 @@ public class UserServiceImpl implements UserService {
                         if (!StringUtils.isEmpty(userDto.getAttribute1())) {
                             /* from mobile */
                             userRepository.findByLoginId(loginId).ifPresent(c -> {
-                                c.setAttribute1(userDto.getAttribute1());
 
                                 // save Mobile token (String value)
                                 userRepository.save(c);
@@ -363,7 +331,6 @@ public class UserServiceImpl implements UserService {
     @Override
     public void logoutMobile(HttpSession session) {
         User mobileUser = util.getLoginUser();
-        mobileUser.setAttribute1(null);
         userRepository.save(mobileUser);
         session.invalidate();
     }

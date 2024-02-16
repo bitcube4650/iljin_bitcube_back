@@ -24,7 +24,7 @@ public interface UserService {
     ResponseEntity<String> deleteUser(String loginId);
     @Modifying
     @Transactional
-    ResponseEntity<User> updateUser(Long id, UserDto dto);
+    ResponseEntity<User> updateUser(String id, UserDto dto);
     ResponseEntity<AuthToken> login(UserDto userDto, HttpSession session, HttpServletRequest request);
     ResponseEntity<AuthToken> ssoLogin(UserDto userDto, HttpSession session, HttpServletRequest request);
     void logout(HttpSession session);

@@ -47,16 +47,16 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
         auth.jdbcAuthentication().dataSource(dataSource)
                 .usersByUsernameQuery(
-                        " SELECT login_id, login_pw, enable_flag " +
-                        " FROM A_USER " +
-                        " WHERE login_id = ? "
+                        "SELECT user_id AS login_id, user_pwd AS login_pw, 'true' AS enable_flag " +
+                        "  FROM t_co_cust_user " +
+                        " WHERE user_id = ? "
                 )
                 .authoritiesByUsernameQuery(
-                        " SELECT A_USER.login_id, A_USER_ROLE.role " +
-                        " FROM A_USER_ROLE " +
-                        " INNER JOIN A_USER " +
-                        " ON (A_USER.id = A_USER_ROLE.user_id) " +
-                        " WHERE A_USER.LOGIN_ID = ? "
+                        "SELECT a.user_id AS login_id, A_USER_ROLE.role " +
+                        "  FROM A_USER_ROLE " +
+                        " INNER JOIN t_co_cust_user a" +
+                        "    ON (a.user_id = A_USER_ROLE.user_id) " +
+                        " WHERE a.user_id = ? "
                 )
                 .passwordEncoder(passwordEncoder());
     }

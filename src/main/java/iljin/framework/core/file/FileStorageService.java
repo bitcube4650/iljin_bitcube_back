@@ -219,10 +219,10 @@ public class FileStorageService {
         List<UploadFileDto> result = new ArrayList<>();
         for (UploadFile file : fileList) {
             UploadFileDto fileDto = modelMapper.map(file, UploadFileDto.class);
-            Optional<User> user =  userRepository.findById(fileDto.getCreatedBy());
-            if (user.isPresent()) {
-                fileDto.setCreator(user.get().getUserName());
-            }
+//            Optional<User> user =  userRepository.findByLoginId(fileDto.getCreatedBy());
+//            if (user.isPresent()) {
+//                fileDto.setCreator(user.get().getUserName());
+//            }
             result.add(fileDto);
         }
         return result;

@@ -47,7 +47,7 @@ public class Util {
 
     public String getLoginCompCd() {
         Optional<User> user = userRepository.findByLoginId(getLoginId());
-        return user.map(User::getCompCd).orElse(null);
+        return null;
     }
 
     public User getLoginUser() {
