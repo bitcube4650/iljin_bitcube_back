@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface UserService {
@@ -28,5 +29,6 @@ public interface UserService {
     ResponseEntity<AuthToken> login(UserDto userDto, HttpSession session, HttpServletRequest request);
     ResponseEntity<AuthToken> ssoLogin(UserDto userDto, HttpSession session, HttpServletRequest request);
     void logout(HttpSession session);
-    void logoutMobile(HttpSession session);
+    Map idSearch(Map<String, String> params);
+    Map pwSearch(Map<String, String> params);
 }

@@ -163,8 +163,6 @@ public class UserServiceImpl implements UserService {
                             //logger.debug("*Authentication: " + String.valueOf(authentication.isAuthenticated()));
                         }
 
-                        String clientIp = this.getClientIp(request);
-
                         return getAuthToken(session, loginId, obj, token, authentication);
                     });
 
@@ -262,38 +260,28 @@ public class UserServiceImpl implements UserService {
     public void logout(HttpSession session) {
         session.invalidate();
     }
-
     @Override
-    public void logoutMobile(HttpSession session) {
-        User mobileUser = util.getLoginUser();
-        userRepository.save(mobileUser);
-        session.invalidate();
+    public Map idSearch(Map<String, String> params) {
+        Map result = new HashMap();
+        if ("비트큐브".equals(params.get("userName"))) {
+            result.put("code", "ok");
+            result.put("userId", "agent1");
+        } else {
+            result.put("code", "err");
+        }
+        return result;
+    }
+    @Override
+    public Map pwSearch(Map<String, String> params) {
+        Map result = new HashMap();
+        if ("비트큐브".equals(params.get("userName"))) {
+            result.put("code", "ok");
+            result.put("userId", "agent1");
+        } else {
+            result.put("code", "err");
+        }
+        return result;
     }
 
-    public static String getClientIp(HttpServletRequest request) {
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("Proxy-Client-IP");
-        }
-        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("WL-Proxy-Client-IP");
-        }
-        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("HTTP_CLIENT_IP");
-        }
-        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("HTTP_X_FORWARDED_FOR");
-        }
-        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("X-Real-IP");
-        }
-        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("X-RealIP");
-        }
-        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getRemoteAddr();
-        }
-        return ip;
-    }
 
 }
