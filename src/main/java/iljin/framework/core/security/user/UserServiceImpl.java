@@ -30,6 +30,7 @@ import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import javax.transaction.Transactional;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.LocalDateTime;
@@ -282,6 +283,11 @@ public class UserServiceImpl implements UserService {
         }
         return result;
     }
-
-
+    @Override
+    @Transactional
+    public Map custSave(Map<String, String> params) {
+        Map result = new HashMap();
+        result.put("code", "ok");
+        return result;
+    }
 }

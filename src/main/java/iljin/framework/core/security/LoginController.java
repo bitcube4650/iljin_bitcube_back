@@ -4,6 +4,7 @@ import com.rathontech.sso.sp.config.Env;
 import iljin.framework.core.security.sso.Sso;
 import iljin.framework.core.security.user.UserDto;
 import iljin.framework.core.security.user.UserService;
+import iljin.framework.ebid.custom.repository.TCoInterrelatedRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,23 +17,25 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
 @CrossOrigin
 public class LoginController {
 
-    private final
-    UserService userService;
+    private final UserService userService;
 
     private final Sso sso;
+    private final TCoInterrelatedRepository tCoInterrelatedRepository;
 
     private static final Logger logger = LoggerFactory.getLogger(LoginController.class);
 
     @Autowired
-    public LoginController(UserService userService, Sso sso) {
+    public LoginController(UserService userService, Sso sso, TCoInterrelatedRepository tCoInterrelatedRepository) {
         this.userService = userService;
         this.sso = sso;
+        this.tCoInterrelatedRepository = tCoInterrelatedRepository;
     }
 
     @PostMapping("/login")
@@ -61,6 +64,16 @@ public class LoginController {
     @PostMapping("/login/pwSearch")
     public Map pwSearch(@RequestBody Map<String, String> params) {
         return userService.pwSearch(params);
+    }
+
+    @PostMapping("/login/interrelatedList")
+    public List interrelatedList() {
+        return tCoInterrelatedRepository.findAll();
+    }
+
+    @PostMapping("/login/custSave")
+    public Map custSave(@RequestBody Map<String, String> params) {
+        return userService.custSave(params);
     }
 
 }

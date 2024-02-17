@@ -31,4 +31,5 @@ public interface UserService {
     void logout(HttpSession session);
     Map idSearch(Map<String, String> params);
     Map pwSearch(Map<String, String> params);
+    Map custSave(Map<String, String> params);
 }
