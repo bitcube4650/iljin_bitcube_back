@@ -1,8 +1,6 @@
 package iljin.framework.core.security.user;
 
 import iljin.framework.core.security.AuthToken;
-import iljin.framework.core.security.loginHistory.LoginHistory;
-import iljin.framework.core.security.loginHistory.LoginHistoryRepository;
 import iljin.framework.core.security.role.Role;
 import iljin.framework.core.security.role.RoleRepository;
 import iljin.framework.core.security.role.UserRole;
@@ -47,11 +45,9 @@ public class UserServiceImpl implements UserService {
 
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
-    private final UserRepositoryCustom userRepositoryCustom;
     private final PasswordEncoder passwordEncoder;
     private final UserRoleRepository userRoleRepository;
     private final RoleRepository roleRepository;
-    private final LoginHistoryRepository loginHistoryRepository;
     private final Util util;
 
     @Value("${address.frontend}")
@@ -145,49 +141,30 @@ public class UserServiceImpl implements UserService {
             String loginPw = userDto.loginPw;
             String loginToken = userDto.token;
 
-            Optional<User> user = userRepository.findByLoginId(loginId);
+//            Optional<User> user = userRepository.findByLoginId(loginId);
+            Optional<UserDto> user = Optional.of(userDto);
 
             Optional<AuthToken> result =
                     user.map(obj -> {
                         // 1. username, password를 조합하여 UsernamePasswordAuthenticationToken 생성
+                        logger.info("1. username, password를 조합하여 UsernamePasswordAuthenticationToken 생성");
                         UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(loginId, loginPw);
                         Authentication authentication = null;
                         if(!StringUtils.isEmpty(loginToken)) {
+                            logger.info("Create Granted Authority Rules");
                             // Create Granted Authority Rules
                             Set<GrantedAuthority> grantedAuthorities = new HashSet<>();
                             token = new UsernamePasswordAuthenticationToken(loginId, null, grantedAuthorities);
                         } else {
+                            logger.info("2. 검증을 위해 UsernamePasswordAuthenticationToken 을 authenticationManager 의 인스턴스로 전달");
                             // form login
                             // 2. 검증을 위해 UsernamePasswordAuthenticationToken 을 authenticationManager 의 인스턴스로 전달
                             authentication = authenticationManager.authenticate(token);// 3. 인증에 성공하면 Authentication 인스턴스 리턴
                             //logger.debug("*Authentication: " + String.valueOf(authentication.isAuthenticated()));
                         }
 
-                        /*
-                         * added on 26.08.2019
-                         * Login history
-                         * */
                         String clientIp = this.getClientIp(request);
 
-                        /* login success */
-                        LoginHistory loginHistory = new LoginHistory();
-                        loginHistory.setConnectId(loginId);
-                        loginHistory.setConnectIp(clientIp);
-                        loginHistory.setConnectMthd(userDto.getConnectMthd());
-                        loginHistory.setConnectError("");
-                        loginHistory.setConnectUrl(request.getRequestURI());
-                        loginHistory.setCreationDate(LocalDateTime.now());
-
-                        loginHistoryRepository.save(loginHistory);
-
-                        if (!StringUtils.isEmpty(userDto.getAttribute1())) {
-                            /* from mobile */
-                            userRepository.findByLoginId(loginId).ifPresent(c -> {
-
-                                // save Mobile token (String value)
-                                userRepository.save(c);
-                            });
-                        }
                         return getAuthToken(session, loginId, obj, token, authentication);
                     });
 
@@ -198,33 +175,12 @@ public class UserServiceImpl implements UserService {
                             , null
                             , null
                             , null
-                            , null
-                            , null
-                            , null
-                            , null
-                            , null
-                            , null
                             ,null
                             , null), HttpStatus.UNAUTHORIZED));
         } catch (AuthenticationException e) {
-            LoginHistory loginHistory = new LoginHistory();
-            loginHistory.setConnectId(userDto.loginId);
-            loginHistory.setConnectIp(this.getClientIp(request));
-            loginHistory.setConnectMthd(userDto.connectMthd);
-            loginHistory.setConnectError(e.getMessage());
-            loginHistory.setConnectUrl(request.getRequestURI());
-            loginHistory.setCreationDate(LocalDateTime.now());
-
-            loginHistoryRepository.save(loginHistory);
 
             return new ResponseEntity<>(new AuthToken(
                     null
-                    , null
-                    , null
-                    , null
-                    , null
-                    , null
-                    , null
                     , null
                     , null
                     , null
@@ -235,29 +191,30 @@ public class UserServiceImpl implements UserService {
     }
 
     @NotNull
-    private AuthToken getAuthToken(final HttpSession session, final String loginId, final User obj, final UsernamePasswordAuthenticationToken token, final Authentication authentication) {
+    private AuthToken getAuthToken(final HttpSession session, final String loginId, final UserDto obj, final UsernamePasswordAuthenticationToken token, final Authentication authentication) {
         // 4. Authentication 인스턴스를 SecurityContextHolder의 SecurityContext에 설정
         SecurityContextHolder.getContext().setAuthentication(token);
         session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, SecurityContextHolder.getContext());
 
-        Optional<UserDto> userDto = userRepositoryCustom.findByLoginId(loginId);
+//        Optional<UserDto> userDto = userRepositoryCustom.findByLoginId(loginId);
 
-//        Collection authList = authentication.getAuthorities();
-        List<Role> authList = roleRepository.findByLoginId(loginId);
-
-        return new AuthToken(obj.userName,
-                loginId,
-                userDto.get().getLoginCompCd(),
-                userDto.get().getLoginCompNm(),
-                userDto.get().getLoginDeptCd(),
-                userDto.get().getLoginDeptNm(),
-                userDto.get().getLoginJobCd(),
-                userDto.get().getLoginJobNm(),
-                userDto.get().getLoginDutCd(),
-                userDto.get().getLoginDutNm(),
-                userDto.get().getAttribute2(),
-                session.getId(),
-                authList);
+        if ("agent1".equals(loginId)) {
+            return new AuthToken("inter",
+                    "01",
+                    "일진전기",
+                    "agent1",
+                    "계열사",
+                    "3",
+                    "token");
+        } else {
+            return new AuthToken("cust",
+                    "18",
+                    "(주)세종소재",
+                    "custom",
+                    "협력사",
+                    "1",
+                    "token");
+        }
     }
 
     @Override
@@ -276,7 +233,7 @@ public class UserServiceImpl implements UserService {
                     user.map(obj -> {
                         UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(loginId, null, grantedAuthorities);
 
-                        return getAuthToken(session, loginId, obj, token, token);
+                        return getAuthToken(session, loginId, null, token, token);
                     });
 
 
@@ -288,32 +245,10 @@ public class UserServiceImpl implements UserService {
                             , null
                             , null
                             , null
-                            , null
-                            , null
-                            , null
-                            , null
-                            , null
-                            , null
                             , null), HttpStatus.UNAUTHORIZED));
         } catch (AuthenticationException e) {
-            LoginHistory loginHistory = new LoginHistory();
-            loginHistory.setConnectId(userDto.loginId);
-            loginHistory.setConnectIp(this.getClientIp(request));
-            loginHistory.setConnectMthd(userDto.connectMthd);
-            loginHistory.setConnectError(e.getMessage());
-            loginHistory.setConnectUrl(request.getRequestURI());
-            loginHistory.setCreationDate(LocalDateTime.now());
-
-            loginHistoryRepository.save(loginHistory);
-
             return new ResponseEntity<>(new AuthToken(
                     null
-                    , null
-                    , null
-                    , null
-                    , null
-                    , null
-                    , null
                     , null
                     , null
                     , null

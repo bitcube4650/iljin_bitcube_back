@@ -1,5 +1,6 @@
 package iljin.framework.core.config;
 
+import iljin.framework.core.security.user.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -32,33 +33,24 @@ import javax.sql.DataSource;
 @ComponentScan("iljin.framework.core.security")
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-    private final DataSource dataSource;
+//    private final DataSource dataSource;
+
+    private final CustomUserDetailsService customUserDetailsService;
     private final Environment environment;
 
     @Autowired
-    public SecurityConfig(DataSource dataSource, Environment environment) {
+    public SecurityConfig(CustomUserDetailsService customUserDetailsService, Environment environment) {
         super();
         this.environment = environment;
         SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL);
-        this.dataSource = dataSource;
+        this.customUserDetailsService = customUserDetailsService;
+//        this.dataSource = dataSource;
     }
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.jdbcAuthentication().dataSource(dataSource)
-                .usersByUsernameQuery(
-                        "SELECT user_id AS login_id, user_pwd AS login_pw, 'true' AS enable_flag " +
-                        "  FROM t_co_cust_user " +
-                        " WHERE user_id = ? "
-                )
-                .authoritiesByUsernameQuery(
-                        "SELECT a.user_id AS login_id, A_USER_ROLE.role " +
-                        "  FROM A_USER_ROLE " +
-                        " INNER JOIN t_co_cust_user a" +
-                        "    ON (a.user_id = A_USER_ROLE.user_id) " +
-                        " WHERE a.user_id = ? "
-                )
-                .passwordEncoder(passwordEncoder());
+        auth.userDetailsService(customUserDetailsService)
+            .passwordEncoder(passwordEncoder());
     }
 
     @Bean

@@ -21,7 +21,7 @@ public class RoleController {
 
     @GetMapping(value = "/")
     public List<UserRole> getAll() {
-        return roleService.getAll();
+        return null;
     }
 
     @PostMapping(value = "/getRole")
