@@ -5,18 +5,23 @@ import iljin.framework.core.security.sso.Sso;
 import iljin.framework.core.security.user.UserDto;
 import iljin.framework.core.security.user.UserService;
 import iljin.framework.ebid.custom.repository.TCoInterrelatedRepository;
+import iljin.framework.ebid.custom.repository.TCoItemRepository;
+import iljin.framework.ebid.custom.repository.TCoItemGrpRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -28,14 +33,18 @@ public class LoginController {
 
     private final Sso sso;
     private final TCoInterrelatedRepository tCoInterrelatedRepository;
+    private final TCoItemGrpRepository tCoItemGrpRepository;
+    private final TCoItemRepository tCoItemRepository;
 
     private static final Logger logger = LoggerFactory.getLogger(LoginController.class);
 
     @Autowired
-    public LoginController(UserService userService, Sso sso, TCoInterrelatedRepository tCoInterrelatedRepository) {
+    public LoginController(UserService userService, Sso sso, TCoInterrelatedRepository tCoInterrelatedRepository, TCoItemGrpRepository tCoItemGrpRepository, TCoItemRepository tCoItemRepository, TCoItemGrpRepository tItemGrpRepository1) {
         this.userService = userService;
         this.sso = sso;
         this.tCoInterrelatedRepository = tCoInterrelatedRepository;
+        this.tCoItemGrpRepository = tCoItemGrpRepository;
+        this.tCoItemRepository = tCoItemRepository;
     }
 
     @PostMapping("/login")
@@ -74,6 +83,29 @@ public class LoginController {
     @PostMapping("/login/custSave")
     public Map custSave(@RequestBody Map<String, String> params) {
         return userService.custSave(params);
+    }
+
+    @PostMapping("/login/itemGrpList")
+    public List itemGrpList() {
+        return tCoItemGrpRepository.findAll();
+    }
+
+    @PostMapping("/login/itemList")
+    public Page itemList(@RequestBody Map<String, Object> params) {
+        int page = 0;
+        int size = 5;
+        if (params.get("page") != null) {
+            page = (Integer) params.get("page");
+        }
+        if (params.get("size") != null) {
+            size = Integer.parseInt((String) params.get("size"));
+        }
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "itemName"));
+        if (ObjectUtils.isEmpty(params.get("itemGrpCd"))) {
+            return tCoItemRepository.findAll(pageable);
+        } else {
+            return tCoItemRepository.findAllByItemGrpCd((String)params.get("itemGrpCd"), pageable);
+        }
     }
 
 }
