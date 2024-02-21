@@ -1,6 +1,6 @@
 package iljin.framework.ebid.custom.controller;
 
-import iljin.framework.core.dto.ResponseBody;
+import iljin.framework.core.dto.ResultBody;
 import iljin.framework.ebid.custom.entity.TCoCustMaster;
 import iljin.framework.ebid.custom.repository.TCoCustMasterRepository;
 import iljin.framework.ebid.custom.service.CustService;
@@ -50,11 +50,11 @@ public class CustController {
         return tCoCustMasterRepository.findById(id);
     }
     @PostMapping("/save")
-    public ResponseBody save(@RequestBody Map<String, String> params) {
+    public ResultBody save(@RequestBody Map<String, String> params) {
         return custService.save(params);
     }
     @PostMapping("/delete")
-    public ResponseBody delete(@RequestBody Map<String, String> params) {
+    public ResultBody delete(@RequestBody Map<String, String> params) {
         return custService.delete(params);
     }
 }

@@ -104,7 +104,8 @@ public class LoginController {
         if (ObjectUtils.isEmpty(params.get("itemGrpCd"))) {
             return tCoItemRepository.findAll(pageable);
         } else {
-            return tCoItemRepository.findAllByItemGrpCd((String)params.get("itemGrpCd"), pageable);
+            return tCoItemRepository.findAll(pageable);
+//            return tCoItemRepository.findAllByItemGrpCd((String)params.get("itemGrpCd"), pageable);
         }
     }
 

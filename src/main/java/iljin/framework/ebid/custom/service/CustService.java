@@ -1,6 +1,6 @@
 package iljin.framework.ebid.custom.service;
 
-import iljin.framework.core.dto.ResponseBody;
+import iljin.framework.core.dto.ResultBody;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -13,13 +13,17 @@ import java.util.*;
 @Slf4j
 public class CustService {
     @Transactional
-    public ResponseBody save(Map<String, String> params) {
-        ResponseBody responseBody = new ResponseBody();
-        return responseBody;
+    public ResultBody save(Map<String, String> params) {
+        ResultBody resultBody = new ResultBody();
+        return resultBody;
     }
     @Transactional
-    public ResponseBody delete(Map<String, String> params) {
-        ResponseBody responseBody = new ResponseBody();
-        return responseBody;
+    public ResultBody delete(Map<String, String> params) {
+        ResultBody resultBody = new ResultBody();
+        if (true) {
+            resultBody.setCode("ERR");
+            resultBody.setMsg("test");
+        }
+        return resultBody;
     }
 }
