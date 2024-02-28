@@ -7,6 +7,8 @@ import iljin.framework.core.security.user.UserRepositoryCustom;
 import iljin.framework.core.util.Util;
 import iljin.framework.ebid.bid.dto.BidProgressDetailDto;
 import iljin.framework.ebid.bid.dto.BidProgressDto;
+import iljin.framework.ebid.bid.dto.BidProgressFileDto;
+import iljin.framework.ebid.bid.dto.BidProgressTableDto;
 import iljin.framework.ebid.custom.entity.TCoUser;
 import iljin.framework.ebid.custom.repository.TCoUserRepository;
 import iljin.framework.ebid.etc.util.PagaUtils;
@@ -105,7 +107,7 @@ public class BidProgressService {
         return new PageImpl(list, pageable, count.intValue());
     }
 
-    public List<BidProgressDetailDto> progresslistDetail(String param) {
+    public List<List<?>> progresslistDetail(String param) {
         StringBuilder sbList = new StringBuilder(
                 "SELECT a.bi_no AS bi_no, a.bi_name AS bi_name, " +
                         "CASE WHEN a.bi_mode = 'A' THEN '지명경쟁입찰' ELSE '일반경쟁입찰' END AS bi_mode, " +
@@ -124,29 +126,55 @@ public class BidProgressService {
                         +
                         "a.ing_tag AS ing_tag, f.item_code AS item_code, e.user_name AS gongo_id, a.pay_cond AS pay_cond, a.why_A3 AS why_A3, "
                         +
-                        "a.why_A7 AS why_A7, a.bi_open AS bi_open, a.interrelated_cust_code AS interrelated_cust_code, a.real_amt AS real_amt, a.amt_basis AS amt_basis, a.bd_amt AS bd_amt"
+                        "a.why_A7 AS why_A7, a.bi_open AS bi_open, a.interrelated_cust_code AS interrelated_cust_code, a.real_amt AS real_amt, a.amt_basis AS amt_basis, a.bd_amt AS bd_amt,"
                         +
                         "a.add_accept AS add_accept, a.mat_dept AS mat_dept, a.mat_proc AS mat_proc, a.mat_cls AS mat_cls, "
                         +
                         "a.mat_factory AS mat_factory, a.mat_factory_line AS mat_factory_line, a.mat_factory_cnt AS mat_factory_cnt "
                         +
-                        "FROM t_bi_info_mat a " +
-                        "JOIN t_co_user b ON a.est_opener = b.user_id " +
-                        "LEFT JOIN t_co_user c ON a.open_att1 = c.user_id " +
-                        "LEFT JOIN t_co_user d ON a.open_att2 = d.user_id " +
-                        "JOIN t_co_user e ON a.gongo_id = e.user_id "+
-                        "LEFT JOIN t_co_item f ON a.item_code = f.item_code "+
+                "FROM t_bi_info_mat a " +
+                "JOIN t_co_user b ON a.est_opener = b.user_id " +
+                "LEFT JOIN t_co_user c ON a.open_att1 = c.user_id " +
+                "LEFT JOIN t_co_user d ON a.open_att2 = d.user_id " +
+                "JOIN t_co_user e ON a.gongo_id = e.user_id " +
+                "LEFT JOIN t_co_item f ON a.item_code = f.item_code " +
+                "WHERE 1=1 ");
+
+        StringBuilder sbTableList = new StringBuilder(
+                "SELECT a.bi_no AS bi_no, a.seq AS seq, a.name AS name, a.ssize AS ssize, " +
+                        "a.order_qty AS order_qty, a.unitcode AS unitcode, ifnull(a.order_uc, 0) AS order_uc " +
+                        "FROM t_bi_spec_mat a " +
                         "WHERE 1=1 ");
+
+        StringBuilder sbFileList = new StringBuilder(
+            "SELECT a.bi_no AS bi_no, a.file_flag AS file_flag, " +
+                    "CASE WHEN a.file_flag = 'K' THEN '세부내역' WHEN a.file_flag = '0' THEN '대내용' WHEN a.file_flag = '1' THEN '대외용' END AS file_flag_ko, " +
+                    "a.file_nm AS file_NM, a.file_path AS file_path " +
+            "FROM t_bi_upload a " +
+            "WHERE a.use_yn = 'Y' ");                
+
         StringBuilder sbWhere = new StringBuilder();
-        if (!StringUtils.isEmpty(param)) {
-            sbWhere.append(" and a.bi_no = :param");
-        }
+        sbWhere.append(" and a.bi_no = :param");
         sbList.append(sbWhere);
+        sbTableList.append(sbWhere);
+        sbFileList.append(sbWhere);
 
         Query queryList = entityManager.createNativeQuery(sbList.toString());
+        Query queryTableList = entityManager.createNativeQuery(sbTableList.toString());
+        Query queryFileList = entityManager.createNativeQuery(sbFileList.toString());
         queryList.setParameter("param", param);
+        queryTableList.setParameter("param", param);
+        queryFileList.setParameter("param", param);
 
-        return new JpaResultMapper().list(queryList, BidProgressDetailDto.class);
+        List<BidProgressDetailDto> resultList = new JpaResultMapper().list(queryList, BidProgressDetailDto.class);
+        List<BidProgressTableDto> tableList = new JpaResultMapper().list(queryTableList, BidProgressTableDto.class);
+        List<BidProgressFileDto> fileList = new JpaResultMapper().list(queryFileList, BidProgressFileDto.class);
+        List<List<?>> combinedResults = new ArrayList<>();
+        combinedResults.add(resultList);
+        combinedResults.add(tableList);
+        combinedResults.add(fileList);
+
+        return combinedResults;
     }
 
 }

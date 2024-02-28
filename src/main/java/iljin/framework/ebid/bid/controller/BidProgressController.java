@@ -27,7 +27,7 @@ public class BidProgressController {
     }
 
     @PostMapping("/progresslistDetail")
-    public List<BidProgressDetailDto> progresslistDetail(@RequestBody String param){
+    public List<List<?>> progresslistDetail(@RequestBody String param){
         return bidProgressService.progresslistDetail(param);
     }
 }

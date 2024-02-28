@@ -9,6 +9,8 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import java.math.BigDecimal;
+
 @Data
 public class BidProgressDetailDto {
     String biNo;
@@ -43,14 +45,15 @@ public class BidProgressDetailDto {
     String interrelatedCustCode;
     String realAmt;
     String amtBasis;
-    String bdAmt;
+    BigDecimal bdAmt;
     String addAccept;
     String matDept;
     String matProc;
-    String matcls;
+    String matCls;
     String matFactory;
     String matFactoryLine;
     String matFactoryCnt;
+
 
     public BidProgressDetailDto(
         String biNo, String biName, String biMode, String insMode, String bidJoinSpec,
@@ -59,7 +62,7 @@ public class BidProgressDetailDto {
         String estOpenDate, String openAtt1, String openAtt1Sign, String openAtt2,
         String openAtt2Sign, String ingTag, String itemCode, String gongoId,
         String payCond, String whyA3, String whyA7, String biOpen, String interrelatedCustCode,
-        String realAmt, String amtBasis, String bdAmt, String addAccept, String matDept, String matProc, String matcls,
+        String realAmt, String amtBasis, BigDecimal bdAmt, String addAccept, String matDept, String matProc, String matCls,
         String matFactory, String matFactoryLine, String matFactoryCnt){
             this.biNo = biNo;
             this.biName = biName;
@@ -93,10 +96,12 @@ public class BidProgressDetailDto {
             this.addAccept = addAccept;
             this.matDept = matDept;
             this.matProc = matProc;
-            this.matcls = matcls;
+            this.matCls = matCls;
             this.matFactory = matFactory;
             this.matFactoryLine = matFactoryLine;
             this.matFactoryCnt = matFactoryCnt;
     }
+
+
 
 }
