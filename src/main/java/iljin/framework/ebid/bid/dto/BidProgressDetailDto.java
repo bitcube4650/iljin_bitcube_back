@@ -38,6 +38,7 @@ public class BidProgressDetailDto {
     String updateDate;
     String itemCode;
     String gongoId;
+    String gongoDept;
     String payCond;
     String whyA3;
     String whyA7;
@@ -60,7 +61,7 @@ public class BidProgressDetailDto {
         String specialCond, String supplyCond, String spotDate, String spotArea,
         String succDeciMeth, String estStartDate, String estCloseDate, String estOpener,
         String estOpenDate, String openAtt1, String openAtt1Sign, String openAtt2,
-        String openAtt2Sign, String ingTag, String itemCode, String gongoId,
+        String openAtt2Sign, String ingTag, String itemCode, String gongoId, String gongoDept,
         String payCond, String whyA3, String whyA7, String biOpen, String interrelatedCustCode,
         String realAmt, String amtBasis, BigDecimal bdAmt, String addAccept, String matDept, String matProc, String matCls,
         String matFactory, String matFactoryLine, String matFactoryCnt){
@@ -85,6 +86,7 @@ public class BidProgressDetailDto {
             this.ingTag = ingTag;
             this.itemCode = itemCode;
             this.gongoId = gongoId;
+            this.gongoDept = gongoDept;
             this.payCond = payCond;
             this.whyA3 = whyA3;
             this.whyA7 = whyA7;

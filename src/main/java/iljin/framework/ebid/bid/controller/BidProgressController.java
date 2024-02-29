@@ -30,4 +30,13 @@ public class BidProgressController {
     public List<List<?>> progresslistDetail(@RequestBody String param){
         return bidProgressService.progresslistDetail(param);
     }
+
+    @PostMapping("/openBid")
+    public ResultBody save(@RequestBody Map<String, String> params) {
+        return bidProgressService.openBid(params);
+    }
+    @PostMapping("/delete")
+    public ResultBody delete(@RequestBody Map<String, String> params) {
+        return bidProgressService.delete(params);
+    }
 }
