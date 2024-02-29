@@ -16,4 +16,8 @@ public class TCoUser {
 	String userId;
 	@Column(name="user_name")
 	String userName;
+	@Column(name="user_auth")
+	String userAuth;
+	@Column(name="interrelated_cust_code")
+	String interrelatedCustCode;
 }

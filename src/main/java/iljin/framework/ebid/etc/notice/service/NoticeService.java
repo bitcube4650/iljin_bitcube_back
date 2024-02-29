@@ -55,7 +55,16 @@ public class NoticeService {
 	//공지사항 목록 조회
 	@Transactional
 	public Page noticeList(Map<String, Object> params) {
-		
+  
+		UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		Optional<TCoUser> userOptional = tCoUserRepository.findById(principal.getUsername());
+		String userAuth = "";
+
+        if (userOptional.isPresent()) {//계열사인 경우
+        	// userAuth(1 = 시스템관리자, 2 = 각사관리자, 3 = 일반사용자, 4 = 감사사용자)
+        	userAuth = userOptional.get().getUserAuth();
+        }
+ 
 		try {
 			StringBuilder sbCount = new StringBuilder(" select count(1) "
 									        		 +" from ( "
@@ -93,11 +102,22 @@ public class NoticeService {
 															     + " left outer join t_co_user tcu2 "
 															     + " on (tcbn2.b_userid = tcu2.user_id) "
 															     + " where tcbn2.b_co = 'CUST' "
-															     + " and tcbc.interrelated_cust_code = :custCode"
-															 + " ) "
+													 );
+			if(!userAuth.equals("1")) {
+				//시스템관리자가 아닌 경우 계열사 공지 조건 추가
+				//협력사는 custCode가 빈문자열로 검색되어 계열사 공지가 출력안됨
+				sbCount.append(
+																   " and tcbc.interrelated_cust_code = :custCode"
+							  );
+			}
+			
+			sbCount.append(
+															   " ) "
 														 + " ) rst "
 													+ " where 1=1 "
-													 );
+						  );
+			
+											
 								
 			StringBuilder sbList = new StringBuilder(" select rst.b_no , "
 														  + " rst.b_userid , "
@@ -110,46 +130,55 @@ public class NoticeService {
 														  + " rst.b_co , "
 														  + " rst.userName , "
 														  + " row_number() over( order by rst.b_date desc ) as rowNo "
-									        		+" from ( "
-													 	    + " ( "
-													 	    	+ " select tcbn.b_no , "
-													 	    		   + " tcbn.b_userid , "
-													 	    		   + " tcbn.b_title , "
-													 	    		   + " tcbn.b_date , "
-													 	    		   + " tcbn.b_count , "
-													 	    		   + " tcbn.b_file , "
-													 	    		   + " tcbn.b_content , "
-													 	    		   + " tcbn.b_file_path , "
-													 	    		   + " tcbn.b_co , "
-													 	    	       + " tcu.user_name as userName "
-															    + " from t_co_board_notice tcbn "
-															    + " left outer join t_co_user tcu "
-															    + " on (tcbn.b_userid = tcu.user_id) "
-															    + " where tcbn.b_co = 'ALL' "
-														    + " ) "
-															+ " union all "
-															+ "	("
-															    + " select tcbn2.b_no , "
-															    	   + " tcbn2.b_userid , "
-															    	   + " tcbn2.b_title , "
-															    	   + " tcbn2.b_date , "
-															    	   + " tcbn2.b_count , "
-															    	   + " tcbn2.b_file , "
-															    	   + " tcbn2.b_content , "
-															    	   + " tcbn2.b_file_path , "
-															    	   + " tcbn2.b_co , "
-															    	   + " tcu2.user_name as userName "
-															    + "	from t_co_board_notice tcbn2 "
-															    + "	inner join t_co_board_cust tcbc "
-															    + "	on(tcbn2.b_no = tcbc.b_no) "
-															    + " left outer join t_co_user tcu2 "
-															    + " on (tcbn2.b_userid = tcu2.user_id) "
-															    + "	where tcbn2.B_CO = 'CUST' "
-															    + "	and tcbc.interrelated_cust_code = :custCode"
-															+ " ) "
-														+ " ) rst "
-												   + " where 1=1 "
-													);
+									        		 +" from ( "
+													 	     + " ( "
+													 	    	 + " select tcbn.b_no , "
+													 	    		    + " tcbn.b_userid , "
+													 	    		    + " tcbn.b_title , "
+													 	    		    + " tcbn.b_date , "
+													 	    		    + " tcbn.b_count , "
+													 	    		    + " tcbn.b_file , "
+													 	    		    + " tcbn.b_content , "
+													 	    		    + " tcbn.b_file_path , "
+													 	    		    + " tcbn.b_co , "
+													 	    	        + " tcu.user_name as userName "
+															     + " from t_co_board_notice tcbn "
+															     + " left outer join t_co_user tcu "
+															     + " on (tcbn.b_userid = tcu.user_id) "
+															     + " where tcbn.b_co = 'ALL' "
+														     + " ) "
+															 + " union all "
+															 + " ("
+															     + " select tcbn2.b_no , "
+															    	    + " tcbn2.b_userid , "
+															    	    + " tcbn2.b_title , "
+															    	    + " tcbn2.b_date , "
+															    	    + " tcbn2.b_count , "
+															    	    + " tcbn2.b_file , "
+															    	    + " tcbn2.b_content , "
+															    	    + " tcbn2.b_file_path , "
+															    	    + " tcbn2.b_co , "
+															    	    + " tcu2.user_name as userName "
+															     + " from t_co_board_notice tcbn2 "
+															     + " inner join t_co_board_cust tcbc "
+															     + " on(tcbn2.b_no = tcbc.b_no) "
+															     + " left outer join t_co_user tcu2 "
+															     + " on (tcbn2.b_userid = tcu2.user_id) "
+															     + " where tcbn2.b_co = 'CUST' "
+													 );
+			if(!userAuth.equals("1")) {
+				//시스템관리자가 아닌 경우 계열사 공지 조건 추가
+				//협력사는 custCode가 빈문자열로 검색되어 계열사 공지가 출력안됨
+				sbList.append(
+																   " and tcbc.interrelated_cust_code = :custCode"
+							  );
+			}
+			
+			sbList.append(
+															   " ) "
+														 + " ) rst "
+													+ " where 1=1 "
+						  );
 			StringBuilder sbWhere = new StringBuilder();
 			
 			if (!StringUtils.isEmpty(params.get("title"))) {
@@ -168,10 +197,11 @@ public class NoticeService {
 			sbCount.append(sbWhere);
 			Query queryTotal = entityManager.createNativeQuery(sbCount.toString());
 			
-			
-			//어느 계열사인지(협력사의 경우 빈 문자열 검색)
-			queryList.setParameter("custCode", params.get("custCode"));
-			queryTotal.setParameter("custCode", params.get("custCode"));
+			if(!userAuth.equals("1")) {//시스템관리자가 아닌 경우
+				//어느 계열사인지(협력사의 경우 빈 문자열 검색)
+				queryList.setParameter("custCode", params.get("custCode"));
+				queryTotal.setParameter("custCode", params.get("custCode"));
+			}
 			
 			//공지사항 제목
 			if (!StringUtils.isEmpty(params.get("title"))) {
@@ -403,7 +433,6 @@ public class NoticeService {
 	        
 
 	    } catch (Exception e) {
-	    	System.out.println("시작~~");
 	    	e.printStackTrace();
 	        resultBody.setCode("ERROR");
 	        resultBody.setStatus(500);
