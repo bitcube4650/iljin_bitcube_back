@@ -10,7 +10,7 @@ public class NoticeDto {
 	private Integer bNo;
     private String bUserid;
     private String bTitle;
-    private Timestamp bDate;
+    private String bDate;
     private Integer bCount;
     private String bFile;
     private String bContent;
@@ -19,14 +19,17 @@ public class NoticeDto {
     private String bUserName;
     private BigInteger rowNo;
 	
+    public NoticeDto() {}
+    
 	/**
 	 * 목록 (/api/v1/notice/noticeList)
 	 */
+
     public NoticeDto(
             Integer bNo, 
             String bUserid, 
             String bTitle, 
-            Timestamp bDate, 
+            String bDate, 
             Integer bCount, 
             String bFile, 
             String bContent, 
