@@ -71,6 +71,9 @@ dependencies {
     implementation 'commons-beanutils:commons-beanutils:1.9.3'
     implementation 'javax.xml.bind:jaxb-api:2.3.1'
     implementation 'de.codecentric:spring-boot-admin-starter-client:2.2.1'
+    implementation 'org.apache.poi:poi:4.1.2'
+    implementation 'com.opencsv:opencsv:5.5'
+
     runtimeOnly 'org.springframework.boot:spring-boot-devtools'
     compile fileTree(include: ['*.jar'], dir: 'libs')
 }
