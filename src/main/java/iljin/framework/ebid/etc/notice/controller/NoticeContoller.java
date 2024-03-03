@@ -1,15 +1,30 @@
 package iljin.framework.ebid.etc.notice.controller;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import iljin.framework.core.dto.ResultBody;
 import iljin.framework.ebid.etc.notice.entity.TCoBoardCustCode;
@@ -22,6 +37,13 @@ public class NoticeContoller {
 
 	@Autowired
     private NoticeService noticeService;
+	
+	private ObjectMapper objectMapper;
+
+    public void UploadController(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
+
 	
 	//공지사항 조회
 	@PostMapping("/noticeList")
@@ -53,9 +75,17 @@ public class NoticeContoller {
 	
 	//공지사항 수정
 	@PostMapping("/updateNotice")
-	public ResultBody updateNotice(@RequestBody Map<String, Object> params) {
+	public ResultBody updateNotice(@RequestPart(value = "file", required = false) MultipartFile file, @RequestPart("data") String jsonData) {
 
-		return noticeService.updateNotice(params);
+		ObjectMapper mapper = new ObjectMapper();
+        Map<String, Object> params = null;
+		try {
+			params = mapper.readValue(jsonData, Map.class);
+		} catch (Exception e) {
+			e.printStackTrace();
+		} 
+        
+		return noticeService.updateNotice(file, params);
 	}
 	
 	//공지사항 등록
@@ -64,4 +94,18 @@ public class NoticeContoller {
 
 		return noticeService.insertNotice(params);
 	}
+	
+	//첨부파일 다운로드
+	@PostMapping("/downloadFile")
+    public ByteArrayResource downloadFile(@RequestBody Map<String, Object> params) throws IOException {
+		String fileId = (String) params.get("fileId");
+		Path path = Paths.get(fileId);
+		byte[] fileContent = Files.readAllBytes(path);
+        
+        // ByteArrayResource를 사용하여 byte 배열을 리소스로 변환한다.
+        ByteArrayResource resource = new ByteArrayResource(fileContent);
+
+        return resource;
+    }
+	
 }

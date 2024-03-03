@@ -1,11 +1,19 @@
 package iljin.framework.ebid.etc.notice.service;
 
+import java.io.File;
+import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityTransaction;
@@ -19,6 +27,7 @@ import javax.transaction.Transactional;
 
 import org.qlrm.mapper.JpaResultMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -26,6 +35,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import iljin.framework.core.dto.ResultBody;
 import iljin.framework.ebid.custom.entity.TCoUser;
@@ -51,6 +61,10 @@ public class NoticeService {
 	
 	@PersistenceContext
     private EntityManager entityManager;
+	
+	@Value("${file.upload.directory}")
+    private String uploadDirectory;
+
 	
 	//공지사항 목록 조회
 	@Transactional
@@ -86,7 +100,8 @@ public class NoticeService {
 														     + " ) "
 															 + " union all "
 															 + " ("
-															     + " select tcbn2.b_no , "
+															     + " select distinct "
+															     		+ " tcbn2.b_no , "
 															    	    + " tcbn2.b_userid , "
 															    	    + " tcbn2.b_title , "
 															    	    + " tcbn2.b_date , "
@@ -107,7 +122,7 @@ public class NoticeService {
 				//시스템관리자가 아닌 경우 계열사 공지 조건 추가
 				//협력사는 custCode가 빈문자열로 검색되어 계열사 공지가 출력안됨
 				sbCount.append(
-																   " and tcbc.interrelated_cust_code = :custCode"
+																   " and tcbc.interrelated_cust_code = :custCode "
 							  );
 			}
 			
@@ -149,7 +164,8 @@ public class NoticeService {
 														     + " ) "
 															 + " union all "
 															 + " ("
-															     + " select tcbn2.b_no , "
+															     + " select distinct "
+															     	 	+ " tcbn2.b_no , "
 															    	    + " tcbn2.b_userid , "
 															    	    + " tcbn2.b_title , "
 															    	    + " tcbn2.b_date , "
@@ -170,7 +186,7 @@ public class NoticeService {
 				//시스템관리자가 아닌 경우 계열사 공지 조건 추가
 				//협력사는 custCode가 빈문자열로 검색되어 계열사 공지가 출력안됨
 				sbList.append(
-																   " and tcbc.interrelated_cust_code = :custCode"
+																   " and tcbc.interrelated_cust_code = :custCode "
 							  );
 			}
 			
@@ -325,12 +341,11 @@ public class NoticeService {
 	
 	//공지사항 수정
 	@Transactional
-	public ResultBody updateNotice(Map<String, Object> params) {
+	public ResultBody updateNotice(MultipartFile file, Map<String, Object> params) {
 		ResultBody resultBody = new ResultBody();
 		UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         TCoUser user = tCoUserRepository.findById(principal.getUsername()).get();//로그인한 유저정보
         
-
 	    try {
 	
 	    	//받아온 파라미터
@@ -339,6 +354,8 @@ public class NoticeService {
 	        String btitle = (String) params.get("btitle");
 	        String bcontent = (String) params.get("bcontent");
 	        String buserid = user.getUserId();
+	        String uploadedPath = null;
+	        String fileName = null;
 	        
 	        @SuppressWarnings("unchecked")
 			ArrayList<String> custCodeList=  (ArrayList<String>) params.get("interrelatedCustCodeArr");//수정된 공지 계열사 정보
@@ -359,7 +376,6 @@ public class NoticeService {
 	    		
 	    	}
 	        
-	        
 	        //공지사항 UPDATE
 	        TCoBoardNotice notice = entityManager.find(TCoBoardNotice.class, bno);
 	        
@@ -369,6 +385,17 @@ public class NoticeService {
 	            notice.setBContent(bcontent);
 	            notice.setBCo(bco);
 	            notice.setBUserid(buserid);
+	            
+	            if(file != null) {
+	            	//첨부파일 등록
+	    	    	uploadedPath = uploadFile(file, uploadDirectory);
+	    	
+	                //원래 파일명
+	                fileName = file.getOriginalFilename();
+	            }
+	            
+	            notice.setBFile(fileName);
+	            notice.setBFilePath(uploadedPath);
 	            
 	            LocalDateTime currentDate = LocalDateTime.now();
 	            notice.setBDate(currentDate);
@@ -414,6 +441,8 @@ public class NoticeService {
             notice.setBCount(0);
 	       
             entityManager.persist(notice);
+            
+            Integer bno = notice.getBNo();
 	        
 	        if( bco.equals("CUST") ) {//계열사 공지인 경우
 	        	@SuppressWarnings("unchecked")
@@ -423,7 +452,7 @@ public class NoticeService {
 		    	for(int i = 0 ; i < custCodeList.size() ; i++) {
 
 		    		TCoBoardCustCode newGroup = new TCoBoardCustCode();
-		    		newGroup.setBNo(notice.getBNo());
+		    		newGroup.setBNo(bno);
 		    		newGroup.setInterrelatedCustCode(custCodeList.get(i));
 		    		
 		    		entityManager.persist(newGroup);
@@ -442,6 +471,44 @@ public class NoticeService {
 		return resultBody;
 	}
 
+	// 파일 업로드 메서드
+    public static String uploadFile(MultipartFile file, String uploadDirectory) throws IOException {
+        if (file.isEmpty()) {
+            throw new IllegalArgumentException("파일이 비어 있습니다.");
+        }
+
+        // 현재 날짜를 기준으로 연도와 월 폴더 생성
+        SimpleDateFormat yearFormat = new SimpleDateFormat("yyyy");
+        SimpleDateFormat monthFormat = new SimpleDateFormat("MM");
+        Date currentDate = new Date();
+        String year = yearFormat.format(currentDate);
+        String month = monthFormat.format(currentDate);
+
+        // 현재 연도 폴더 생성
+        Path yearPath = Paths.get(uploadDirectory, year);
+        if (!Files.exists(yearPath)) {
+            Files.createDirectories(yearPath);
+        }
+
+        // 현재 월 폴더 생성
+        Path monthPath = Paths.get(yearPath.toString(), month);
+        if (!Files.exists(monthPath)) {
+            Files.createDirectories(monthPath);
+        }
+
+        // 파일명에 UUID를 사용하여 고유성 확보
+        String originalFileName = file.getOriginalFilename();
+        String uniqueFileName = UUID.randomUUID().toString() + "_" + originalFileName;
+
+        // 파일 저장 경로 설정
+        Path filePath = Paths.get(monthPath.toString(), uniqueFileName);
+
+        // 파일 저장
+        Files.copy(file.getInputStream(), filePath);
+
+        // 파일 저장 경로 반환
+        return filePath.toString();
+    }
 
 
 }
