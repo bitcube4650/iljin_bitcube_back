@@ -11,6 +11,7 @@ import iljin.framework.ebid.bid.dto.BidProgressDto;
 import iljin.framework.ebid.bid.dto.BidProgressFileDto;
 import iljin.framework.ebid.bid.dto.BidProgressTableDto;
 import iljin.framework.ebid.bid.dto.CoUserInfoDto;
+import iljin.framework.ebid.bid.dto.InterUserInfoDto;
 import iljin.framework.ebid.custom.entity.TCoUser;
 import iljin.framework.ebid.custom.repository.TCoUserRepository;
 import iljin.framework.ebid.etc.util.PagaUtils;
@@ -56,12 +57,13 @@ public class BidProgressService {
     Util util;
 
     public Page progresslist(@RequestBody Map<String, Object> params) {
-        // String id = util.getLoginId();
-        UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        TCoUser user = tCoUserRepository.findById(principal.getUsername()).get();
 
-        System.out.println("111111111111" + user);
-        System.out.println(principal.getUsername());
+        UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Optional<TCoUser> userOptional = tCoUserRepository.findById(principal.getUsername());
+
+        String userAuth = userOptional.get().getUserAuth();
+        String interrelatedCode = userOptional.get().getInterrelatedCustCode();
+        String userId = principal.getUsername();
 
         StringBuilder sbCount = new StringBuilder(" select count(1) from t_bi_info_mat a where 1=1");
         StringBuilder sbList = new StringBuilder(
@@ -85,6 +87,30 @@ public class BidProgressService {
         if (!StringUtils.isEmpty(params.get("bidName"))) {
             sbWhere.append(" and a.bi_name like concat('%',:bidName,'%')");
         }
+
+        if (userAuth.equals('2') || userAuth.equals('3')) {
+            sbWhere.append(" and a.create_user = :userid " +
+                    "or a.open_att1 = :userid " +
+                    "or a.open_att2 = :userid" +
+                    "or a.gongo_id = :userid");
+        }
+
+        if (userAuth.equals('4')) {
+            List<InterUserInfoDto> userInfoList = (List<InterUserInfoDto>) findInterCustCode(userId);
+            List<String> custCodes = new ArrayList<>();
+            for (InterUserInfoDto userInfo : userInfoList) {
+                custCodes.add(userInfo.getInterrelatedCustCode());
+            }
+
+            sbWhere.append(" and (");
+            for (int i = 0; i < custCodes.size(); i++) {
+                if (i > 0) {
+                    sbWhere.append(" or ");
+                }
+                sbWhere.append("a.interrelated_cust_code = :custCode").append(i);
+            }
+            sbWhere.append(")");
+        }
         sbList.append(sbWhere);
 
         Query queryList = entityManager.createNativeQuery(sbList.toString());
@@ -98,6 +124,23 @@ public class BidProgressService {
         if (!StringUtils.isEmpty(params.get("bidName"))) {
             queryList.setParameter("bidName", params.get("bidName"));
             queryTotal.setParameter("bidName", params.get("bidName"));
+        }
+        if (userAuth.equals('2') || userAuth.equals('3')) {
+            queryList.setParameter("userid", userId);
+            queryTotal.setParameter("userid", userId);
+        }
+        if (userAuth.equals('4')) {
+            List<InterUserInfoDto> userInfoList = (List<InterUserInfoDto>) findInterCustCode(userId);
+            List<String> custCodes = new ArrayList<>();
+            for (InterUserInfoDto userInfo : userInfoList) {
+                custCodes.add(userInfo.getInterrelatedCustCode());
+            }
+
+            sbWhere.append(" and (");
+            for (int i = 0; i < custCodes.size(); i++) {
+                queryList.setParameter("custCode" + i, custCodes.get(i));
+                queryTotal.setParameter("custCode" + i, custCodes.get(i));
+            }
         }
 
         Pageable pageable = PagaUtils.pageable(params);
@@ -198,12 +241,23 @@ public class BidProgressService {
         StringBuilder sbList = new StringBuilder(
                 "SELECT a.user_id AS user_id, a.user_auth AS user_auth, a.interrelated_cust_code AS interrelated_cust_code "
                         +
-                        "FROM t_co_user " +
+                        "FROM t_co_user a " +
                         "WHERE a.user_id = :userId");
 
         Query queryList = entityManager.createNativeQuery(sbList.toString());
         queryList.setParameter("userId", userId);
         return new JpaResultMapper().list(queryList, CoUserInfoDto.class);
+    }
+
+    public List<?> findInterCustCode(String param) {
+        StringBuilder sbList = new StringBuilder(
+                "SELECT a.user_id AS user_id, a.interrelated_cust_code AS interrelated_cust_code " +
+                        "FROM t_co_user_interrelated a " +
+                        "WHERE a.user_id = :param");
+
+        Query queryList = entityManager.createNativeQuery(sbList.toString());
+        queryList.setParameter("param", param);
+        return new JpaResultMapper().list(queryList, InterUserInfoDto.class);
     }
 
     @Transactional

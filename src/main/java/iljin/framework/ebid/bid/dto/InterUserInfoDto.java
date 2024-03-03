@@ -12,17 +12,13 @@ import java.util.List;
 import java.math.BigDecimal;
 
 @Data
-public class CoUserInfoDto {
+public class InterUserInfoDto {
     String userId;
-    String userAuth;
     String interrelatedCustCode;
 
-    public CoUserInfoDto(String userId, String userAuth, String interrelatedCustCode){
+    public InterUserInfoDto(String userId, String interrelatedCustCode){
         this.userId = userId;
-        this.userAuth = userAuth;
         this.interrelatedCustCode = interrelatedCustCode;
     }
-
 }
-
 
