@@ -65,7 +65,7 @@ public class BidProgressService {
         String interrelatedCode = userOptional.get().getInterrelatedCustCode();
         String userId = principal.getUsername();
 
-        StringBuilder sbCount = new StringBuilder(" select count(1) from t_bi_info_mat a where 1=1");
+        StringBuilder sbCount = new StringBuilder(" select count(1) from t_bi_info_mat a where 1=1 AND a.ing_tag = 'A0'");
         StringBuilder sbList = new StringBuilder(
                 "SELECT a.bi_no AS bi_no, a.bi_name AS bi_name, " +
                         "DATE_FORMAT(a.est_start_date, '%Y-%m-%d %H:%i') AS est_start_date, " +
@@ -88,14 +88,14 @@ public class BidProgressService {
             sbWhere.append(" and a.bi_name like concat('%',:bidName,'%')");
         }
 
-        if (userAuth.equals('2') || userAuth.equals('3')) {
+        if (userAuth.equals("2") || userAuth.equals('3')) {
             sbWhere.append(" and a.create_user = :userid " +
                     "or a.open_att1 = :userid " +
                     "or a.open_att2 = :userid" +
                     "or a.gongo_id = :userid");
         }
 
-        if (userAuth.equals('4')) {
+        if (userAuth.equals("4")) {
             List<InterUserInfoDto> userInfoList = (List<InterUserInfoDto>) findInterCustCode(userId);
             List<String> custCodes = new ArrayList<>();
             for (InterUserInfoDto userInfo : userInfoList) {
@@ -125,11 +125,11 @@ public class BidProgressService {
             queryList.setParameter("bidName", params.get("bidName"));
             queryTotal.setParameter("bidName", params.get("bidName"));
         }
-        if (userAuth.equals('2') || userAuth.equals('3')) {
+        if (userAuth.equals("2") || userAuth.equals('3')) {
             queryList.setParameter("userid", userId);
             queryTotal.setParameter("userid", userId);
         }
-        if (userAuth.equals('4')) {
+        if (userAuth.equals("4")) {
             List<InterUserInfoDto> userInfoList = (List<InterUserInfoDto>) findInterCustCode(userId);
             List<String> custCodes = new ArrayList<>();
             for (InterUserInfoDto userInfo : userInfoList) {
@@ -155,23 +155,23 @@ public class BidProgressService {
     public List<List<?>> progresslistDetail(String param) {
         StringBuilder sbList = new StringBuilder(
                 "SELECT a.bi_no AS bi_no, a.bi_name AS bi_name, " +
-                        "CASE WHEN a.bi_mode = 'A' THEN '지명경쟁입찰' ELSE '일반경쟁입찰' END AS bi_mode, " +
+                        "CASE WHEN a.bi_mode = 'A' THEN '지명경쟁입찰' ELSE '일반경쟁입찰' END AS bi_mode, a.bi_mode AS bi_mode_code, " +
                         "CASE WHEN a.ins_mode = '1' THEN '파일등록' ELSE '직접입력' END AS ins_mode, " +
                         "a.bid_join_spec AS bid_join_spec, a.special_cond AS special_cond, a.supply_cond AS supply_cond, "
                         +
                         "DATE_FORMAT(a.spot_date, '%Y-%m-%d %H:%i') AS spot_date, a.spot_area AS spot_area, " +
                         "CASE WHEN a.succ_deci_meth = '1' THEN '최저가' WHEN a.succ_deci_meth = '2' THEN '최고가' " +
                         "WHEN a.succ_deci_meth = '3' THEN '내부적격심사' WHEN a.succ_deci_meth = '4' THEN '최고가&내부적격심사' " +
-                        "ELSE '최저가&내부적격심사' END AS succ_deci_meth, DATE_FORMAT(a.est_start_date, '%Y-%m-%d %H:%i') AS est_start_date, "
+                        "ELSE '최저가&내부적격심사' END AS succ_deci_meth, a.succ_deci_meth AS succ_deci_meth_code, DATE_FORMAT(a.est_start_date, '%Y-%m-%d %H:%i') AS est_start_date, "
                         +
                         "DATE_FORMAT(a.est_close_date, '%Y-%m-%d %H:%i') AS est_close_date, b.user_name AS est_opener, "
                         +
                         "DATE_FORMAT(a.est_open_date, '%Y-%m-%d %H:%i') AS est_open_date, c.user_name AS open_att1, " +
                         "a.open_att1_sign AS open_att1_sign, d.user_name AS open_att2, a.open_att2_sign AS open_att2_sign, "
                         +
-                        "a.ing_tag AS ing_tag, f.item_code AS item_code, e.user_name AS gongo_id, g.dept_name AS gongo_dept, a.pay_cond AS pay_cond, a.why_A3 AS why_A3, "
+                        "a.ing_tag AS ing_tag, a.item_code AS item_code,  f.item_name AS item_name, e.user_name AS gongo_id, g.dept_name AS gongo_dept, a.pay_cond AS pay_cond, a.why_A3 AS why_A3, "
                         +
-                        "a.why_A7 AS why_A7, a.bi_open AS bi_open, a.interrelated_cust_code AS interrelated_cust_code, a.real_amt AS real_amt, a.amt_basis AS amt_basis, a.bd_amt AS bd_amt,"
+                        "a.why_A7 AS why_A7, a.bi_open AS bi_open, a.interrelated_cust_code AS interrelated_cust_code, h.interrelated_nm AS interrelated_nm, a.real_amt AS real_amt, a.amt_basis AS amt_basis, a.bd_amt AS bd_amt,"
                         +
                         "a.add_accept AS add_accept, a.mat_dept AS mat_dept, a.mat_proc AS mat_proc, a.mat_cls AS mat_cls, "
                         +
@@ -184,6 +184,7 @@ public class BidProgressService {
                         "JOIN t_co_user e ON a.gongo_id = e.user_id " +
                         "LEFT JOIN t_co_item f ON a.item_code = f.item_code " +
                         "LEFT JOIN t_co_user g ON a.gongo_id = g.user_id " +
+                        "JOIN t_co_interrelated h ON a.interrelated_cust_code = h.interrelated_cust_code " +
                         "WHERE 1=1 ");
 
         StringBuilder sbTableList = new StringBuilder(
@@ -287,9 +288,58 @@ public class BidProgressService {
 
     @Transactional
     public ResultBody delete(Map<String, String> params) {
-        ResultBody resultBody = new ResultBody();
+        String biNo = params.get("biNo");
 
+        ResultBody resultBody = new ResultBody();
+        StringBuilder sbList = new StringBuilder(
+                "DELETE FROM t_co_info_mat " +
+                        "WHERE bi_no = :bi_no");
+
+        Query queryList = entityManager.createNativeQuery(sbList.toString());
+        queryList.setParameter("biNo", biNo);
+        queryList.executeUpdate();
+        updateEmail(params);
         return resultBody;
+    }
+
+    @Transactional
+    public void updateEmail(Map<String, String> params) {
+        String biNo = params.get("biNo");
+        String type = params.get("type"); // del : 입찰삭제 , open : 입찰공고
+        String bidName = params.get("bidName");
+        String reason = params.get("reason");
+        String interNm = params.get("interNm");
+
+        String titleType = "";
+
+        String contentHeader = "안녕하십니까\n일진그룹 전자입찰 e-bidding입니다.\n\n";
+        String contentBody = "";
+        String contentFooter = "감사합니다.";
+        String contentReason = "";
+
+        switch (type) {
+            case "del":
+                titleType = "계획 삭제";
+                contentBody = "입찰명 [<b>" + bidName + "</b>] 입찰계획을\n삭제하였습니다.\n아래 삭제사유를 확인해 주십시오.\n\n";
+                contentReason = "-삭제사유\n" + reason;
+                break;
+            case "open":
+                titleType = "입찰 공고";
+                contentBody = "[" + interNm + "]에서 입찰공고 하였습니다.\n입찰명은 [<b>" + bidName
+                        + "</b>] 입니다.\n자세한 사항은 e-bidding 시스템에 로그인하여 확인해 주십시오.\n\n";
+        }
+        String title = "[일진그룹 e-bidding] 입찰" + titleType + "(<b>" + bidName + "</b>)";
+        String content = contentHeader + contentBody + contentFooter + contentReason;
+
+        StringBuilder sbList = new StringBuilder(
+                "INSERT INTO t_email (title, conts, send_flag, create_date, bi_no) VALUES " +
+                        "(:title, :content, 'N', sysdate(), :biNo)");
+
+        Query queryList = entityManager.createNativeQuery(sbList.toString());
+        queryList.setParameter("title", title);
+        queryList.setParameter("content", content);
+        queryList.setParameter("biNo", biNo);
+        queryList.executeUpdate();
     }
 
     @Transactional

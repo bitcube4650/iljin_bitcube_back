@@ -16,6 +16,7 @@ public class BidProgressDetailDto {
     String biNo;
     String biName;
     String biMode;
+    String biModeCode;
     String insMode;
     String bidJoinSpec;
     String specialCond;
@@ -23,6 +24,7 @@ public class BidProgressDetailDto {
     String spotDate;
     String spotArea;
     String succDeciMeth;
+    String succDeciMethCode;
     String estStartDate;
     String estCloseDate;
     String estOpener;
@@ -37,6 +39,7 @@ public class BidProgressDetailDto {
     String updateUser;
     String updateDate;
     String itemCode;
+    String itemName;
     String gongoId;
     String gongoDept;
     String payCond;
@@ -44,6 +47,7 @@ public class BidProgressDetailDto {
     String whyA7;
     String biOpen;
     String interrelatedCustCode;
+    String interrelatedNm;
     String realAmt;
     String amtBasis;
     BigDecimal bdAmt;
@@ -57,17 +61,18 @@ public class BidProgressDetailDto {
 
 
     public BidProgressDetailDto(
-        String biNo, String biName, String biMode, String insMode, String bidJoinSpec,
+        String biNo, String biName, String biMode, String biModeCode, String insMode, String bidJoinSpec,
         String specialCond, String supplyCond, String spotDate, String spotArea,
-        String succDeciMeth, String estStartDate, String estCloseDate, String estOpener,
+        String succDeciMeth, String succDeciMethCode, String estStartDate, String estCloseDate, String estOpener,
         String estOpenDate, String openAtt1, String openAtt1Sign, String openAtt2,
-        String openAtt2Sign, String ingTag, String itemCode, String gongoId, String gongoDept,
-        String payCond, String whyA3, String whyA7, String biOpen, String interrelatedCustCode,
+        String openAtt2Sign, String ingTag, String itemCode, String itemName, String gongoId, String gongoDept,
+        String payCond, String whyA3, String whyA7, String biOpen, String interrelatedCustCode, String interrelatedNm,
         String realAmt, String amtBasis, BigDecimal bdAmt, String addAccept, String matDept, String matProc, String matCls,
         String matFactory, String matFactoryLine, String matFactoryCnt){
             this.biNo = biNo;
             this.biName = biName;
             this.biMode = biMode;
+            this.biModeCode = biModeCode;;
             this.insMode = insMode;
             this.bidJoinSpec = bidJoinSpec;
             this.specialCond = specialCond;
@@ -75,6 +80,7 @@ public class BidProgressDetailDto {
             this.spotDate = spotDate;
             this.spotArea = spotArea;
             this.succDeciMeth = succDeciMeth;
+            this.succDeciMethCode = succDeciMethCode;
             this.estStartDate = estStartDate;
             this.estCloseDate = estCloseDate;
             this.estOpener = estOpener;
@@ -85,6 +91,7 @@ public class BidProgressDetailDto {
             this.openAtt2Sign = openAtt2Sign;
             this.ingTag = ingTag;
             this.itemCode = itemCode;
+            this.itemName = itemName;
             this.gongoId = gongoId;
             this.gongoDept = gongoDept;
             this.payCond = payCond;
@@ -92,6 +99,7 @@ public class BidProgressDetailDto {
             this.whyA7 = whyA7;
             this.biOpen = biOpen;
             this.interrelatedCustCode = interrelatedCustCode;
+            this.interrelatedNm = interrelatedNm;
             this.realAmt = realAmt;
             this.amtBasis = amtBasis;
             this.bdAmt = bdAmt;
