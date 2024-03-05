@@ -39,4 +39,15 @@ public class BidProgressController {
     public ResultBody delete(@RequestBody Map<String, String> params) {
         return bidProgressService.delete(params);
     }
+
+    @PostMapping("/custList")
+    public Page custList(@RequestBody Map<String, Object> params){
+        return bidProgressService.custList(params);
+    }
+
+    @PostMapping("/openBidUserList")
+    List<?> findCoUserInfo(Map<String, String> params){
+        return bidProgressService.findCoUserInfo(params);
+    }
+
 }

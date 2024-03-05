@@ -12,19 +12,18 @@ import java.util.List;
 import java.math.BigDecimal;
 
 @Data
-public class CoUserInfoDto {
-    String userId;
-    String userAuth;
+public class InterrelatedCustDto {
+    String custCode;
+    String custName;
+    String combinedAddr;
+    String presName;
     String interrelatedCustCode;
-    String openAuth;
 
-    public CoUserInfoDto(String userId, String userAuth, String interrelatedCustCode, String openAuth){
-        this.userId = userId;
-        this.userAuth = userAuth;
+    public InterrelatedCustDto(String custCode, String custName, String presName, String combinedAddr, String interrelatedCustCode){
+        this.custCode = custCode;
+        this.custName = custName;   
+        this.presName = presName;
+        this.combinedAddr = combinedAddr;
         this.interrelatedCustCode = interrelatedCustCode;
-        this.openAuth = openAuth;
     }
-
 }
-
-

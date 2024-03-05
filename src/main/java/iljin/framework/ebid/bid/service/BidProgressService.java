@@ -12,6 +12,7 @@ import iljin.framework.ebid.bid.dto.BidProgressFileDto;
 import iljin.framework.ebid.bid.dto.BidProgressTableDto;
 import iljin.framework.ebid.bid.dto.CoUserInfoDto;
 import iljin.framework.ebid.bid.dto.InterUserInfoDto;
+import iljin.framework.ebid.bid.dto.InterrelatedCustDto;
 import iljin.framework.ebid.custom.entity.TCoUser;
 import iljin.framework.ebid.custom.repository.TCoUserRepository;
 import iljin.framework.ebid.etc.util.PagaUtils;
@@ -56,6 +57,53 @@ public class BidProgressService {
     @Autowired
     Util util;
 
+    public Page custList(@RequestBody Map<String, Object> params) {
+        UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Optional<TCoUser> userOptional = tCoUserRepository.findById(principal.getUsername());
+
+        String interrelatedCode = userOptional.get().getInterrelatedCustCode();
+        StringBuilder sbCount = new StringBuilder(
+                " select count(1) FROM t_co_cust_master a WHERE a.interrelated_cust_code = :interrelatedCode");
+        StringBuilder sbList = new StringBuilder(
+                "SELECT CAST(a.cust_code AS CHAR) AS cust_code, a.cust_name AS cust_name, a.pres_name AS pres_name," +
+                        "CONCAT('(', a.zipcode, ')', a.addr, ' ', a.addr_detail) AS combined_addr, " +
+                        "a.interrelated_cust_code AS interrelated_cust_code " +
+                        "FROM t_co_cust_master a WHERE a.interrelated_cust_code = :interrelatedCode");
+
+        StringBuilder sbWhere = new StringBuilder();
+
+        if (!StringUtils.isEmpty(params.get("custName"))) {
+            sbWhere.append(" and a.cust_name like concat('%',:custName,'%')");
+        }
+
+        if (!StringUtils.isEmpty(params.get("chairman"))) {
+            sbWhere.append(" and a.pres_name like concat('%',:chairman,'%')");
+        }
+        sbList.append(sbWhere);
+        sbCount.append(sbWhere);
+        Query queryList = entityManager.createNativeQuery(sbList.toString());
+        Query queryCountList = entityManager.createNativeQuery(sbCount.toString());
+        queryList.setParameter("interrelatedCode", interrelatedCode);
+        if (!StringUtils.isEmpty(params.get("custName"))) {
+            queryList.setParameter("custName", params.get("custName"));
+            queryCountList.setParameter("custName", params.get("custName"));
+        }
+        if (!StringUtils.isEmpty(params.get("chairman"))) {
+            queryList.setParameter("chairman", params.get("chairman"));
+            queryCountList.setParameter("chairman", params.get("chairman"));
+        }
+        queryList.setParameter("interrelatedCode", interrelatedCode);
+        queryCountList.setParameter("interrelatedCode", interrelatedCode);
+
+        Pageable pageable = PagaUtils.pageable(params);
+        queryList.setFirstResult(pageable.getPageNumber() * pageable.getPageSize())
+                .setMaxResults(pageable.getPageSize()).getResultList();
+        List list = new JpaResultMapper().list(queryList, InterrelatedCustDto.class);
+
+        BigInteger count = (BigInteger) queryCountList.getSingleResult();
+        return new PageImpl(list, pageable, count.intValue());
+    }
+
     public Page progresslist(@RequestBody Map<String, Object> params) {
 
         UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -65,7 +113,8 @@ public class BidProgressService {
         String interrelatedCode = userOptional.get().getInterrelatedCustCode();
         String userId = principal.getUsername();
 
-        StringBuilder sbCount = new StringBuilder(" select count(1) from t_bi_info_mat a where 1=1 AND a.ing_tag = 'A0'");
+        StringBuilder sbCount = new StringBuilder(
+                " select count(1) from t_bi_info_mat a where 1=1 AND a.ing_tag = 'A0'");
         StringBuilder sbList = new StringBuilder(
                 "SELECT a.bi_no AS bi_no, a.bi_name AS bi_name, " +
                         "DATE_FORMAT(a.est_start_date, '%Y-%m-%d %H:%i') AS est_start_date, " +
@@ -155,7 +204,8 @@ public class BidProgressService {
     public List<List<?>> progresslistDetail(String param) {
         StringBuilder sbList = new StringBuilder(
                 "SELECT a.bi_no AS bi_no, a.bi_name AS bi_name, " +
-                        "CASE WHEN a.bi_mode = 'A' THEN '지명경쟁입찰' ELSE '일반경쟁입찰' END AS bi_mode, a.bi_mode AS bi_mode_code, " +
+                        "CASE WHEN a.bi_mode = 'A' THEN '지명경쟁입찰' ELSE '일반경쟁입찰' END AS bi_mode, a.bi_mode AS bi_mode_code, "
+                        +
                         "CASE WHEN a.ins_mode = '1' THEN '파일등록' ELSE '직접입력' END AS ins_mode, " +
                         "a.bid_join_spec AS bid_join_spec, a.special_cond AS special_cond, a.supply_cond AS supply_cond, "
                         +
@@ -164,12 +214,12 @@ public class BidProgressService {
                         "WHEN a.succ_deci_meth = '3' THEN '내부적격심사' WHEN a.succ_deci_meth = '4' THEN '최고가&내부적격심사' " +
                         "ELSE '최저가&내부적격심사' END AS succ_deci_meth, a.succ_deci_meth AS succ_deci_meth_code, DATE_FORMAT(a.est_start_date, '%Y-%m-%d %H:%i') AS est_start_date, "
                         +
-                        "DATE_FORMAT(a.est_close_date, '%Y-%m-%d %H:%i') AS est_close_date, b.user_name AS est_opener, "
+                        "DATE_FORMAT(a.est_close_date, '%Y-%m-%d %H:%i') AS est_close_date, b.user_name AS est_opener, a.est_opener AS est_opener_code,"
                         +
-                        "DATE_FORMAT(a.est_open_date, '%Y-%m-%d %H:%i') AS est_open_date, c.user_name AS open_att1, " +
-                        "a.open_att1_sign AS open_att1_sign, d.user_name AS open_att2, a.open_att2_sign AS open_att2_sign, "
+                        "DATE_FORMAT(a.est_open_date, '%Y-%m-%d %H:%i') AS est_open_date, c.user_name AS open_att1, a.open_att1 AS open_att1_code," +
+                        "a.open_att1_sign AS open_att1_sign, d.user_name AS open_att2, a.open_att2 AS open_att2_code, a.open_att2_sign AS open_att2_sign, "
                         +
-                        "a.ing_tag AS ing_tag, a.item_code AS item_code,  f.item_name AS item_name, e.user_name AS gongo_id, g.dept_name AS gongo_dept, a.pay_cond AS pay_cond, a.why_A3 AS why_A3, "
+                        "a.ing_tag AS ing_tag, a.item_code AS item_code, f.item_name AS item_name, e.user_name AS gongo_id, a.gongo_id AS gongo_id_code, g.dept_name AS gongo_dept, a.pay_cond AS pay_cond, a.why_A3 AS why_A3, "
                         +
                         "a.why_A7 AS why_A7, a.bi_open AS bi_open, a.interrelated_cust_code AS interrelated_cust_code, h.interrelated_nm AS interrelated_nm, a.real_amt AS real_amt, a.amt_basis AS amt_basis, a.bd_amt AS bd_amt,"
                         +
@@ -236,11 +286,11 @@ public class BidProgressService {
         return combinedResults;
     }
 
-    public List<?> findCoUserInfo() {
+    public List<?> findCoUserInfo(Map<String, String> params) {
         UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String userId = principal.getUsername();
         StringBuilder sbList = new StringBuilder(
-                "SELECT a.user_id AS user_id, a.user_auth AS user_auth, a.interrelated_cust_code AS interrelated_cust_code "
+                "SELECT a.user_id AS user_id, a.user_auth AS user_auth, a.interrelated_cust_code AS interrelated_cust_code, a.open_auth AS open_auth "
                         +
                         "FROM t_co_user a " +
                         "WHERE a.user_id = :userId");
