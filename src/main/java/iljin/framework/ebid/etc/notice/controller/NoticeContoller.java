@@ -90,9 +90,17 @@ public class NoticeContoller {
 	
 	//공지사항 등록
 	@PostMapping("/insertNotice")
-	public ResultBody insertNotice(@RequestBody Map<String, Object> params) {
+	public ResultBody insertNotice(@RequestPart(value = "file", required = false) MultipartFile file, @RequestPart("data") String jsonData) {
 
-		return noticeService.insertNotice(params);
+		ObjectMapper mapper = new ObjectMapper();
+        Map<String, Object> params = null;
+		try {
+			params = mapper.readValue(jsonData, Map.class);
+		} catch (Exception e) {
+			e.printStackTrace();
+		} 
+		
+		return noticeService.insertNotice(file, params);
 	}
 	
 	//첨부파일 다운로드

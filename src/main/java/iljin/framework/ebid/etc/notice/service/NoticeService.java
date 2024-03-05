@@ -354,6 +354,8 @@ public class NoticeService {
 	        String btitle = (String) params.get("btitle");
 	        String bcontent = (String) params.get("bcontent");
 	        String buserid = user.getUserId();
+	        String preUploadedPath = (String) params.get("bfilePath");
+	        String preFileName = (String) params.get("bfile");
 	        String uploadedPath = null;
 	        String fileName = null;
 	        
@@ -386,12 +388,19 @@ public class NoticeService {
 	            notice.setBCo(bco);
 	            notice.setBUserid(buserid);
 	            
-	            if(file != null) {
+	            if(file != null) {//새로 첨부된 파일이 있는 경우
+	            	
 	            	//첨부파일 등록
 	    	    	uploadedPath = uploadFile(file, uploadDirectory);
 	    	
 	                //원래 파일명
 	                fileName = file.getOriginalFilename();
+	                
+	            }else if(preUploadedPath != null && preFileName != null) {//기존에 첨부했던 파일이 그대로 있는 경우
+	            	
+	            	uploadedPath = preUploadedPath;
+	            	fileName = preFileName;
+	    
 	            }
 	            
 	            notice.setBFile(fileName);
@@ -419,7 +428,7 @@ public class NoticeService {
 
 	//공지사항 등록
 	@Transactional
-	public ResultBody insertNotice(Map<String, Object> params) {
+	public ResultBody insertNotice(MultipartFile file, Map<String, Object> params) {
 		ResultBody resultBody = new ResultBody();
 		
 		try {
@@ -431,6 +440,16 @@ public class NoticeService {
 	        String btitle = (String) params.get("btitle");
 	        String bcontent = (String) params.get("bcontent");
 	        String buserid = (String) params.get("buserid");
+	        String uploadedPath = null;
+	        String fileName = null;
+	        
+	        if(file != null) {
+            	//첨부파일 등록
+    	    	uploadedPath = uploadFile(file, uploadDirectory);
+    	
+                //원래 파일명
+                fileName = file.getOriginalFilename();
+            }
 	        
 	        //파라미터 set
 	        notice.setBCo(bco);
@@ -439,6 +458,8 @@ public class NoticeService {
             notice.setBUserid(buserid);
             notice.setBDate(currentDate);
             notice.setBCount(0);
+            notice.setBFile(fileName);
+            notice.setBFilePath(uploadedPath);
 	       
             entityManager.persist(notice);
             
