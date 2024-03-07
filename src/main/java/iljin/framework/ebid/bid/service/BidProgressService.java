@@ -39,6 +39,7 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.transaction.Transactional;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -410,28 +411,32 @@ public class BidProgressService {
     }
 
     @Transactional
-    public ResultBody updateBid(Map<String, Object> params) {
+    public ResultBody updateBid(@RequestBody Map<String, Object> params) {
         Map<String, Object> result = (Map<String, Object>) params.get("result");
-        Map<String, Object> table = (Map<String, Object>) params.get("tableContent");
-        Map<String, Object> file = (Map<String, Object>) params.get("fileContent");
-        Map<String, Object> cust = (Map<String, Object>) params.get("custContent");
+        // List<Map<String, Object>> table = (List<Map<String, Object>>)
+        // params.get("tableContent");
+        // List<Map<String, Object>> file = (List<Map<String, Object>>)
+        // params.get("fileContent");
+        // List<Map<String, Object>> cust = (List<Map<String, Object>>)
+        // params.get("custContent");
 
         UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String userId = principal.getUsername();
-        
-        String biNo = (String) result.get("biNo");
 
-        StringBuilder sbList = new StringBuilder( //입찰 업데이트
-                "UPDATE t_bi_info_mat set bi_name = :biName, bi_mode = :biModeCode, ins_mode = :insModeCode, " +
-                        "bid_join_spec = :bidJoinSpec, special_cond =:specialCond, supply_cond = :supplyCond, " +
+        StringBuilder sbList = new StringBuilder( // 입찰 업데이트
+                "UPDATE t_bi_info_mat SET bi_name = :biName, bi_mode = :biModeCode, ins_mode = :insModeCode, " +
+                        "bid_join_spec = :bidJoinSpec, special_cond = :specialCond, supply_cond = :supplyCond, " +
                         "spot_date = STR_TO_DATE(:spotDate, '%Y-%m-%d %H:%i'), spot_area = :spotArea, " +
                         "succ_deci_meth = :succDeciMethCode, amt_basis = :amtBasis, bd_amt = :bdAmt, " +
-                        "est_start_date =STR_TO_DATE(:estStartDate, '%Y-%m-%d %H:%i'), " +
-                        "est_close_date =STR_TO_DATE(:estCloseDate, '%Y-%m-%d %H:%i'), est_opener = :estOpenerCode, " +
-                        "open_att1 = :openAtt1Code, open_att2 = :openAtt2Code, update_user = :userId, update_date = sysdate(), " +
-                        "item_code = :itemCode, gongo_id = :gongoIdCode, pay_cond = :payCond, mat_dept = :matDept, mat_proc =:matProc, " +
-                        "mat_cls = :matCls, mat_factory = : matFactory, mat_factory_line = : matFactoryLine, mat_factory_cnt = : matFactoryCnt " +
-                        "WHERE bi_no = :bi_no");
+                        "est_start_date = STR_TO_DATE(:estStartDate, '%Y-%m-%d %H:%i'), " +
+                        "est_close_date = STR_TO_DATE(:estCloseDate, '%Y-%m-%d %H:%i'), est_opener = :estOpenerCode, " +
+                        "open_att1 = :openAtt1Code, open_att2 = :openAtt2Code, update_user = :userId, update_date = sysdate(), "
+                        +
+                        "item_code = :itemCode, gongo_id = :gongoIdCode, pay_cond = :payCond, mat_dept = :matDept, mat_proc = :matProc, "
+                        +
+                        "mat_cls = :matCls, mat_factory = :matFactory, mat_factory_line = :matFactoryLine, mat_factory_cnt = :matFactoryCnt "
+                        +
+                        "WHERE bi_no = :biNo");
 
         Query queryList = entityManager.createNativeQuery(sbList.toString());
         queryList.setParameter("biName", (String) result.get("biName"));
@@ -444,7 +449,7 @@ public class BidProgressService {
         queryList.setParameter("spotArea", (String) result.get("spotArea"));
         queryList.setParameter("succDeciMethCode", (String) result.get("succDeciMethCode"));
         queryList.setParameter("amtBasis", (String) result.get("amtBasis"));
-        queryList.setParameter("bdAmt", (String) result.get("bdAmt"));
+        queryList.setParameter("bdAmt", (Integer) result.get("bdAmt"));
         queryList.setParameter("estStartDate", (String) result.get("estStartDate"));
         queryList.setParameter("estCloseDate", (String) result.get("estCloseDate"));
         queryList.setParameter("estOpenerCode", (String) result.get("estOpenerCode"));
@@ -462,18 +467,98 @@ public class BidProgressService {
         queryList.setParameter("matFactoryCnt", (String) result.get("matFactoryCnt"));
         queryList.setParameter("biNo", (String) result.get("biNo"));
 
-        StringBuilder sbList1 = new StringBuilder( //입찰 hist 업데이트
-                "INSERT into t_bi_info_mat_hist (bi_no, bi_name, bi_mode, ins_mode, bid_join_spec, special_cond, supply_cond, spot_date, " +
-                        "spot_area, succ_deci_meth, amt_basis, bd_amt, succ_amt, est_start_date, est_close_date, est_opener, " +
-                        "est_open_date, open_att1, open_att1_sign, open_att2, open_att2_sign, ing_tag, update_user, update_date, item_code, " +
-                        "gongo_id, pay_cond, why_a3, why_a7, bi_open, interrelated_cust_code, real_amt, add_accept, mat_dept, mat_proc, mat_cls, " +
-                        "mat_factory, mat_factory_line, mat_factory_cnt) values (:biNo, :biModeCode, :insModeCode, :bidJoinSpec, :specialCond, :supplyCond, " +
-                        "STR_TO_DATE(:spotDate, '%Y-%m-%d %H:%i'), :spotArea, :succDeciMethCode, :amtBasis, :bdAmt, :succAmt, " +
-                        "est_start_date =STR_TO_DATE(:estStartDate, '%Y-%m-%d %H:%i'), est_close_date =STR_TO_DATE(:estCloseDate, '%Y-%m-%d %H:%i'), " +
-                        ""); 
-
-
         queryList.executeUpdate();
+
+        StringBuilder sbList1 = new StringBuilder( // 입찰 hist 업데이트
+                "INSERT into t_bi_info_mat_hist (bi_no, bi_name, bi_mode, ins_mode, bid_join_spec, special_cond, supply_cond, spot_date, "
+                        +
+                        "spot_area, succ_deci_meth, amt_basis, bd_amt, est_start_date, est_close_date, est_opener, "
+                        +
+                        "open_att1, open_att2, ing_tag, update_user, update_date, item_code, " +
+                        "gongo_id, pay_cond, bi_open, mat_dept, mat_proc, mat_cls, mat_factory, mat_factory_line, mat_factory_cnt) "
+                        +
+                        "values (:biNo, :biName, :biModeCode, :insModeCode, :bidJoinSpec, :specialCond, :supplyCond, " +
+                        "STR_TO_DATE(:spotDate, '%Y-%m-%d %H:%i'), :spotArea, :succDeciMethCode, :amtBasis, :bdAmt, "
+                        +
+                        "est_start_date =STR_TO_DATE(:estStartDate, '%Y-%m-%d %H:%i'), est_close_date =STR_TO_DATE(:estCloseDate, '%Y-%m-%d %H:%i'), :estOpenerCode,"
+                        +
+                        ":openAtt1Code, :openAtt2Code, 'A0', :userId, sysdate(), :itemCode, :gongoIdCode, :payCond, 'N', :matDept, :matProc, :matCls, :matFactory, "
+                        +
+                        ":matFactoryLine, :matFactoryCnt)");
+
+        Query queryList1 = entityManager.createNativeQuery(sbList1.toString());
+        queryList1.setParameter("biNo", (String) result.get("biNo"));
+        queryList1.setParameter("biName", (String) result.get("biName"));
+        queryList1.setParameter("biModeCode", (String) result.get("biModeCode"));
+        queryList1.setParameter("insModeCode", (String) result.get("insModeCode"));
+        queryList1.setParameter("bidJoinSpec", (String) result.get("bidJoinSpec"));
+        queryList1.setParameter("specialCond", (String) result.get("specialCond"));
+        queryList1.setParameter("supplyCond", (String) result.get("supplyCond"));
+        queryList1.setParameter("spotDate", (String) result.get("spotDate"));
+        queryList1.setParameter("spotArea", (String) result.get("spotArea"));
+        queryList1.setParameter("succDeciMethCode", (String) result.get("succDeciMethCode"));
+        queryList1.setParameter("amtBasis", (String) result.get("amtBasis"));
+        queryList1.setParameter("bdAmt", (Integer) result.get("bdAmt"));
+        queryList1.setParameter("estStartDate", (String) result.get("estStartDate"));
+        queryList1.setParameter("estCloseDate", (String) result.get("estCloseDate"));
+        queryList1.setParameter("estOpenerCode", (String) result.get("estOpenerCode"));
+        queryList1.setParameter("openAtt1Code", (String) result.get("openAtt1Code"));
+        queryList1.setParameter("openAtt2Code", (String) result.get("openAtt2Code"));
+        queryList1.setParameter("userId", userId);
+        queryList1.setParameter("itemCode", (String) result.get("itemCode"));
+        queryList1.setParameter("gongoIdCode", (String) result.get("gongoIdCode"));
+        queryList1.setParameter("payCond", (String) result.get("payCond"));
+        queryList1.setParameter("matDept", (String) result.get("matDept"));
+        queryList1.setParameter("matProc", (String) result.get("matProc"));
+        queryList1.setParameter("matCls", (String) result.get("matCls"));
+        queryList1.setParameter("matFactory", (String) result.get("matFactory"));
+        queryList1.setParameter("matFactoryLine", (String) result.get("matFactoryLine"));
+        queryList1.setParameter("matFactoryCnt", (String) result.get("matFactoryCnt"));
+
+        queryList1.executeUpdate();
+
+        // String insMode = (String) result.get("insModeCode");
+
+        // if (insMode.equals("2")) {
+        // StringBuilder delQ = new StringBuilder(
+        // "DELETE from t_bi_spec_mat where bi_no = :biNo");
+        // Query queryList2 = entityManager.createNativeQuery(delQ.toString());
+        // queryList2.setParameter("biNo", (String) result.get("biNo"));
+        // queryList2.executeUpdate();
+
+        // for (Map<String, Object> row : table) {
+        // StringBuilder upQ = new StringBuilder(
+        // "INSERT INTO t_bi_spec_mat (bi_no, seq, name, ssize, unitcode, order_uc,
+        // create_user, create_date, order_qty) "
+        // +
+        // "values (:biNo, :seq, :name, :ssize, :unitcode, :orderUc, :userId, sysdate(),
+        // :orderQty)");
+        // Query queryList3 = entityManager.createNativeQuery(upQ.toString());
+        // queryList3.setParameter("biNo", (String) row.get("biNo"));
+        // queryList3.setParameter("seq", (String) row.get("seq"));
+        // queryList3.setParameter("name", (String) row.get("name"));
+        // queryList3.setParameter("ssize", (String) row.get("ssize"));
+        // queryList3.setParameter("unitcode", (String) row.get("unitcode"));
+        // queryList3.setParameter("orderUc", (String) row.get("orderUc"));
+        // queryList3.setParameter("userId", userId);
+        // queryList3.setParameter("orderQty", (String) row.get("orderQty"));
+        // queryList3.executeUpdate();
+        // }
+        // }
+
+        ResultBody resultBody = new ResultBody();
+        return resultBody;
+    }
+    @Transactional
+    public ResultBody updateBidCust(@RequestBody List<Map<String, Object>> params){  
+        for (Map<String, Object> data : params) {
+            StringBuilder sbList = new StringBuilder(
+                "UPDATE");
+
+            String biNo = (String) data.get("biNo");
+            System.out.println("biNo: " + biNo);
+        }
+
         ResultBody resultBody = new ResultBody();
         return resultBody;
     }
@@ -484,8 +569,8 @@ public class BidProgressService {
 
         ResultBody resultBody = new ResultBody();
         StringBuilder sbList = new StringBuilder(
-                "DELETE FROM t_co_info_mat " +
-                        "WHERE bi_no = :bi_no");
+                "DELETE FROM t_bi_info_mat " +
+                        "WHERE bi_no = :biNo");
 
         Query queryList = entityManager.createNativeQuery(sbList.toString());
         queryList.setParameter("biNo", biNo);
@@ -524,13 +609,12 @@ public class BidProgressService {
         String content = contentHeader + contentBody + contentFooter + contentReason;
 
         StringBuilder sbList = new StringBuilder(
-                "INSERT INTO t_email (title, conts, send_flag, create_date, bi_no) VALUES " +
-                        "(:title, :content, 'N', sysdate(), :biNo)");
+                "INSERT INTO t_email (title, conts, send_flag, create_date) VALUES " +
+                        "(:title, :content, 'N', sysdate())");
 
         Query queryList = entityManager.createNativeQuery(sbList.toString());
         queryList.setParameter("title", title);
         queryList.setParameter("content", content);
-        queryList.setParameter("biNo", biNo);
         queryList.executeUpdate();
     }
 

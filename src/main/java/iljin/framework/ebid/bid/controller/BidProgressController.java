@@ -56,4 +56,9 @@ public class BidProgressController {
         return bidProgressService.updateBid(params);
     }
 
+    @PostMapping("/updateBidCust")
+    public ResultBody updateBidCust(@RequestBody List<Map<String, Object>> params) {
+        return bidProgressService.updateBidCust(params);
+    }
+
 }
