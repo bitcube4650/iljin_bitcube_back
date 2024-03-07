@@ -35,6 +35,7 @@ public class BidProgressController {
     public ResultBody save(@RequestBody Map<String, String> params) {
         return bidProgressService.openBid(params);
     }
+
     @PostMapping("/delete")
     public ResultBody delete(@RequestBody Map<String, String> params) {
         return bidProgressService.delete(params);
@@ -45,9 +46,14 @@ public class BidProgressController {
         return bidProgressService.custList(params);
     }
 
-    @PostMapping("/openBidUserList")
-    List<?> findCoUserInfo(Map<String, String> params){
+    @PostMapping("/userList")
+    public Page findCoUserInfo(@RequestBody Map<String, Object> params){
         return bidProgressService.findCoUserInfo(params);
+    }
+
+    @PostMapping("/updateBid")
+    public ResultBody updateBid(@RequestBody Map<String, Object> params) {
+        return bidProgressService.updateBid(params);
     }
 
 }

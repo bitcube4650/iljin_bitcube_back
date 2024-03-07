@@ -14,15 +14,20 @@ import java.math.BigDecimal;
 @Data
 public class CoUserInfoDto {
     String userId;
+    String userName;
+    String deptName;
     String userAuth;
     String interrelatedCustCode;
-    String openAuth;
+    String openauth;
 
-    public CoUserInfoDto(String userId, String userAuth, String interrelatedCustCode, String openAuth){
+    public CoUserInfoDto(String userId, String userName, String deptName, String userAuth, 
+                         String interrelatedCustCode, String openauth){
         this.userId = userId;
+        this.userName = userName;
+        this.deptName = deptName;
         this.userAuth = userAuth;
         this.interrelatedCustCode = interrelatedCustCode;
-        this.openAuth = openAuth;
+        this.openauth = openauth;
     }
 
 }

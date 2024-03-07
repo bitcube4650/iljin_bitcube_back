@@ -18,6 +18,7 @@ public class BidProgressDetailDto {
     String biMode;
     String biModeCode;
     String insMode;
+    String insModeCode;
     String bidJoinSpec;
     String specialCond;
     String supplyCond;
@@ -65,7 +66,7 @@ public class BidProgressDetailDto {
 
 
     public BidProgressDetailDto(
-        String biNo, String biName, String biMode, String biModeCode, String insMode, String bidJoinSpec,
+        String biNo, String biName, String biMode, String biModeCode, String insMode, String insModeCode, String bidJoinSpec,
         String specialCond, String supplyCond, String spotDate, String spotArea,
         String succDeciMeth, String succDeciMethCode, String estStartDate, String estCloseDate, String estOpener, String estOpenerCode,
         String estOpenDate, String openAtt1, String openAtt1Code, String openAtt1Sign, String openAtt2, String openAtt2Code,
@@ -78,6 +79,7 @@ public class BidProgressDetailDto {
             this.biMode = biMode;
             this.biModeCode = biModeCode;
             this.insMode = insMode;
+            this.insModeCode = insModeCode;
             this.bidJoinSpec = bidJoinSpec;
             this.specialCond = specialCond;
             this.supplyCond = supplyCond;
