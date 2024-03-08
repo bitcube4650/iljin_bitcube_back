@@ -198,15 +198,31 @@ public class UserServiceImpl implements UserService {
 //        Optional<UserDto> userDto = userRepositoryCustom.findByLoginId(loginId);
 
         if ("agent1".equals(loginId)) {
-            return new AuthToken("inter",
+            return new AuthToken("inter",//계열사 일반
                     "01",
                     "일진전기",
                     "agent1",
-                    "계열사",
+                    "계열사 일반",
                     "3",
                     "token");
-        } else {
-            return new AuthToken("cust",
+        } else if ("master".equals(loginId)) {
+            return new AuthToken("inter",//계열사 시스템관리자
+                    "01",
+                    "일진전기",
+                    "master",
+                    "계열사 시스템관리자",
+                    "1",
+                    "token");
+        } else if ("copper".equals(loginId)) {
+            return new AuthToken("inter",//계열사 각사관리자
+                    "02",
+                    "롯데에너지머티리얼즈",
+                    "copper",
+                    "계열사 각사관리자",
+                    "2",
+                    "token");
+        }else{
+            return new AuthToken("cust",//협력사
                     "18",
                     "(주)세종소재",
                     "custom",
