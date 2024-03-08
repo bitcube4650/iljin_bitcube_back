@@ -78,7 +78,7 @@ public class NoticeService {
         	// userAuth(1 = 시스템관리자, 2 = 각사관리자, 3 = 일반사용자, 4 = 감사사용자)
         	userAuth = userOptional.get().getUserAuth();
         }
- 
+        System.out.println("들어온것~~ >> " + params.get("custCode"));
 		try {
 			StringBuilder sbCount = new StringBuilder(" select count(1) "
 									        		 +" from ( "
@@ -118,7 +118,7 @@ public class NoticeService {
 															     + " on (tcbn2.b_userid = tcu2.user_id) "
 															     + " where tcbn2.b_co = 'CUST' "
 													 );
-			if(!userAuth.equals("1")) {
+			if(!userAuth.equals("1") && !StringUtils.isEmpty(params.get("custCode"))) {
 				//시스템관리자가 아닌 경우 계열사 공지 조건 추가
 				//협력사는 custCode가 빈문자열로 검색되어 계열사 공지가 출력안됨
 				sbCount.append(
@@ -182,7 +182,7 @@ public class NoticeService {
 															     + " on (tcbn2.b_userid = tcu2.user_id) "
 															     + " where tcbn2.b_co = 'CUST' "
 													 );
-			if(!userAuth.equals("1")) {
+			if(!userAuth.equals("1") && !StringUtils.isEmpty(params.get("custCode"))) {
 				//시스템관리자가 아닌 경우 계열사 공지 조건 추가
 				//협력사는 custCode가 빈문자열로 검색되어 계열사 공지가 출력안됨
 				sbList.append(
@@ -198,13 +198,16 @@ public class NoticeService {
 			StringBuilder sbWhere = new StringBuilder();
 			
 			if (!StringUtils.isEmpty(params.get("title"))) {
-			sbWhere.append(" and rst.b_title like concat('%',:title,'%')");
+				sbWhere.append(" and rst.b_title like concat('%',:title,'%') ");
 			}
 			if (!StringUtils.isEmpty(params.get("content"))) {
-			sbWhere.append(" and rst.b_content like concat('%',:content,'%')");
+				sbWhere.append(" and rst.b_content like concat('%',:content,'%') ");
 			}
 			if (!StringUtils.isEmpty(params.get("userName"))) {
-			sbWhere.append(" and rst.userName like concat('%',:userName,'%')");
+				sbWhere.append(" and rst.userName like concat('%',:userName,'%') ");
+			}
+			if (!StringUtils.isEmpty(params.get("bno"))) {
+				sbWhere.append(" and rst.b_no = :bno ");
 			}
 			
 			sbList.append(sbWhere);
@@ -213,7 +216,7 @@ public class NoticeService {
 			sbCount.append(sbWhere);
 			Query queryTotal = entityManager.createNativeQuery(sbCount.toString());
 			
-			if(!userAuth.equals("1")) {//시스템관리자가 아닌 경우
+			if(!userAuth.equals("1") && !StringUtils.isEmpty(params.get("custCode"))) {//시스템관리자가 아닌 경우
 				//어느 계열사인지(협력사의 경우 빈 문자열 검색)
 				queryList.setParameter("custCode", params.get("custCode"));
 				queryTotal.setParameter("custCode", params.get("custCode"));
@@ -221,19 +224,24 @@ public class NoticeService {
 			
 			//공지사항 제목
 			if (!StringUtils.isEmpty(params.get("title"))) {
-			queryList.setParameter("title", params.get("title"));
-			queryTotal.setParameter("title", params.get("title"));
+				queryList.setParameter("title", params.get("title"));
+				queryTotal.setParameter("title", params.get("title"));
 			}
 			
 			//공지사항 내용
 			if (!StringUtils.isEmpty(params.get("content"))) {
-			queryList.setParameter("content", params.get("content"));
-			queryTotal.setParameter("content", params.get("content"));
+				queryList.setParameter("content", params.get("content"));
+				queryTotal.setParameter("content", params.get("content"));
 			}
 			//공지사항 작성자
 			if (!StringUtils.isEmpty(params.get("userName"))) {
-			queryList.setParameter("userName", params.get("userName"));
-			queryTotal.setParameter("userName", params.get("userName"));
+				queryList.setParameter("userName", params.get("userName"));
+				queryTotal.setParameter("userName", params.get("userName"));
+			}
+			//공지사항 id
+			if (!StringUtils.isEmpty(params.get("bno"))) {
+				queryList.setParameter("bno", params.get("bno"));
+				queryTotal.setParameter("bno", params.get("bno"));
 			}
 			
 			Pageable pageable = PagaUtils.pageable(params);

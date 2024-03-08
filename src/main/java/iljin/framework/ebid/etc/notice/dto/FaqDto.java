@@ -14,6 +14,7 @@ public class FaqDto {
     private String title;
     private String answer;
     private String createUser;
+    private String userName;
     private String createDate;
 	
     public FaqDto() {}
@@ -29,6 +30,7 @@ public class FaqDto {
             String title, 
             String answer, 
             String createUser, 
+            String userName,
             String createDate
     ) {
         this.faqId = faqId; 
@@ -37,6 +39,7 @@ public class FaqDto {
         this.title = title; 
         this.answer = answer; 
         this.createUser = createUser; 
+        this.userName = userName; 
         this.createDate = createDate;
     }
 }

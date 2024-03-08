@@ -48,36 +48,41 @@ public class FaqService {
 
 		try {
 			StringBuilder sbCount = new StringBuilder(" select count(1) "
-												    + " from t_faq "
+												    + " from t_faq tf"
+												    + " left outer join t_co_user tcu "
+												    + " on(tf.create_user = tcu.USER_ID) "
 												    + " where 1 = 1 ");
 			
-			StringBuilder sbList = new StringBuilder(" select faq_id , "
-												   		  + " faq_type , "
+			StringBuilder sbList = new StringBuilder(" select tf.faq_id , "
+												   		  + " tf.faq_type , "
 												   		  + " CASE "
-													   		  + " WHEN faq_type = 1 THEN '가입관련' "
-													   		  + " WHEN faq_type = 2 THEN '입찰관련' "
-													   		  + " WHEN faq_type = 3 THEN '인증서관련' "
+													   		  + " WHEN tf.faq_type = 1 THEN '가입관련' "
+													   		  + " WHEN tf.faq_type = 2 THEN '입찰관련' "
+													   		  + " WHEN tf.faq_type = 3 THEN '인증서관련' "
 													   		  + " ELSE '기타' "
 												   		  + " END AS faq_type_description , "
-												   		  + " title , "
-												   		  + " answer , "
-												   		  + " create_user , "
-												   		  + " DATE_FORMAT( create_date , '%Y-%m-%d %H:%i') as createDate "
-												   + " from t_faq "
-												   + " where 1 = 1 ");
+												   		  + " tf.title , "
+												   		  + " tf.answer , "
+												   		  + " tf.create_user , "
+												   		  + " tcu.user_name , "
+												   		  + " DATE_FORMAT( tf.create_date , '%Y-%m-%d %H:%i') as createDate "
+											   	   + " from t_faq tf"
+											   	   + " left outer join t_co_user tcu "
+											   	   + " on(tf.create_user = tcu.USER_ID) "
+											   	   + " where 1 = 1 ");
 			
 			StringBuilder sbWhere = new StringBuilder();
 			String adminYn = (String) params.get("admin");
 			
 			if (!StringUtils.isEmpty(params.get("title"))) {
-				sbWhere.append(" and title like concat('%',:title,'%') ");
+				sbWhere.append(" and tf.title like concat('%',:title,'%') ");
 			}
 			if (!StringUtils.isEmpty(params.get("faqType"))) {
-				sbWhere.append(" and faq_type = :faqType ");
+				sbWhere.append(" and tf.faq_type = :faqType ");
 			}
 
 			sbList.append(sbWhere);
-			sbList.append(" order by create_date desc ");
+			sbList.append(" order by tf.create_date desc ");
 			
 			Query queryList = entityManager.createNativeQuery(sbList.toString());
 			sbCount.append(sbWhere);
@@ -127,7 +132,7 @@ public class FaqService {
 		
 		//faq update
 		if(updateInsert.equals("update")) {//수정하는 경우
-			System.out.println("수정들어옴");
+
 			int faqId = (int) params.get("faqId");
 			TFaq faq = entityManager.find(TFaq.class, faqId);
 			
