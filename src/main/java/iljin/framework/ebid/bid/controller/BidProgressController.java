@@ -61,4 +61,27 @@ public class BidProgressController {
         return bidProgressService.updateBidCust(params);
     }
 
+    @PostMapping("/updateBidItem")
+    public ResultBody updateBidItem(@RequestBody List<Map<String, Object>> params) {
+    System.out.println("itemParamOn");
+    System.out.println(params);        
+
+        return bidProgressService.updateBidItem(params);
+    }
+
+    @PostMapping("/newBiNo")
+    public String newBiNo() {
+        return bidProgressService.newBiNo();
+    }
+
+    @PostMapping("/insertBid")
+    public ResultBody insertBid(@RequestBody Map<String, Object> params) {
+        return bidProgressService.insertBid(params);
+    }
+
+    @PostMapping("/updateEmail")
+    public void updateEmail(@RequestBody Map<String, String> params) {
+        
+    }
+
 }
