@@ -63,10 +63,7 @@ public class FileService {
     //첨부파일 다운로드
     public ByteArrayResource downloadFile(String filePath) throws Exception {
 
-
-        String decryptFile = AES_FileEncryption.decryptFile(filePath.toString());
-
-        Path path = Paths.get(decryptFile);
+        Path path = Paths.get(filePath);
         byte[] fileContent = Files.readAllBytes(path);
         
         // ByteArrayResource를 사용하여 byte 배열을 리소스로 변환
