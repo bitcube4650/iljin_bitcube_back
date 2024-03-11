@@ -28,6 +28,7 @@ import javax.transaction.Transactional;
 import org.qlrm.mapper.JpaResultMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -47,6 +48,7 @@ import iljin.framework.ebid.etc.notice.entity.TCoBoardCustID;
 import iljin.framework.ebid.etc.notice.entity.TCoBoardNotice;
 import iljin.framework.ebid.etc.notice.repository.TCoBoardCustRepository;
 import iljin.framework.ebid.etc.util.PagaUtils;
+import iljin.framework.ebid.etc.util.common.file.FileService;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -58,6 +60,9 @@ public class NoticeService {
 	
 	@Autowired
     private TCoUserRepository tCoUserRepository;
+	
+	@Autowired
+	private FileService fileService;
 	
 	@PersistenceContext
     private EntityManager entityManager;
@@ -399,7 +404,7 @@ public class NoticeService {
 	            if(file != null) {//새로 첨부된 파일이 있는 경우
 	            	
 	            	//첨부파일 등록
-	    	    	uploadedPath = uploadFile(file, uploadDirectory);
+	    	    	uploadedPath = fileService.uploadFile(file);
 	    	
 	                //원래 파일명
 	                fileName = file.getOriginalFilename();
@@ -453,7 +458,7 @@ public class NoticeService {
 	        
 	        if(file != null) {
             	//첨부파일 등록
-    	    	uploadedPath = uploadFile(file, uploadDirectory);
+    	    	uploadedPath = fileService.uploadFile(file);
     	
                 //원래 파일명
                 fileName = file.getOriginalFilename();
@@ -500,6 +505,22 @@ public class NoticeService {
 		return resultBody;
 	}
 
+	//첨부파일 다운로드
+	public ByteArrayResource downloadFile(Map<String, Object> params) {
+		
+		String filePath = (String) params.get("fileId");
+		ByteArrayResource fileResource = null;
+		
+		try {
+			fileResource = fileService.downloadFile(filePath);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return fileResource;
+	}
+
+	/*
 	// 파일 업로드 메서드
     public static String uploadFile(MultipartFile file, String uploadDirectory) throws IOException {
         if (file.isEmpty()) {
@@ -538,6 +559,6 @@ public class NoticeService {
         // 파일 저장 경로 반환
         return filePath.toString();
     }
-
+*/
 
 }

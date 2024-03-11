@@ -29,6 +29,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import iljin.framework.core.dto.ResultBody;
 import iljin.framework.ebid.etc.notice.entity.TCoBoardCustCode;
 import iljin.framework.ebid.etc.notice.service.NoticeService;
+import iljin.framework.ebid.etc.util.common.file.FileService;
 
 @RestController
 @RequestMapping("/api/v1/notice")
@@ -38,12 +39,7 @@ public class NoticeContoller {
 	@Autowired
     private NoticeService noticeService;
 	
-	private ObjectMapper objectMapper;
-
-    public void UploadController(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
-    }
-
+	
 	
 	//공지사항 조회
 	@PostMapping("/noticeList")
@@ -106,14 +102,8 @@ public class NoticeContoller {
 	//첨부파일 다운로드
 	@PostMapping("/downloadFile")
     public ByteArrayResource downloadFile(@RequestBody Map<String, Object> params) throws IOException {
-		String fileId = (String) params.get("fileId");
-		Path path = Paths.get(fileId);
-		byte[] fileContent = Files.readAllBytes(path);
-        
-        // ByteArrayResource를 사용하여 byte 배열을 리소스로 변환한다.
-        ByteArrayResource resource = new ByteArrayResource(fileContent);
 
-        return resource;
+        return noticeService.downloadFile(params);
     }
 	
 }
