@@ -8,6 +8,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.UUID;
 
+import iljin.framework.core.security.aes.AES_FileEncryption;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
@@ -15,13 +16,13 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class FileService {
-	
-	@Value("${file.upload.directory}")
+
+    @Value("${file.upload.directory}")
     private String uploadDirectory;
 
-	// 파일 업로드 메서드
+    // 파일 업로드 메서드
     public String uploadFile(MultipartFile file) throws IOException {
-    	
+
         if (file.isEmpty()) {
             throw new IllegalArgumentException("파일이 비어 있습니다.");
         }
@@ -60,14 +61,89 @@ public class FileService {
     }
     
     //첨부파일 다운로드
-    public ByteArrayResource downloadFile(String filePath) throws IOException {
+    public ByteArrayResource downloadFile(String filePath) throws Exception {
 
-		Path path = Paths.get(filePath);
-		byte[] fileContent = Files.readAllBytes(path);
+
+        String decryptFile = AES_FileEncryption.decryptFile(filePath.toString());
+
+        Path path = Paths.get(decryptFile);
+        byte[] fileContent = Files.readAllBytes(path);
         
         // ByteArrayResource를 사용하여 byte 배열을 리소스로 변환
         ByteArrayResource resource = new ByteArrayResource(fileContent);
 
         return resource;
     }
+
+
+    //암호화 첨부파일
+    public String uploadEncryptedFile(MultipartFile file) throws Exception {
+
+        if (file.isEmpty()) {
+            throw new IllegalArgumentException("파일이 비어 있습니다.");
+        }
+
+        // 현재 날짜를 기준으로 연도와 월 폴더 생성
+        SimpleDateFormat yearFormat = new SimpleDateFormat("yyyy");
+        SimpleDateFormat monthFormat = new SimpleDateFormat("MM");
+        Date currentDate = new Date();
+        String year = yearFormat.format(currentDate);
+        String month = monthFormat.format(currentDate);
+
+        // 현재 연도 폴더 생성
+        Path yearPath = Paths.get(uploadDirectory, year);
+        if (!Files.exists(yearPath)) {
+            Files.createDirectories(yearPath);
+        }
+
+        // 현재 월 폴더 생성
+        Path monthPath = Paths.get(yearPath.toString(), month);
+        if (!Files.exists(monthPath)) {
+            Files.createDirectories(monthPath);
+        }
+
+        // 파일명에 UUID를 사용하여 고유성 확보
+        String originalFileName = file.getOriginalFilename();
+        String uniqueFileName = UUID.randomUUID().toString() + "_" + originalFileName;
+
+        // 파일 저장 경로 설정
+        Path filePath = Paths.get(monthPath.toString(), uniqueFileName);
+
+        // 파일 저장
+        Files.copy(file.getInputStream(), filePath);
+
+        AES_FileEncryption.encryptFile(filePath.toString());
+
+        // 파일 저장 경로 반환
+        return filePath.toString();
+    }
+
+    //복호화 첨부파일
+    public ByteArrayResource downloadDecryptedFile(String filePath) throws Exception {
+
+        String decryptFile = null;
+        try {
+            decryptFile = AES_FileEncryption.decryptFile(filePath.toString());
+
+            Path path = Paths.get(decryptFile);
+            byte[] fileContent = Files.readAllBytes(path);
+
+            // ByteArrayResource를 사용하여 byte 배열을 리소스로 변환
+            ByteArrayResource resource = new ByteArrayResource(fileContent);
+            return resource;
+        } finally {
+            deleteFile(decryptFile);
+        }
+    }
+
+    private void deleteFile(String filePath) {
+        try {
+            Files.deleteIfExists(Paths.get(filePath));
+        } catch (Exception e) {
+            // 파일 삭제 중에 오류가 발생해도 무시
+            e.printStackTrace();
+        }
+    }
+
+
 }
