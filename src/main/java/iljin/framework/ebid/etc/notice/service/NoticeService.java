@@ -83,7 +83,7 @@ public class NoticeService {
         	// userAuth(1 = 시스템관리자, 2 = 각사관리자, 3 = 일반사용자, 4 = 감사사용자)
         	userAuth = userOptional.get().getUserAuth();
         }
-        System.out.println("들어온것~~ >> " + params.get("custCode"));
+
 		try {
 			StringBuilder sbCount = new StringBuilder(" select count(1) "
 									        		 +" from ( "
@@ -513,7 +513,7 @@ public class NoticeService {
 		
 		try {
 			fileResource = fileService.downloadFile(filePath);
-		} catch (IOException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		
