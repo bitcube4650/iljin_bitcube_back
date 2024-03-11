@@ -1,9 +1,9 @@
-package iljin.framework.core.excel.controller;
+package iljin.framework.ebid.etc.util.common.excel.controller;
 
-import iljin.framework.core.excel.service.ExcelService;
-import iljin.framework.core.excel.repository.ExcelRepository;
-import iljin.framework.core.excel.utils.ExcelUtils;
-import iljin.framework.core.excel.entity.FileEntity;
+import iljin.framework.ebid.etc.util.common.excel.service.ExcelService;
+import iljin.framework.ebid.etc.util.common.excel.repository.ExcelRepository;
+import iljin.framework.ebid.etc.util.common.excel.utils.ExcelUtils;
+import iljin.framework.ebid.etc.util.common.excel.entity.FileEntity;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.HttpStatus;

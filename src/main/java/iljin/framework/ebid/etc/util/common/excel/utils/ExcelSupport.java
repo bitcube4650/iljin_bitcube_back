@@ -1,4 +1,4 @@
-package iljin.framework.core.excel.utils;
+package iljin.framework.ebid.etc.util.common.excel.utils;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;

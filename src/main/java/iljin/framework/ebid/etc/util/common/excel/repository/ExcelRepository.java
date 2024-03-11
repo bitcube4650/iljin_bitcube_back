@@ -1,6 +1,6 @@
-package iljin.framework.core.excel.repository;
+package iljin.framework.ebid.etc.util.common.excel.repository;
 
-import iljin.framework.core.excel.entity.FileEntity;
+import iljin.framework.ebid.etc.util.common.excel.entity.FileEntity;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;

@@ -1,6 +1,6 @@
-package iljin.framework.core.excel.entity;
+package iljin.framework.ebid.etc.util.common.excel.entity;
 
-import iljin.framework.core.excel.utils.ExcelColumnName;
+import iljin.framework.ebid.etc.util.common.excel.utils.ExcelColumnName;
 import lombok.Data;
 
 import javax.persistence.Column;

@@ -1,7 +1,7 @@
-package iljin.framework.core.excel.dto;
+package iljin.framework.ebid.etc.util.common.excel.dto;
 
 import com.querydsl.core.annotations.QueryProjection;
-import iljin.framework.core.excel.utils.ExcelColumnName;
+import iljin.framework.ebid.etc.util.common.excel.utils.ExcelColumnName;
 import lombok.Getter;
 
 import java.time.LocalDate;

@@ -1,6 +1,6 @@
-package iljin.framework.core.schedule.service;
+package iljin.framework.ebid.etc.util.common.schedule.service;
 
-import iljin.framework.core.schedule.repository.ScheduleRepository;
+import iljin.framework.ebid.etc.util.common.schedule.repository.ScheduleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

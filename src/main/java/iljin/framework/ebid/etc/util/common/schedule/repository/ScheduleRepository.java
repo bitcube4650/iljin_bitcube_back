@@ -1,4 +1,4 @@
-package iljin.framework.core.schedule.repository;
+package iljin.framework.ebid.etc.util.common.schedule.repository;
 
 import org.springframework.stereotype.Repository;
 

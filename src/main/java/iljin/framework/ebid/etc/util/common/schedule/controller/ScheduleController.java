@@ -1,6 +1,6 @@
-package iljin.framework.core.schedule.controller;
+package iljin.framework.ebid.etc.util.common.schedule.controller;
 
-import iljin.framework.core.schedule.service.ScheduleService;
+import iljin.framework.ebid.etc.util.common.schedule.service.ScheduleService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
