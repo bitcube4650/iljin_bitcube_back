@@ -1,9 +1,11 @@
 package iljin.framework.ebid.etc.util.common.schedule.repository;
 
+import iljin.framework.ebid.etc.util.common.schedule.entity.MailEntity;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import java.util.List;
 
 @Repository
 public class ScheduleRepository {
@@ -23,6 +25,16 @@ public class ScheduleRepository {
                                             "AND ING_TAG = 'A1'";
         em.createNativeQuery(updateIngTagForLast30Days)
                 .executeUpdate();
+    }
+
+
+    public MailEntity findOneMailInfo(String id) {
+        return em.find(MailEntity.class, id);
+    }
+
+    public List<MailEntity> findAllMailInfo() {
+        return em.createQuery("select m from MailEntity m where m.sendFlag = 'N'", MailEntity.class)
+                .getResultList();
     }
 
 
