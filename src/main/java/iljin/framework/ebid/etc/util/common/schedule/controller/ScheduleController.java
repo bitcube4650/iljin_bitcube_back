@@ -56,14 +56,14 @@ public class ScheduleController {
 
     //5분마다 이메일 발송
     //이메일발송 5분마다
-    //@Scheduled(cron="0 3,8,13,18,23,28,33,38,43,48,53,58 * * * *")	//초 분 시 일 월 주(년)
-    @Scheduled(fixedRate = Long.MAX_VALUE)
+    @Scheduled(cron="0 3,8,13,18,23,28,33,38,43,48,53,58 * * * *")	//초 분 시 일 월 주(년)
+   // @Scheduled(fixedRate = Long.MAX_VALUE)
 //	@RequestMapping("emailSendExe.sys")
     public void emailSendExe() {
-        if(!isRealServer) {
+        if(isRealServer) {
             log.info("--------------------------Scheduler emailSendExe() method start!------------------------------");
             try {
-                scheduleService.emailSendExe();
+          //      scheduleService.emailSendExe();
             }
             catch(Exception e) {
                 log.error("emailSendExe Exception : " + e);
