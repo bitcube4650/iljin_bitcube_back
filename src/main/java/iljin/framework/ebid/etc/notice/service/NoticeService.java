@@ -82,11 +82,18 @@ public class NoticeService {
         if (userOptional.isPresent()) {//계열사인 경우
         	// userAuth(1 = 시스템관리자, 2 = 각사관리자, 3 = 일반사용자, 4 = 감사사용자)
         	userAuth = userOptional.get().getUserAuth();
+        	
+        	if(StringUtils.isEmpty(params.get("custCode"))){//만약 계열사 정보가 없는 경우
+        		params.put("custCode", "no data");//다른 계열사 공지가 출력되지 않도록 "no data" 입력
+        	}
+        }else {//협력사인 경우
+        	params.put("custCode", "no data");
         }
 
 		try {
 			StringBuilder sbCount = new StringBuilder(" select count(1) "
 									        		 +" from ( "
+					                                             // 공통 공지
 													 	     + " ( "
 													 	    	 + " select tcbn.b_no , "
 													 	    		    + " tcbn.b_userid , "
@@ -104,6 +111,7 @@ public class NoticeService {
 															     + " where tcbn.b_co = 'ALL' "
 														     + " ) "
 															 + " union all "
+														         // 계열사 공지
 															 + " ("
 															     + " select distinct "
 															     		+ " tcbn2.b_no , "
@@ -125,7 +133,7 @@ public class NoticeService {
 													 );
 			if(!userAuth.equals("1") && !StringUtils.isEmpty(params.get("custCode"))) {
 				//시스템관리자가 아닌 경우 계열사 공지 조건 추가
-				//협력사는 custCode가 빈문자열로 검색되어 계열사 공지가 출력안됨
+				//협력사는 userAuth가 "" 빈문자열, custCode가 "no data"로 검색되어 계열사 공지가 출력안됨
 				sbCount.append(
 																   " and tcbc.interrelated_cust_code = :custCode "
 							  );
@@ -151,6 +159,7 @@ public class NoticeService {
 														  + " rst.userName , "
 														  + " row_number() over( order by rst.b_date desc ) as rowNo "
 									        		 +" from ( "
+									        		 			 // 공통 공지
 													 	     + " ( "
 													 	    	 + " select tcbn.b_no , "
 													 	    		    + " tcbn.b_userid , "
@@ -168,6 +177,7 @@ public class NoticeService {
 															     + " where tcbn.b_co = 'ALL' "
 														     + " ) "
 															 + " union all "
+															 	 // 계열사 공지
 															 + " ("
 															     + " select distinct "
 															     	 	+ " tcbn2.b_no , "
@@ -188,8 +198,9 @@ public class NoticeService {
 															     + " where tcbn2.b_co = 'CUST' "
 													 );
 			if(!userAuth.equals("1") && !StringUtils.isEmpty(params.get("custCode"))) {
+				System.out.println("if문 안에 들어옴 ");
 				//시스템관리자가 아닌 경우 계열사 공지 조건 추가
-				//협력사는 custCode가 빈문자열로 검색되어 계열사 공지가 출력안됨
+				//협력사는 userAuth가 "" 빈문자열, custCode가 "no data"로 검색되어 계열사 공지가 출력안됨
 				sbList.append(
 																   " and tcbc.interrelated_cust_code = :custCode "
 							  );
@@ -222,7 +233,7 @@ public class NoticeService {
 			Query queryTotal = entityManager.createNativeQuery(sbCount.toString());
 			
 			if(!userAuth.equals("1") && !StringUtils.isEmpty(params.get("custCode"))) {//시스템관리자가 아닌 경우
-				//어느 계열사인지(협력사의 경우 빈 문자열 검색)
+				//어느 계열사인지(협력사의 경우 "no data"로 검색)
 				queryList.setParameter("custCode", params.get("custCode"));
 				queryTotal.setParameter("custCode", params.get("custCode"));
 			}
