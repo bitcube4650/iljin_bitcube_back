@@ -76,6 +76,8 @@ dependencies {
 
     runtimeOnly 'org.springframework.boot:spring-boot-devtools'
     compile fileTree(include: ['*.jar'], dir: 'libs')
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation files('libs/oss-4.1.jar', 'libs/tradesign-3.5.66.jar')
 }
 
 tasks.withType(JavaCompile) {
