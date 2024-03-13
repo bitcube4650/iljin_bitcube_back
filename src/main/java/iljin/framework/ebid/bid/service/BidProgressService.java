@@ -258,7 +258,7 @@ public class BidProgressService {
         StringBuilder sbWhere = new StringBuilder();
 
         if (!StringUtils.isEmpty(params.get("bidNo"))) {
-            sbWhere.append(" and a.bi_no like concat('%',:bidNo,'%') ");
+            sbWhere.append(" and a.bi_no = :bidNo ");
         }
 
         if (!StringUtils.isEmpty(params.get("bidName"))) {
@@ -533,6 +533,8 @@ public class BidProgressService {
         Query queryList = entityManager.createNativeQuery(sbList.toString());
         queryList.setParameter("biNo", biNo);
         int rowsUpdated = queryList.executeUpdate();
+
+
 
         if (rowsUpdated > 0) {
             Map<String, String> logParams = new HashMap<>();
