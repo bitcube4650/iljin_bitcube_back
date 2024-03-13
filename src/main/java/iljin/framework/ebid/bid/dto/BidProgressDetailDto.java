@@ -30,6 +30,8 @@ public class BidProgressDetailDto {
     String estCloseDate;
     String estOpener;
     String estOpenerCode;
+    String cuser;
+    String cuserCode;
     String estOpenDate;
     String openAtt1;
     String openAtt1Code;
@@ -46,7 +48,7 @@ public class BidProgressDetailDto {
     String itemName;
     String gongoId;
     String gongoIdCode;
-    String gongoDept;
+    String cuserDept;
     String payCond;
     String whyA3;
     String whyA7;
@@ -69,8 +71,8 @@ public class BidProgressDetailDto {
         String biNo, String biName, String biMode, String biModeCode, String insMode, String insModeCode, String bidJoinSpec,
         String specialCond, String supplyCond, String spotDate, String spotArea,
         String succDeciMeth, String succDeciMethCode, String estStartDate, String estCloseDate, String estOpener, String estOpenerCode,
-        String estOpenDate, String openAtt1, String openAtt1Code, String openAtt1Sign, String openAtt2, String openAtt2Code,
-        String openAtt2Sign, String ingTag, String itemCode, String itemName, String gongoId, String gongoIdCode, String gongoDept,
+        String cuser, String cuserCode, String estOpenDate, String openAtt1, String openAtt1Code, String openAtt1Sign, String openAtt2, String openAtt2Code,
+        String openAtt2Sign, String ingTag, String itemCode, String itemName, String gongoId, String gongoIdCode, String cuserDept,
         String payCond, String whyA3, String whyA7, String biOpen, String interrelatedCustCode, String interrelatedNm,
         String realAmt, String amtBasis, BigDecimal bdAmt, String addAccept, String matDept, String matProc, String matCls,
         String matFactory, String matFactoryLine, String matFactoryCnt){
@@ -91,6 +93,8 @@ public class BidProgressDetailDto {
             this.estCloseDate = estCloseDate;
             this.estOpener = estOpener;
             this.estOpenerCode = estOpenerCode;
+            this.cuser = cuser;
+            this.cuserCode = cuserCode;
             this.estOpenDate = estOpenDate;
             this.openAtt1 = openAtt1;
             this.openAtt1Code = openAtt1Code;
@@ -103,7 +107,7 @@ public class BidProgressDetailDto {
             this.itemName = itemName;
             this.gongoId = gongoId;
             this.gongoIdCode = gongoIdCode;
-            this.gongoDept = gongoDept;
+            this.cuserDept = cuserDept;
             this.payCond = payCond;
             this.whyA3 = whyA3;
             this.whyA7 = whyA7;

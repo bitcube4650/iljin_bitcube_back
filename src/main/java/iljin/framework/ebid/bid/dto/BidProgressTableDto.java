@@ -18,19 +18,19 @@ public class BidProgressTableDto {
     String name;
     String ssize;
     BigDecimal orderQty;
-    String unitCode;
+    String unitcode;
     BigDecimal orderUc;
 
     public BidProgressTableDto(
         String biNo, int seq, String name, String ssize,
-        BigDecimal orderQty, String unitCode, BigDecimal orderUc
+        BigDecimal orderQty, String unitcode, BigDecimal orderUc
     ){
         this.biNo = biNo;
         this.seq = seq;
         this.name = name;
         this.ssize = ssize;
         this.orderQty = orderQty;
-        this.unitCode = unitCode;
+        this.unitcode = unitcode;
         this.orderUc = orderUc;
     }
 }
