@@ -248,7 +248,7 @@ public class BidProgressService {
                         "DATE_FORMAT(a.est_start_date, '%Y-%m-%d %H:%i') AS est_start_date, " +
                         "DATE_FORMAT(a.est_close_date, '%Y-%m-%d %H:%i') AS est_close_date, " +
                         "CASE WHEN a.bi_mode = 'A' THEN '지명' ELSE '일반' END AS bi_mode, " +
-                        "CASE WHEN a.ins_mode = '1' THEN '파일' ELSE '직접입력' END AS ins_mode, " +
+                        "CASE WHEN a.ins_mode = '1' THEN '파일' ELSE '직접입력' END AS ins_mode, a.ing_tag AS ing_tag, " +
                         "b.user_name AS cuser, b.user_email AS cuser_email, " +
                         "c.user_name AS gongo_id, c.user_email AS gongo_email, " +
                         "a.interrelated_cust_code AS interrelated_cust_code " +
@@ -390,9 +390,14 @@ public class BidProgressService {
                         "WHERE a.use_yn = 'Y' ");
 
         StringBuilder sbCustList = new StringBuilder(
-                "SELECT a.bi_no AS bi_no, CAST(a.cust_code AS CHAR) AS cust_code, b.cust_name AS cust_name " +
+                "SELECT a.bi_no AS bi_no, CAST(a.cust_code AS CHAR) AS cust_code, b.cust_name AS cust_name, d.code_name AS esmt_curr, " +
+                        "a.esmt_yn AS esmt_yn, c.file_nm AS file_nm, c.file_path AS file_path, a.etc_b_file AS etc_file, a.etc_b_file_path AS etc_path, "
+                        +
+                        "DATE_FORMAT(a.submit_date, '%Y-%m-%d %H:%i') AS submit_date " +
                         "FROM t_bi_info_mat_cust a " +
                         "LEFT JOIN t_co_cust_master b ON a.cust_code = b.cust_code " +
+                        "LEFT JOIN t_bi_upload c ON a.file_id = c.file_id " +
+                        "left join t_co_code d on a.esmt_curr = d.code_val " +
                         "WHERE 1=1 ");
 
         StringBuilder sbWhere = new StringBuilder();
@@ -533,8 +538,6 @@ public class BidProgressService {
         Query queryList = entityManager.createNativeQuery(sbList.toString());
         queryList.setParameter("biNo", biNo);
         int rowsUpdated = queryList.executeUpdate();
-
-
 
         if (rowsUpdated > 0) {
             Map<String, String> logParams = new HashMap<>();
@@ -1052,19 +1055,19 @@ public class BidProgressService {
         queryList.executeUpdate();
     }
 
-    	//첨부파일 다운로드
-	public ByteArrayResource downloadFile(Map<String, Object> params) {
-		
-		String filePath = (String) params.get("fileId");
-		ByteArrayResource fileResource = null;
-		
-		try {
-			fileResource = fileService.downloadDecryptedFile(filePath);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		
-		return fileResource;
-	}
+    // 첨부파일 다운로드
+    public ByteArrayResource downloadFile(Map<String, Object> params) {
+
+        String filePath = (String) params.get("fileId");
+        ByteArrayResource fileResource = null;
+
+        try {
+            fileResource = fileService.downloadDecryptedFile(filePath);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return fileResource;
+    }
 
 }
