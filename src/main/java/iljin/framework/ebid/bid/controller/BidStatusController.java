@@ -31,4 +31,9 @@ public class BidStatusController {
         return bidStatusService.statuslist(params);
     }
     
+    @PostMapping("/bidFailure")
+    public ResultBody bidFailure(@RequestBody Map<String, String> params) {
+        return bidStatusService.bidFailure(params);
+    }
+    
 }

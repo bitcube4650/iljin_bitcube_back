@@ -37,7 +37,7 @@ public class BidProgressController {
     }
 
     @PostMapping("/openBid")
-    public ResultBody save(@RequestBody Map<String, String> params) {
+    public ResultBody openBid(@RequestBody Map<String, String> params) {
         return bidProgressService.openBid(params);
     }
 

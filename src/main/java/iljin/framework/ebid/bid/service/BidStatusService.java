@@ -285,4 +285,31 @@ public class BidStatusService {
 
         return combinedResults;
     }
+
+    @Transactional
+    public ResultBody bidFailure(Map<String, String> params) {
+        String biNo = params.get("biNo");
+
+        System.out.println(11111111 + biNo);
+        StringBuilder sbList = new StringBuilder(
+                "UPDATE t_bi_info_mat set bid_open_date = sysdate()," +
+                        "ing_tag = 'A7' " +
+                        "WHERE bi_no = :biNo");
+
+        Query queryList = entityManager.createNativeQuery(sbList.toString());
+        queryList.setParameter("biNo", biNo);
+        int rowsUpdated = queryList.executeUpdate();
+
+        if (rowsUpdated > 0) {
+            Map<String, String> logParams = new HashMap<>();
+            logParams.put("msg", "[본사] 유찰");
+            logParams.put("biNo", biNo);
+            bidProgressService.updateLog(logParams);
+        }
+
+        bidProgressService.updateEmail(params);
+
+        ResultBody resultBody = new ResultBody();
+        return resultBody;
+    }
 }

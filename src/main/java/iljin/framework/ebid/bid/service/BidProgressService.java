@@ -390,7 +390,8 @@ public class BidProgressService {
                         "WHERE a.use_yn = 'Y' ");
 
         StringBuilder sbCustList = new StringBuilder(
-                "SELECT a.bi_no AS bi_no, CAST(a.cust_code AS CHAR) AS cust_code, b.cust_name AS cust_name, d.code_name AS esmt_curr, " +
+                "SELECT a.bi_no AS bi_no, CAST(a.cust_code AS CHAR) AS cust_code, b.cust_name AS cust_name, d.code_name AS esmt_curr, "
+                        +
                         "a.esmt_yn AS esmt_yn, c.file_nm AS file_nm, c.file_path AS file_path, a.etc_b_file AS etc_file, a.etc_b_file_path AS etc_path, "
                         +
                         "DATE_FORMAT(a.submit_date, '%Y-%m-%d %H:%i') AS submit_date " +
@@ -973,16 +974,14 @@ public class BidProgressService {
     @Transactional
     public void updateEmail(Map<String, String> params) {
         String biNo = params.get("biNo");
-        String type = params.get("type"); // del : 입찰삭제 , open : 입찰공고, insert: 입찰등록,
+        String type = params.get("type"); // del : 입찰삭제 , open : 입찰공고, insert: 입찰등록, fail: 유찰,
         String biName = params.get("biName");
         String reason = params.get("reason");
         String interNm = params.get("interNm");
 
         String titleType = "";
 
-        String contentHeader = "안녕하십니까\n일진그룹 전자입찰 e-bidding입니다.\n\n";
         String contentBody = "";
-        String contentFooter = "감사합니다.";
         String contentReason = "";
 
         StringBuilder userList = new StringBuilder(
@@ -1015,9 +1014,15 @@ public class BidProgressService {
                 contentBody = "[" + interNm + "]에서 입찰계획을 등록하였습니다.\n입찰명은 [" + biName
                         + "] 입니다.\n자세한 사항은 e-bidding 시스템에 로그인하여 확인해 주십시오.\n\n";
                 break;
+            case "fail":
+                titleType = "유찰 처리";
+                contentBody = "입찰명 [" + biName + "]를 유찰처리 하였습니다.\n" +
+                        "아래 유찰사유를 확인해 주십시오.\n\n";
+                contentReason = "-유찰사유\n" + reason;
+                break;
         }
         String title = "[일진그룹 e-bidding] 입찰" + titleType + "(" + biName + ")";
-        String content = contentHeader + contentBody + contentFooter + contentReason;
+        String content = contentBody + contentReason;
 
         System.out.println(content);
         if (receiverList != null) {
