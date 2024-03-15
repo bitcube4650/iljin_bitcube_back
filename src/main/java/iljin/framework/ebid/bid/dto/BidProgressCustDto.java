@@ -17,6 +17,7 @@ public class BidProgressCustDto {
     String custCode;
     String custName;
     String esmtCurr;
+    String userName;
     String esmtYn;
     String fileNm;
     String filePath;
@@ -24,12 +25,13 @@ public class BidProgressCustDto {
     String etcPath;
     String submitDate;
 
-    public BidProgressCustDto(String biNo, String custCode, String custName, String esmtCurr, String esmtYn,
+    public BidProgressCustDto(String biNo, String custCode, String custName, String esmtCurr, String userName, String esmtYn,
                 String fileNm, String filePath, String etcFile, String etcPath, String submitDate){
         this.biNo = biNo;
         this.custCode = custCode;
         this.custName = custName;
         this.esmtCurr = esmtCurr;
+        this.userName = userName;
         this.esmtYn = esmtYn;
         this.fileNm = fileNm;
         this.filePath = filePath;

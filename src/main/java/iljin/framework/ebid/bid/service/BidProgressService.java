@@ -278,9 +278,9 @@ public class BidProgressService {
                     "and (a.create_user = :userid " +
                     "or a.open_att1 = :userid " +
                     "or a.open_att2 = :userid " +
-                    "or a.gongo_id = :userId " +
-                    "or a.est_bidder = :userId " +
-                    "or a.est_opener = :userId)");
+                    "or a.gongo_id = :userid " +
+                    "or a.est_bidder = :userid " +
+                    "or a.est_opener = :userid)");
         }
 
         if (userAuth.equals("4")) {
@@ -316,16 +316,6 @@ public class BidProgressService {
         if (userAuth.equals("2") || userAuth.equals("3")) {
             queryList.setParameter("interrelatedCustCode", interrelatedCode);
             queryTotal.setParameter("interrelatedCustCode", interrelatedCode);
-            queryList.setParameter("userid", userId);
-            queryTotal.setParameter("userid", userId);
-            queryList.setParameter("userid", userId);
-            queryTotal.setParameter("userid", userId);
-            queryList.setParameter("userid", userId);
-            queryTotal.setParameter("userid", userId);
-            queryList.setParameter("userid", userId);
-            queryTotal.setParameter("userid", userId);
-            queryList.setParameter("userid", userId);
-            queryTotal.setParameter("userid", userId);
             queryList.setParameter("userid", userId);
             queryTotal.setParameter("userid", userId);
         }
@@ -407,7 +397,7 @@ public class BidProgressService {
                         "WHERE a.use_yn = 'Y' ");
 
         StringBuilder sbCustList = new StringBuilder(
-                "SELECT a.bi_no AS bi_no, CAST(a.cust_code AS CHAR) AS cust_code, b.cust_name AS cust_name, d.code_name AS esmt_curr, "
+                "SELECT a.bi_no AS bi_no, CAST(a.cust_code AS CHAR) AS cust_code, b.cust_name AS cust_name, d.code_name AS esmt_curr, e.user_name AS user_name, "
                         +
                         "a.esmt_yn AS esmt_yn, c.file_nm AS file_nm, c.file_path AS file_path, a.etc_b_file AS etc_file, a.etc_b_file_path AS etc_path, "
                         +
@@ -416,6 +406,7 @@ public class BidProgressService {
                         "LEFT JOIN t_co_cust_master b ON a.cust_code = b.cust_code " +
                         "LEFT JOIN t_bi_upload c ON a.file_id = c.file_id " +
                         "left join t_co_code d on a.esmt_curr = d.code_val " +
+                        "left join t_co_cust_user e on a.cust_code = e.cust_code AND e.user_type = '1' " +
                         "WHERE 1=1 ");
 
         StringBuilder sbWhere = new StringBuilder();
@@ -569,7 +560,7 @@ public class BidProgressService {
     }
 
     @Transactional
-    public ResultBody openBid(Map<String, String> params) {
+    public ResultBody bidNotice(Map<String, String> params) {
         String biNo = params.get("biNo");
 
         System.out.println(11111111 + biNo);
@@ -1022,7 +1013,7 @@ public class BidProgressService {
     @Transactional
     public void updateEmail(Map<String, String> params) {
         String biNo = params.get("biNo");
-        String type = params.get("type"); // del : 입찰삭제 , open : 입찰공고, insert: 입찰등록, fail: 유찰,
+        String type = params.get("type"); // del : 입찰삭제 , notice : 입찰공고, insert: 입찰등록, fail: 유찰,
         String biName = params.get("biName");
         String reason = params.get("reason");
         String interNm = params.get("interNm");
@@ -1053,7 +1044,7 @@ public class BidProgressService {
                 contentBody = "입찰명 [" + biName + "] 입찰계획을\n삭제하였습니다.\n아래 삭제사유를 확인해 주십시오.\n\n";
                 contentReason = "-삭제사유\n" + reason;
                 break;
-            case "open":
+            case "notice":
                 titleType = "입찰 공고";
                 contentBody = "[" + interNm + "]에서 입찰공고 하였습니다.\n입찰명은 [" + biName
                         + "] 입니다.\n자세한 사항은 e-bidding 시스템에 로그인하여 확인해 주십시오.\n\n";

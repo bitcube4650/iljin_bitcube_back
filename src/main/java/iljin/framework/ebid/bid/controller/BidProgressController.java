@@ -36,9 +36,9 @@ public class BidProgressController {
         return bidProgressService.progresslistDetail(param);
     }
 
-    @PostMapping("/openBid")
-    public ResultBody openBid(@RequestBody Map<String, String> params) {
-        return bidProgressService.openBid(params);
+    @PostMapping("/bidNotice")
+    public ResultBody bidNotice(@RequestBody Map<String, String> params) {
+        return bidProgressService.bidNotice(params);
     }
 
     @PostMapping("/delete")

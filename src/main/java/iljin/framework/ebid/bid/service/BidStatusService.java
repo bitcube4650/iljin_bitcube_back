@@ -130,7 +130,9 @@ public class BidStatusService {
                     "and (a.create_user = :userid " +
                     "or a.open_att1 = :userid " +
                     "or a.open_att2 = :userid " +
-                    "or a.gongo_id = :userid) ");
+                    "or a.gongo_id = :userid " +
+                    "or a.est_bidder = :userid " +
+                    "or a.est_opener = :userid)");
         }
 
         if (userAuth.equals("4")) {
@@ -166,10 +168,6 @@ public class BidStatusService {
         if (userAuth.equals("2") || userAuth.equals("3")) {
             queryList.setParameter("interrelatedCustCode", interrelatedCode);
             queryTotal.setParameter("interrelatedCustCode", interrelatedCode);
-            queryList.setParameter("userid", userId);
-            queryTotal.setParameter("userid", userId);
-            queryList.setParameter("userid", userId);
-            queryTotal.setParameter("userid", userId);
             queryList.setParameter("userid", userId);
             queryTotal.setParameter("userid", userId);
         }
