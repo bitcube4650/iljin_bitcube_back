@@ -30,7 +30,7 @@ import javax.sql.DataSource;
 @EnableWebSecurity
 @EnableJdbcHttpSession(maxInactiveIntervalInSeconds = 31536000)
 @EnableGlobalMethodSecurity(prePostEnabled = true)
-@ComponentScan("iljin.framework.core.security")
+@ComponentScan
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 //    private final DataSource dataSource;

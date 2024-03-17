@@ -203,7 +203,7 @@ public class UserServiceImpl implements UserService {
                     "일진전기",
                     "agent1",
                     "계열사 일반",
-                    "3",
+                    "1",
                     "token");
         } else if ("master".equals(loginId)) {
             return new AuthToken("inter",//계열사 시스템관리자

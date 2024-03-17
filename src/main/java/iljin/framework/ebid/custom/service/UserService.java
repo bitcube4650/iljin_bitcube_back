@@ -1,5 +1,6 @@
 package iljin.framework.ebid.custom.service;
 
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import iljin.framework.core.dto.ResultBody;
 import iljin.framework.core.util.Pair;
 import iljin.framework.ebid.custom.dto.TCoUserDto;
@@ -48,11 +49,11 @@ public class UserService {
 
     public Page userList(Map<String, Object> params) {
         StringBuilder sbCount = new StringBuilder(" select count(1) from t_co_user x where 1=1");
-        StringBuilder sbList = new StringBuilder(" select user_id, user_name, user_position, dept_name, user_tel, user_hp, user_auth, use_yn, (select interrelated_nm from t_co_interrelated x where x.interrelated_cust_code = a.interrelated_cust_code) as interrelated_cust_nm from t_co_user a where 1=1");
+        StringBuilder sbList = new StringBuilder(" select user_name, user_id, user_position, dept_name, user_tel, user_hp, user_auth, use_yn, (select interrelated_nm from t_co_interrelated x where x.interrelated_cust_code = a.interrelated_cust_code) as interrelated_cust_nm from t_co_user a where 1=1");
         StringBuilder sbWhere = new StringBuilder();
 
         if (!StringUtils.isEmpty(params.get("interrelatedCustCode"))) {
-            sbWhere.append(" and interrelated_cust_code = :interrelatedCustCode");
+            sbWhere.append(" and interrelated_cust_code = '"+params.get("interrelatedCustCode")+"'");
         }
         if (!StringUtils.isEmpty(params.get("useYn"))) {
             sbWhere.append(" and use_yn = :useYn");
