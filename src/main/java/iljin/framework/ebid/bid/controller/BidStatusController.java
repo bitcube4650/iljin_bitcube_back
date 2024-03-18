@@ -35,5 +35,10 @@ public class BidStatusController {
     public ResultBody bidFailure(@RequestBody Map<String, String> params) {
         return bidStatusService.bidFailure(params);
     }
+
+    // @PostMapping("/submitHist")
+    // public Page submitHist(@RequestBody Map<String, String> params) {
+    //     return bidStatusService.submitHist(params);
+    // }
     
 }

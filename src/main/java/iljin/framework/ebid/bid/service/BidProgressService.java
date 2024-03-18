@@ -273,7 +273,7 @@ public class BidProgressService {
             sbWhere.append(" and a.bi_name like concat('%',:bidName,'%') ");
         }
 
-        if (userAuth.equals("2") || userAuth.equals("3")) {
+        if (userAuth.equals("1") || userAuth.equals("2") || userAuth.equals("3")) {
             sbWhere.append(" AND a.interrelated_cust_code = :interrelatedCustCode " +
                     "and (a.create_user = :userid " +
                     "or a.open_att1 = :userid " +
@@ -313,7 +313,7 @@ public class BidProgressService {
             queryList.setParameter("bidName", params.get("bidName"));
             queryTotal.setParameter("bidName", params.get("bidName"));
         }
-        if (userAuth.equals("2") || userAuth.equals("3")) {
+        if (userAuth.equals("1") || userAuth.equals("2") || userAuth.equals("3")) {
             queryList.setParameter("interrelatedCustCode", interrelatedCode);
             queryTotal.setParameter("interrelatedCustCode", interrelatedCode);
             queryList.setParameter("userid", userId);
@@ -326,11 +326,13 @@ public class BidProgressService {
                 custCodes.add(userInfo.getInterrelatedCustCode());
             }
 
-            sbWhere.append(" and (");
             for (int i = 0; i < custCodes.size(); i++) {
                 queryList.setParameter("custCode" + i, custCodes.get(i));
                 queryTotal.setParameter("custCode" + i, custCodes.get(i));
             }
+
+            queryList.setParameter("userid", userId);
+            queryTotal.setParameter("userid", userId);
         }
 
         Pageable pageable = PagaUtils.pageable(params);
