@@ -6,9 +6,11 @@ import iljin.framework.core.security.role.RoleRepository;
 import iljin.framework.core.security.role.UserRole;
 import iljin.framework.core.security.role.UserRoleRepository;
 import iljin.framework.core.util.Util;
+import iljin.framework.ebid.custom.dto.TCoCustMasterDto;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
+import org.qlrm.mapper.JpaResultMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,11 +25,15 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.transaction.Transactional;
@@ -44,95 +50,13 @@ import static java.util.stream.Collectors.toList;
 public class UserServiceImpl implements UserService {
     private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
 
+    @PersistenceContext
+    private EntityManager entityManager;
+
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserRoleRepository userRoleRepository;
-    private final RoleRepository roleRepository;
-    private final Util util;
-
-    @Value("${address.frontend}")
-    private String frontAddress;
-    @Value("${address.backend}")
-    private String backAddress;
-
-    @Override
-    public List<UserDto> getUsers() {
-        List<User> users = userRepository.findAll();
-        return null;
-    }
-
-    @Override
-    public Optional<User> getUser(Long id) {
-//        return userRepository.findById(id);
-        return null;
-    }
-
-    @Override
-    public List<User> getSearchUser(String loginId) {
-        return userRepository.findAllByLoginIdContains(loginId);
-    }
-
-    @Override
-    public ResponseEntity<Object> addUser(UserDto dto) {
-        try {
-            dto.setLoginPw(passwordEncoder.encode(dto.getLoginPw()));
-            User newUser = new User();
-            newUser.loginId = dto.loginId;
-            newUser.loginPw = dto.loginPw;
-            userRepository.save(newUser);
-
-
-            return new ResponseEntity<>(dto, HttpStatus.OK);
-        } catch (DataIntegrityViolationException ex) {
-            throw new UserCreateException();
-        }
-    }
-
-    @Override
-    public ResponseEntity<String> deleteUser(String loginId) {
-        userRepository.deleteByLoginId(loginId);
-        return new ResponseEntity<>("사용자가 삭제되었습니다", HttpStatus.OK);
-    }
-
-    @Override
-    public ResponseEntity<User> updateUser(String id, UserDto dto) {
-        Optional<User> userData = userRepository.findByLoginId(id);
-
-        if (userData.isPresent()) {
-            User modifiedUser = userData.get();
-
-            // 비밀번호가 가려진 거 아닌 경우에만 변경.
-            if (!dto.loginPw.equals("******")) {
-                modifiedUser.loginPw = passwordEncoder.encode(dto.getLoginPw());
-            }
-
-            modifiedUser.userName = dto.userName;
-
-            List<UserRole> modifiedRoles = new ArrayList<>();
-
-            // TODO 복수 권한 부여는 차후 필요시 구현 예정
-            Optional<UserRole> modifiedRole = userRoleRepository.findRoleByUser_LoginId(dto.loginId);
-            if (!modifiedRole.isPresent()) {
-                modifiedRole = Optional.of(new UserRole());
-            }
-            modifiedRole.ifPresent(c -> {
-//                c.setRole(RoleType.valueOf(dto.role));
-                c.setRole(dto.role);
-                userRoleRepository.save(c);
-                modifiedRoles.add(c);
-            });
-            userRepository.save(modifiedUser);
-            return new ResponseEntity<>(userRepository.save(modifiedUser), HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-    }
-
-    @Override
-    public Optional<User> getUserByLoginId(String loginId) {
-        return userRepository.findByLoginId(loginId);
-    }
 
     @Override
     public ResponseEntity<AuthToken> login(UserDto userDto, HttpSession session, HttpServletRequest request) {
@@ -142,7 +66,6 @@ public class UserServiceImpl implements UserService {
             String loginPw = userDto.loginPw;
             String loginToken = userDto.token;
 
-//            Optional<User> user = userRepository.findByLoginId(loginId);
             Optional<UserDto> user = Optional.of(userDto);
 
             Optional<AuthToken> result =
@@ -195,41 +118,40 @@ public class UserServiceImpl implements UserService {
         SecurityContextHolder.getContext().setAuthentication(token);
         session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, SecurityContextHolder.getContext());
 
-//        Optional<UserDto> userDto = userRepositoryCustom.findByLoginId(loginId);
+        StringBuilder sb = new StringBuilder(" SELECT 'inter' AS cust_type\n" +
+                "     , interrelated_cust_code AS cust_code \n" +
+                "     , (SELECT interrelated_nm FROM t_co_interrelated x WHERE x.interrelated_cust_code = a.interrelated_cust_code) AS cust_name\n" +
+                "     , user_name \n" +
+                "     , user_id \n" +
+                "     , user_pwd \n" +
+                "     , user_auth\n" +
+                "     , 'token' AS token \n" +
+                "  FROM t_co_user a\n" +
+                " WHERE user_id = :loginId\n" +
+                "   AND use_yn  = 'Y'\n" +
+                " UNION ALL\n" +
+                "SELECT 'cust' AS cust_type\n" +
+                "     , cust_code \n" +
+                "     , (SELECT cust_name FROM t_co_cust_master x WHERE x.cust_code = a.cust_code) AS cust_name\n" +
+                "     , user_name \n" +
+                "     , user_id \n" +
+                "     , user_pwd \n" +
+                "     , user_type \n" +
+                "     , 'token' AS token \n" +
+                "  FROM t_co_cust_user a\n" +
+                " WHERE user_id = :loginId\n" +
+                "   AND use_yn  = 'Y' ");
+        Query query = entityManager.createNativeQuery(sb.toString());
+        query.setParameter("loginId", obj.getLoginId());
+        UserDto data = new JpaResultMapper().uniqueResult(query, UserDto.class);
 
-        if ("agent1".equals(loginId)) {
-            return new AuthToken("inter",//계열사 일반
-                    "01",
-                    "일진전기",
-                    "agent1",
-                    "계열사 일반",
-                    "1",
-                    "token");
-        } else if ("master".equals(loginId)) {
-            return new AuthToken("inter",//계열사 시스템관리자
-                    "01",
-                    "일진전기",
-                    "master",
-                    "계열사 시스템관리자",
-                    "1",
-                    "token");
-        } else if ("copper".equals(loginId)) {
-            return new AuthToken("inter",//계열사 각사관리자
-                    "02",
-                    "롯데에너지머티리얼즈",
-                    "copper",
-                    "계열사 각사관리자",
-                    "2",
-                    "token");
-        }else{
-            return new AuthToken("cust",//협력사
-                    "18",
-                    "(주)세종소재",
-                    "custom",
-                    "협력사",
-                    "1",
-                    "token");
-        }
+        return new AuthToken(data.getCustType(),
+                data.getCustCode(),
+                data.getCustName(),
+                data.getLoginId(),
+                data.getUserName(),
+                data.getUserAuth(),
+                "token");
     }
 
     @Override
@@ -305,5 +227,22 @@ public class UserServiceImpl implements UserService {
         Map result = new HashMap();
         result.put("code", "ok");
         return result;
+    }
+
+    public UserDto findUser(String loginId) {
+        StringBuilder sb = new StringBuilder(" SELECT 'inter' AS cust_type\n" +
+                "     , interrelated_cust_code AS cust_code \n" +
+                "     , (SELECT interrelated_nm FROM t_co_interrelated x WHERE x.interrelated_cust_code = a.interrelated_cust_code) AS cust_name\n" +
+                "     , user_name \n" +
+                "     , user_id AS loginId\n" +
+                "     , user_pwd AS loginPw\n" +
+                "     , user_auth\n" +
+                "     , 'token' AS token \n" +
+                "  FROM t_co_user a\n" +
+                " WHERE user_id = :loginId");
+        Query query = entityManager.createNativeQuery(sb.toString());
+        query.setParameter("loginId", loginId);
+        UserDto data = new JpaResultMapper().uniqueResult(query, UserDto.class);
+        return data;
     }
 }
