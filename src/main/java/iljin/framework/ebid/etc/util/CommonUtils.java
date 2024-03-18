@@ -1,14 +1,22 @@
 package iljin.framework.ebid.etc.util;
 
-import javax.mail.Message;
-import javax.mail.Session;
-import javax.mail.Transport;
+import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.stereotype.Component;
+
+import javax.mail.*;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeUtility;
 import java.util.Properties;
 
+
+@Component
 public class CommonUtils {
+    @Autowired
+    private JavaMailSender javaMailSender;
 
     /**
      * 메일전송
@@ -32,12 +40,28 @@ public class CommonUtils {
         }
         if (mailToCnt == 0) return;
         Properties prop = new Properties();
-        prop.put("mail.smtp.host", Constances.MAIL_HOST);
+      //  prop.put("mail.smtp.host", Constances.MAIL_HOST);
         prop.put(MAIL_SMTP_CONNECTIONTIMEOUT, MAIL_SOCKET_TIMEOUT);
         prop.put(MAIL_SMTP_TIMEOUT, MAIL_SOCKET_TIMEOUT);
         prop.put(MAIL_SMTP_WRITETIMEOUT, MAIL_SOCKET_TIMEOUT);
 
-        Session session = Session.getDefaultInstance(prop, null);
+        prop.put("mail.smtp.host", "smtp.gmail.com");
+        prop.put("mail.smtp.port", "587"); // Gmail SMTP 포트
+        prop.put("mail.smtp.starttls.enable", "true"); // TLS 사용
+        prop.put("mail.smtp.auth", "true"); // 인증 활성화
+
+        String username = "whwnqja1995@gmail.com";
+        String password = "fyzbnxicaagyxdpu";
+
+     //   Session session = Session.getDefaultInstance(prop, null);
+
+        Session session = Session.getInstance(prop, new Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(username, password);
+            }
+        });
+
         MimeMessage message = new MimeMessage(session);
 //		try {
         InternetAddress from = new InternetAddress(Constances.MAIL_SENDER_ADDRESS);
@@ -71,6 +95,27 @@ public class CommonUtils {
 //			throw e;
 //		}
     }
+
+    /*************************************************************************/
+    public void sendEmail2(String[] toEmailAddrArray, String mailSubject, String mailContents) throws Exception {
+        SimpleMailMessage simpleMailMessage = new SimpleMailMessage();
+
+        simpleMailMessage.setTo("wns_p@naver.com");
+        simpleMailMessage.setSubject(mailSubject);
+        simpleMailMessage.setText(mailContents);
+
+        javaMailSender.send(simpleMailMessage);
+
+//		} catch (Exception e) {
+//
+//			throw e;
+//		}
+    }
+    /****************************************************************************/
+
+
+
+
 
     public static boolean isCheckMailAddr(String mailAddress) {
         if (mailAddress == null || "".equals(mailAddress.trim())) return false;
@@ -130,4 +175,27 @@ public class CommonUtils {
 
         return mailContents.toString();
     }
+
+    /**
+     * Object를 받아 문자열 값으로 리턴함, 없을경우 DefaultValue 리턴.
+     * @param obj
+     * @param defaultValue
+     * @return
+     */
+    public static String getString(Object obj, String defaultValue) {
+        String value = "" + obj;
+        try {
+            if(obj == null) {
+                value = defaultValue;
+            } else {
+                if(value.equals("null") || value.length() == 0) {
+                    value = defaultValue;
+                }
+            }
+        } catch(Exception e){
+            value = defaultValue;
+        }
+        return value;
+    }
+
 }

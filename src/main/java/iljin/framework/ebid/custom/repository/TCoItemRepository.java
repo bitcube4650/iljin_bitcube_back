@@ -16,4 +16,5 @@ public interface TCoItemRepository extends JpaRepository<TCoItem, String> {
     Page findAllByItemNameOrderByItemCodeDesc(String itemName, Pageable pageable);
 
     Page findAll(Specification<TCoItem> tCoItemSpecification, Pageable pageable);
+
 }

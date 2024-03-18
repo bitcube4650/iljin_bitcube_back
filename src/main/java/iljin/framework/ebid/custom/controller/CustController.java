@@ -1,6 +1,7 @@
 package iljin.framework.ebid.custom.controller;
 
 import iljin.framework.core.dto.ResultBody;
+import iljin.framework.ebid.custom.dto.TCoCustMasterDto;
 import iljin.framework.ebid.custom.entity.TCoCustMaster;
 import iljin.framework.ebid.custom.repository.TCoCustMasterRepository;
 import iljin.framework.ebid.custom.service.CustService;
@@ -18,43 +19,31 @@ import java.util.Optional;
 @RequestMapping("/api/v1/cust")
 @CrossOrigin
 public class CustController {
-
     @Autowired
     private CustService custService;
-
-    @Autowired
-    private TCoCustMasterRepository tCoCustMasterRepository;
-
-
     @PostMapping("/approvalList")
     public Page approvalList(@RequestBody Map<String, Object> params) {
-        int page = 0;
-        int size = 10;
-        if (params.get("page") != null) {
-            page = (Integer) params.get("page");
-        }
-        if (params.get("size") != null) {
-            size = Integer.parseInt((String) params.get("size"));
-        }
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "custName"));
-        return tCoCustMasterRepository.findAll(pageable);
+        params.put("certYn", "N");
+        return custService.custList(params);
     }
-
+    @PostMapping("/custList")
+    public Page custList(@RequestBody Map<String, Object> params) {
+        return custService.custList(params);
+    }
     @PostMapping("/approval/{id}")
-    public Optional<TCoCustMaster> approvalDetail(@PathVariable String id) {
-        return tCoCustMasterRepository.findById(id);
+    public TCoCustMasterDto approvalDetail(@PathVariable String id) {
+        return custService.custDetail(id);
     }
-
     @PostMapping("/management/{id}")
-    public Optional<TCoCustMaster> management(@PathVariable String id) {
-        return tCoCustMasterRepository.findById(id);
+    public TCoCustMasterDto management(@PathVariable String id) {
+        return custService.custDetail(id);
     }
-    @PostMapping("/save")
-    public ResultBody save(@RequestBody Map<String, String> params) {
-        return custService.save(params);
+    @PostMapping("/approval")
+    public ResultBody approval(@RequestBody Map<String, Object> params) {
+        return custService.approval(params);
     }
-    @PostMapping("/delete")
-    public ResultBody delete(@RequestBody Map<String, String> params) {
-        return custService.delete(params);
+    @PostMapping("/del")
+    public ResultBody back(@RequestBody Map<String, Object> params) {
+        return custService.del(params);
     }
 }
