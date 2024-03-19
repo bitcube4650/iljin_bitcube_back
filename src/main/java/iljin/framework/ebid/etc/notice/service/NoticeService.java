@@ -198,7 +198,7 @@ public class NoticeService {
 															     + " where tcbn2.b_co = 'CUST' "
 													 );
 			if(!userAuth.equals("1") && !StringUtils.isEmpty(params.get("custCode"))) {
-				System.out.println("if문 안에 들어옴 ");
+
 				//시스템관리자가 아닌 경우 계열사 공지 조건 추가
 				//협력사는 userAuth가 "" 빈문자열, custCode가 "no data"로 검색되어 계열사 공지가 출력안됨
 				sbList.append(
