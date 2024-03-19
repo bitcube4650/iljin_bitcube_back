@@ -7,6 +7,7 @@ import iljin.framework.core.security.user.UserService;
 import iljin.framework.ebid.custom.repository.TCoInterrelatedRepository;
 import iljin.framework.ebid.custom.repository.TCoItemRepository;
 import iljin.framework.ebid.custom.repository.TCoItemGrpRepository;
+import iljin.framework.ebid.custom.service.ItemService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,16 +36,18 @@ public class LoginController {
     private final TCoInterrelatedRepository tCoInterrelatedRepository;
     private final TCoItemGrpRepository tCoItemGrpRepository;
     private final TCoItemRepository tCoItemRepository;
+    private final ItemService itemService;
 
     private static final Logger logger = LoggerFactory.getLogger(LoginController.class);
 
     @Autowired
-    public LoginController(UserService userService, Sso sso, TCoInterrelatedRepository tCoInterrelatedRepository, TCoItemGrpRepository tCoItemGrpRepository, TCoItemRepository tCoItemRepository, TCoItemGrpRepository tItemGrpRepository1) {
+    public LoginController(UserService userService, Sso sso, TCoInterrelatedRepository tCoInterrelatedRepository, TCoItemGrpRepository tCoItemGrpRepository, TCoItemRepository tCoItemRepository, ItemService itemService) {
         this.userService = userService;
         this.sso = sso;
         this.tCoInterrelatedRepository = tCoInterrelatedRepository;
         this.tCoItemGrpRepository = tCoItemGrpRepository;
         this.tCoItemRepository = tCoItemRepository;
+        this.itemService = itemService;
     }
 
     @PostMapping("/login")
@@ -92,21 +95,7 @@ public class LoginController {
 
     @PostMapping("/login/itemList")
     public Page itemList(@RequestBody Map<String, Object> params) {
-        int page = 0;
-        int size = 5;
-        if (params.get("page") != null) {
-            page = (Integer) params.get("page");
-        }
-        if (params.get("size") != null) {
-            size = Integer.parseInt((String) params.get("size"));
-        }
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "itemName"));
-        if (ObjectUtils.isEmpty(params.get("itemGrpCd"))) {
-            return tCoItemRepository.findAll(pageable);
-        } else {
-            return tCoItemRepository.findAll(pageable);
-//            return tCoItemRepository.findAllByItemGrpCd((String)params.get("itemGrpCd"), pageable);
-        }
+        return itemService.itemList(params);
     }
 
 }
