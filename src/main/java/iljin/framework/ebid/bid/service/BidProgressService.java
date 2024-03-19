@@ -284,12 +284,19 @@ public class BidProgressService {
         }
 
         if (userAuth.equals("4")) {
+            sbWhere.append(
+                    "and (a.create_user = :userid " +
+                            "or a.open_att1 = :userid " +
+                            "or a.open_att2 = :userid " +
+                            "or a.gongo_id = :userid " +
+                            "or a.est_bidder = :userid " +
+                            "or a.est_opener = :userid)");
+
             List<InterUserInfoDto> userInfoList = (List<InterUserInfoDto>) findInterCustCode(userId);
             List<String> custCodes = new ArrayList<>();
             for (InterUserInfoDto userInfo : userInfoList) {
                 custCodes.add(userInfo.getInterrelatedCustCode());
             }
-
             sbWhere.append(" and (");
             for (int i = 0; i < custCodes.size(); i++) {
                 if (i > 0) {
@@ -297,6 +304,7 @@ public class BidProgressService {
                 }
                 sbWhere.append("a.interrelated_cust_code = :custCode").append(i);
             }
+            sbWhere.append(" or a.interrelated_cust_code = :interrelatedCustCode");
             sbWhere.append(")");
         }
         sbList.append(sbWhere);
@@ -331,6 +339,8 @@ public class BidProgressService {
                 queryTotal.setParameter("custCode" + i, custCodes.get(i));
             }
 
+            queryList.setParameter("interrelatedCustCode", interrelatedCode);
+            queryTotal.setParameter("interrelatedCustCode", interrelatedCode);
             queryList.setParameter("userid", userId);
             queryTotal.setParameter("userid", userId);
         }

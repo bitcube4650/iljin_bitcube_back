@@ -180,6 +180,7 @@ public class BidStatusService {
                     sbWhere.append(" or ");
                 }
                 sbWhere.append("a.interrelated_cust_code = :custCode").append(i);
+                sbWhere.append(" or a.interrelated_cust_code = :interrelatedCustCode");
             }
             sbWhere.append(")");
 
@@ -223,6 +224,8 @@ public class BidStatusService {
                 queryList.setParameter("custCode" + i, custCodes.get(i));
                 queryTotal.setParameter("custCode" + i, custCodes.get(i));
             }
+            queryList.setParameter("interrelatedCustCode", interrelatedCode);
+            queryTotal.setParameter("interrelatedCustCode", interrelatedCode);
             queryList.setParameter("userid", userId);
             queryTotal.setParameter("userid", userId);
         }
