@@ -86,7 +86,7 @@ public class BidStatusService {
         String userId = principal.getUsername();
 
         StringBuilder sbCount = new StringBuilder(
-                " select count(1) from t_bi_info_mat a where 1=1 AND a.ing_tag = 'A1' ");
+                " select count(1) from t_bi_info_mat a where a.ing_tag = 'A1' ");
         StringBuilder sbList = new StringBuilder(
                 "SELECT a.bi_no AS bi_no, a.bi_name AS bi_name, " +
                         "DATE_FORMAT(a.est_start_date, '%Y-%m-%d %H:%i') AS est_start_date, " +
@@ -100,7 +100,7 @@ public class BidStatusService {
                         "a.interrelated_cust_code AS interrelated_cust_code " +
                         "FROM t_bi_info_mat a LEFT JOIN t_co_user b ON a.create_user = b.user_id LEFT JOIN t_co_user c ON a.gongo_id = c.user_id "
                         +
-                        "WHERE a.ing_tag = 'A1' and a.est_close_date < sysdate() ");
+                        "WHERE 1=1 ");
         StringBuilder sbWhere = new StringBuilder();
 
         if (!StringUtils.isEmpty(params.get("bidNo"))) {
@@ -110,7 +110,7 @@ public class BidStatusService {
         if (!StringUtils.isEmpty(params.get("bidName"))) {
             sbWhere.append(" and a.bi_name like concat('%',:bidName,'%') ");
         }
-
+        sbWhere.append("and ( a.ing_tag = 'A1' ");
         if ((Boolean) (params.get("rebidYn"))) {
             sbWhere.append(" or a.ing_tag = 'A3' ");
         }
@@ -118,14 +118,12 @@ public class BidStatusService {
         if ((Boolean) (params.get("openBidYn"))) {
             sbWhere.append(" or a.ing_tag = 'A2' ");
         }
-
-        if ((Boolean) (params.get("dateOverYn"))) {
+        sbWhere.append(" ) ");
+        if (!(Boolean) (params.get("dateOverYn"))) {
             sbWhere.append(" and a.est_close_date >= sysdate() ");
-        } else {
-            sbWhere.append(" and a.est_close_date =< sysdate() ");
         }
 
-        if (userAuth.equals("2") || userAuth.equals("3")) {
+        if (userAuth.equals("1") || userAuth.equals("2") || userAuth.equals("3")) {
             sbWhere.append(" AND a.interrelated_cust_code = :interrelatedCustCode " +
                     "and (a.create_user = :userid " +
                     "or a.open_att1 = :userid " +
@@ -150,6 +148,14 @@ public class BidStatusService {
                 sbWhere.append("a.interrelated_cust_code = :custCode").append(i);
             }
             sbWhere.append(")");
+
+            sbWhere.append(
+                    " and (a.create_user = :userid " +
+                            "or a.open_att1 = :userid " +
+                            "or a.open_att2 = :userid " +
+                            "or a.gongo_id = :userid " +
+                            "or a.est_bidder = :userid " +
+                            "or a.est_opener = :userid)");
         }
         sbList.append(sbWhere);
 
@@ -165,7 +171,7 @@ public class BidStatusService {
             queryList.setParameter("bidName", params.get("bidName"));
             queryTotal.setParameter("bidName", params.get("bidName"));
         }
-        if (userAuth.equals("2") || userAuth.equals("3")) {
+        if (userAuth.equals("1") || userAuth.equals("2") || userAuth.equals("3")) {
             queryList.setParameter("interrelatedCustCode", interrelatedCode);
             queryTotal.setParameter("interrelatedCustCode", interrelatedCode);
             queryList.setParameter("userid", userId);
@@ -178,11 +184,12 @@ public class BidStatusService {
                 custCodes.add(userInfo.getInterrelatedCustCode());
             }
 
-            sbWhere.append(" and (");
             for (int i = 0; i < custCodes.size(); i++) {
                 queryList.setParameter("custCode" + i, custCodes.get(i));
                 queryTotal.setParameter("custCode" + i, custCodes.get(i));
             }
+            queryList.setParameter("userid", userId);
+            queryTotal.setParameter("userid", userId);
         }
 
         Pageable pageable = PagaUtils.pageable(params);
@@ -248,13 +255,14 @@ public class BidStatusService {
                         "WHERE a.use_yn = 'Y' ");
 
         StringBuilder sbCustList = new StringBuilder(
-            "SELECT a.bi_no AS bi_no, CAST(a.cust_code AS CHAR) AS cust_code, b.cust_name AS cust_name, " +
-            "a.esmt_yn AS esmt_yn, c.file_nm AS file_nm, c.file_path AS file_path, a.etc_b_file AS etc_file, a.etc_b_file_path AS etc_path " +
-            "FROM t_bi_info_mat_cust a " +
-            "LEFT JOIN t_co_cust_master b ON a.cust_code = b.cust_code " +
-            "LEFT JOIN t_bi_upload c ON a.file_id = c.file_id " +
-            "WHERE 1=1 ");
-                
+                "SELECT a.bi_no AS bi_no, CAST(a.cust_code AS CHAR) AS cust_code, b.cust_name AS cust_name, " +
+                        "a.esmt_yn AS esmt_yn, c.file_nm AS file_nm, c.file_path AS file_path, a.etc_b_file AS etc_file, a.etc_b_file_path AS etc_path "
+                        +
+                        "FROM t_bi_info_mat_cust a " +
+                        "LEFT JOIN t_co_cust_master b ON a.cust_code = b.cust_code " +
+                        "LEFT JOIN t_bi_upload c ON a.file_id = c.file_id " +
+                        "WHERE 1=1 ");
+
         StringBuilder sbWhere = new StringBuilder();
         sbWhere.append(" and a.bi_no = :param");
         sbList.append(sbWhere);
