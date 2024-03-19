@@ -43,9 +43,29 @@ public class MainService {
 		BidCntDto bidCntDto = new BidCntDto();
 		UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		Optional<TCoUser> userOptional = tCoUserRepository.findById(principal.getUsername());
-		String userAuth = userOptional.get().getUserAuth();
-		String interrelatedCode = userOptional.get().getInterrelatedCustCode();
+		String userAuth = "";// userAuth(1 = 시스템관리자, 2 = 각사관리자, 3 = 일반사용자, 4 = 감사사용자)
+		String interrelatedCode = "";
 		String userId = principal.getUsername();
+		
+		List<InterUserInfoDto> userInfoList = new ArrayList<>(); 
+        List<String> custCodes = new ArrayList<>();
+        
+		
+		if (userOptional.isPresent()) {
+        	
+        	userAuth = userOptional.get().getUserAuth();
+    		interrelatedCode = userOptional.get().getInterrelatedCustCode();
+  
+        	if(userAuth.equals("4")) {//감사사용자에 해당하는 계열사 조회
+        		userInfoList = (List<InterUserInfoDto>) bidProgressService.findInterCustCode(userId);
+        		//감사사용자에 해당하는 계열사리스트 담기
+                for (InterUserInfoDto userInfo : userInfoList) {
+                    custCodes.add(userInfo.getInterrelatedCustCode());
+                }
+        	}
+        	
+        	
+        }
 		
 
 		StringBuilder sbCnt = new StringBuilder(" select COUNT(CASE WHEN ing_tag = 'A0' THEN 1 END) AS planning, "
@@ -71,23 +91,15 @@ public class MainService {
 		//계열사 조건
 		//userAuth(4 = 감사사용자)
 		if (userAuth.equals("4")) {
-			
-            List<InterUserInfoDto> userInfoList = (List<InterUserInfoDto>) bidProgressService.findInterCustCode(userId);
-            List<String> custCodes = new ArrayList<>();
-            
-            //감사사용자에 해당하는 계열사리스트 담기
-            for (InterUserInfoDto userInfo : userInfoList) {
-                custCodes.add(userInfo.getInterrelatedCustCode());
-            }
 
             sbWhere.append(" and (");
             
+            sbWhere.append(" interrelated_cust_code = " + interrelatedCode );
+            
             //감사사용자에 해당하는 계열사 조건 추가
             for (int i = 0; i < custCodes.size(); i++) {
-                if (i > 0) {
-                    sbWhere.append(" or ");
-                }
-                sbWhere.append("interrelated_cust_code = :custCode").append(i);
+            	sbWhere.append(" or ");
+                sbWhere.append(" interrelated_cust_code = :custCode").append(i);
             }
             
             sbWhere.append(")");
@@ -114,11 +126,6 @@ public class MainService {
         }
 		
         if (userAuth.equals("4")) {
-            List<InterUserInfoDto> userInfoList = (List<InterUserInfoDto>) bidProgressService.findInterCustCode(userId);
-            List<String> custCodes = new ArrayList<>();
-            for (InterUserInfoDto userInfo : userInfoList) {
-                custCodes.add(userInfo.getInterrelatedCustCode());
-            }
 
             for (int i = 0; i < custCodes.size(); i++) {
             	queryCnt.setParameter("custCode" + i, custCodes.get(i));
@@ -145,9 +152,15 @@ public class MainService {
 	public PartnerCntDto selectPartnerCnt(Map<String, Object> params) {
 		UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		Optional<TCoUser> userOptional = tCoUserRepository.findById(principal.getUsername());
-		String interrelatedCode = userOptional.get().getInterrelatedCustCode();
+		String interrelatedCode = "";
 		PartnerCntDto partnerCntDto = new PartnerCntDto();
 		
+		if (userOptional.isPresent()) {
+        
+    		interrelatedCode = userOptional.get().getInterrelatedCustCode();
+  
+        }
+
 		StringBuilder sbCnt = new StringBuilder(" select COUNT(CASE WHEN tccm.cert_yn = 'N' THEN 1 END) as 'request', "
 													 + " COUNT(CASE WHEN tccm.cert_yn = 'Y' THEN 1 END) as 'approval', "
 													 + " COUNT(CASE WHEN tccm.cert_yn = 'D' THEN 1 END) as 'deletion' "
@@ -181,8 +194,9 @@ public class MainService {
 	//협력사 전자입찰 건수 조회(협력사메인)
 	public PartnerBidCntDto selectPartnerBidCnt(Map<String, Object> params) {
 
+		
 		PartnerBidCntDto partnerBidCntDto = new PartnerBidCntDto();
-
+/*
 		StringBuilder sbCnt = new StringBuilder(" select (select COUNT(1) from t_bi_info_mat tbim where tbim.ING_TAG IN ('A1')) AS noticing, "
 												     + " (select COUNT(1) from t_bi_info_mat tbim inner join t_bi_info_mat_cust tbimc on tbim.BI_NO = tbimc.BI_NO where tbim.ING_TAG IN ('A1', 'A2', 'A3', 'A7') and tbimc.CUST_CODE = :custCode) AS count2, "
 												     + " (select COUNT(1) from t_bi_info_mat tbim inner join t_bi_info_mat_cust tbimc on tbim.BI_NO = tbimc.BI_NO where tbim.ING_TAG IN ('A5') and tbimc.CUST_CODE = :custCode) AS count3, "
@@ -203,7 +217,7 @@ public class MainService {
 	    partnerBidCntDto.setConfirmation((BigInteger) result[2]);
 	    partnerBidCntDto.setAwarded((BigInteger) result[3]);
 	    partnerBidCntDto.setUnsuccessful((BigInteger) result[4]);
-
+*/
 	    return partnerBidCntDto;
 	}
 
@@ -211,7 +225,7 @@ public class MainService {
 	public PartnerCompletedBidCntDto selectCompletedBidCnt(Map<String, Object> params) {
 		
 		PartnerCompletedBidCntDto partnerCompletedBidCntDto = new PartnerCompletedBidCntDto();
-		
+		/*
 		StringBuilder sbCnt = new StringBuilder(" select (select COUNT(1) from t_bi_info_mat tbim where tbim.ING_TAG IN ('A5') and (tbim.UPDATE_DATE >= CURDATE() - INTERVAL 12 MONTH)) AS posted, "
 													 + " (select COUNT(1) from t_bi_info_mat tbim inner join t_bi_info_mat_cust tbimc on(tbim.BI_NO = tbimc.BI_NO) where tbim.ING_TAG IN ('A5') and (tbim.UPDATE_DATE >= CURDATE() - INTERVAL 12 MONTH) and tbimc.CUST_CODE = :custCode) AS submitted, "
 													 + " (select COUNT(1) from t_bi_info_mat tbim inner join t_bi_info_mat_cust tbimc on(tbim.BI_NO = tbimc.BI_NO) where tbim.ING_TAG IN ('A5') and (tbim.UPDATE_DATE >= CURDATE() - INTERVAL 12 MONTH) and tbimc.SUCC_YN = 'Y' and tbimc.CUST_CODE = :custCode) AS awarded "
@@ -227,7 +241,7 @@ public class MainService {
 		partnerCompletedBidCntDto.setPosted((BigInteger) result[0]);
 		partnerCompletedBidCntDto.setSubmitted((BigInteger) result[1]);
 		partnerCompletedBidCntDto.setAwarded((BigInteger) result[2]);
-		
+		*/
 		return partnerCompletedBidCntDto;
 	}
 
