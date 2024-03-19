@@ -371,7 +371,7 @@ public class BidStatusService {
             sbCount.append(
                     "SELECT count(1) from t_bi_info_mat_cust_temp where bi_no = :biNo and cust_code = :custCode");
             sbList.append(
-                    "SELECT bi_order, esmt_curr, esmt_amt, DATE_FORMAT(submit_date, '%Y-%m-%d %H:%i') AS submit_date from t_bi_info_mat_cust_temp "
+                    "SELECT '1' AS insMode, bi_order, esmt_curr, esmt_amt, DATE_FORMAT(submit_date, '%Y-%m-%d %H:%i') AS submit_date from t_bi_info_mat_cust_temp "
                             +
                             "where bi_no = :biNo and cust_code = :custCode");
         }
@@ -381,7 +381,7 @@ public class BidStatusService {
                     "SELECT count(1) from t_bi_detail_mat_cust_temp a, t_bi_info_mat_cust b " +
                             "where a.bi_no = :biNo and a.cust_code = :custCode and (a.bi_no =b.bi_no and a.cust_code = b.cust_code)");
             sbList.append(
-                    "SELECT a.bi_order AS bi_order, a.esmt_uc AS esmt_uc, DATE_FORMAT(b.submit_date, '%Y-%m-%d %H:%i') AS submit_date "
+                    "SELECT '2' AS insMode, a.bi_order AS bi_order, 'KRW' AS esmt_curr, a.esmt_uc AS esmt_amt, DATE_FORMAT(b.submit_date, '%Y-%m-%d %H:%i') AS submit_date "
                             +
                             "from t_bi_detail_mat_cust_temp a, t_bi_info_mat_cust b " +
                             "where a.bi_no = :biNo and a.cust_code = :custCode and (a.bi_no =b.bi_no and a.cust_code = b.cust_code)");
