@@ -207,8 +207,8 @@ public class UserServiceImpl implements UserService {
                     "token");
         } else if ("master".equals(loginId)) {
             return new AuthToken("inter",//계열사 시스템관리자
-                    "01",
-                    "일진전기",
+                    "11",
+                    "일진씨앤에스",
                     "master",
                     "계열사 시스템관리자",
                     "1",
