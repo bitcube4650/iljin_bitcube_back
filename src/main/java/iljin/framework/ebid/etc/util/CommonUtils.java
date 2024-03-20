@@ -2,6 +2,7 @@ package iljin.framework.ebid.etc.util;
 
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Component;
@@ -18,6 +19,9 @@ public class CommonUtils {
     @Autowired
     private JavaMailSender javaMailSender;
 
+    @Autowired
+    private Constances constances;
+
     /**
      * 메일전송
      *
@@ -26,42 +30,26 @@ public class CommonUtils {
      * @param mailContents
      */
     public static void sendEmail(String[] toEmailAddrArray, String mailSubject, String mailContents) throws Exception {
-        String MAIL_SMTP_CONNECTIONTIMEOUT = "mail.smtp.connectiontimeout";
+        String MAIL_SMTP_CONNECTIONTIMEOUT ="mail.smtp.connectiontimeout";
         String MAIL_SMTP_TIMEOUT = "mail.smtp.timeout";
         String MAIL_SMTP_WRITETIMEOUT = "mail.smtp.writetimeout";
         String MAIL_SOCKET_TIMEOUT = "60000";
 
-        if (toEmailAddrArray == null || toEmailAddrArray.length == 0) return;
+        if(toEmailAddrArray==null || toEmailAddrArray.length==0) return;
         int mailToCnt = 0;
-        for (String toEmailAddr : toEmailAddrArray) {
-            if (isCheckMailAddr(toEmailAddr)) {
-                mailToCnt++;
-            }
+        for(String toEmailAddr : toEmailAddrArray) {
+            if(isCheckMailAddr(toEmailAddr)) { mailToCnt++; }
         }
-        if (mailToCnt == 0) return;
+        if(mailToCnt==0) return;
         Properties prop = new Properties();
-      //  prop.put("mail.smtp.host", Constances.MAIL_HOST);
+
+        prop.put("mail.smtp.host", Constances.MAIL_HOST);
         prop.put(MAIL_SMTP_CONNECTIONTIMEOUT, MAIL_SOCKET_TIMEOUT);
         prop.put(MAIL_SMTP_TIMEOUT, MAIL_SOCKET_TIMEOUT);
         prop.put(MAIL_SMTP_WRITETIMEOUT, MAIL_SOCKET_TIMEOUT);
 
-        prop.put("mail.smtp.host", "smtp.gmail.com");
-        prop.put("mail.smtp.port", "587"); // Gmail SMTP 포트
-        prop.put("mail.smtp.starttls.enable", "true"); // TLS 사용
-        prop.put("mail.smtp.auth", "true"); // 인증 활성화
 
-        String username = "whwnqja1995@gmail.com";
-        String password = "fyzbnxicaagyxdpu";
-
-     //   Session session = Session.getDefaultInstance(prop, null);
-
-        Session session = Session.getInstance(prop, new Authenticator() {
-            @Override
-            protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication(username, password);
-            }
-        });
-
+        Session session = Session.getDefaultInstance(prop, null);
         MimeMessage message = new MimeMessage(session);
 //		try {
         InternetAddress from = new InternetAddress(Constances.MAIL_SENDER_ADDRESS);
@@ -85,9 +73,7 @@ public class CommonUtils {
 //			message.setSubject(mailSubject);
         message.setSubject(MimeUtility.encodeText(mailSubject,"EUC-KR","B"));
 //			message.setContent(mailContents, "text/plain");
-
         message.setContent(setMailContents(mailContents), "text/html; charset=EUC-KR");
-
 
         Transport.send(message);
 //		} catch (Exception e) {
@@ -95,26 +81,6 @@ public class CommonUtils {
 //			throw e;
 //		}
     }
-
-    /*************************************************************************/
-    public void sendEmail2(String[] toEmailAddrArray, String mailSubject, String mailContents) throws Exception {
-        SimpleMailMessage simpleMailMessage = new SimpleMailMessage();
-
-        simpleMailMessage.setTo("wns_p@naver.com");
-        simpleMailMessage.setSubject(mailSubject);
-        simpleMailMessage.setText(mailContents);
-
-        javaMailSender.send(simpleMailMessage);
-
-//		} catch (Exception e) {
-//
-//			throw e;
-//		}
-    }
-    /****************************************************************************/
-
-
-
 
 
     public static boolean isCheckMailAddr(String mailAddress) {
@@ -140,7 +106,6 @@ public class CommonUtils {
         //HEADER
         mailContents.append("		<tr>");
         mailContents.append("			<td style='padding:0 0 0 25px;background:#F53243;border:2px solid #F53243;height:50px;overflow:hidden;text-align:center;' nowrap>");
-        mailContents.append("				<img src='" + Constances.MAIL_LINK_URL+"/img/buy/edm_ico.png'>");
         mailContents.append("			</td>");
         mailContents.append("			<td style='padding:0 25px 0 0;background:#F53243;border:2px solid #F53243;width:300px;height:50px;overflow:hidden;font-size:20px;font-family:\"Malgun Gothic\";font-weight:bold;' nowrap>");
         mailContents.append("				<span style='margin-left:10px; color:#fff;'>E-mail 서비스 입니다.</span>");
@@ -151,8 +116,13 @@ public class CommonUtils {
         //CONTENT
         mailContents.append("		<tr>");
         mailContents.append("			<td colspan='3' style='margin:0;padding:20px 55px 10px;background:#fff;font-size:14px;line-height:20px;font-family:\"Malgun Gothic\";letter-spacing:-1px;font-weight:bold;color:#343434;word-break:break-all'>");
-        mailContents.append(contents);
-      //  mailContents.append("			<br/><br/><span style='color:#1f497d;'>Okplaza 바로가기 클릭 ☞ </span><a href='"+Constances.SYSTEM_FRONT_URL+"' style='vertical-align:sub;'><img src='"+Constances.MAIL_LINK_URL+"/img/mailLogos.png'></a>");
+        mailContents.append("안녕하십니까<br>" +
+                            "일진그룹 전자입찰 e-bidding입니다.<br>");
+        mailContents.append("<br>");
+        mailContents.append(contents + "<br>");
+        mailContents.append("<br>");
+        mailContents.append("감사합니다.");
+        mailContents.append("<br>");
         mailContents.append("			</td>");
         mailContents.append("		</tr>");
 
@@ -164,7 +134,6 @@ public class CommonUtils {
         mailContents.append("		</tr>");
         mailContents.append("		<tr>");
         mailContents.append("			<td colspan='3' style='padding:0px 25px 5px;overflow:hidden;background:#fff;text-align:right;' nowrap>");
-        mailContents.append("				<img src='"+Constances.MAIL_LINK_URL+"/img/SKtelesys_mails.png' alt='OK plaza'>");
         mailContents.append("			</td>");
         mailContents.append("		</tr>");
 

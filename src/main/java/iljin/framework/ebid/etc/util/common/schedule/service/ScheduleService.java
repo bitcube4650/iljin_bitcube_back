@@ -1,5 +1,6 @@
 package iljin.framework.ebid.etc.util.common.schedule.service;
 
+import iljin.framework.ebid.etc.util.CommonUtils;
 import iljin.framework.ebid.etc.util.common.schedule.entity.MailEntity;
 import iljin.framework.ebid.etc.util.common.schedule.repository.ScheduleRepository;
 import lombok.Data;
@@ -15,6 +16,7 @@ import java.util.List;
 @Slf4j
 public class ScheduleService {
     private final ScheduleRepository scheduleRepository;
+    private final CommonUtils commonUtils;
 
 
     @Transactional
@@ -39,8 +41,7 @@ public class ScheduleService {
                 String mailTitle = mailEntity.getTitle();
                 String mailContents = mailEntity.getConts();
 
-                //CommonUtils에 senEmail을 태운다.
-              //  CommonUtils.sendEmail(toEmailAddrArray, mailTitle, mailContents);
+               commonUtils.sendEmail(toEmailAddrArray, mailTitle, mailContents);
 
                 updateEmailInfoDto.setSendFlag("1");
                 updateEmailInfoDto.setErrMsg("");
