@@ -105,7 +105,7 @@ public class CommonUtils {
         mailContents.append("            일진그룹 전자입찰 e-bidding 입니다.<br>");
         mailContents.append("        </div>");
         mailContents.append("        <div style='font-size:16px; line-height:150%; margin-top:30px'>");
-        mailContents.append(contents + "<br>");
+        mailContents.append(contents + "<br><br>");
         mailContents.append("            자세한 사항은 <a href='https://iljin.idr.myds.me/login.html' target='_blank' style='color:#004B9E !important; font-weight:700; text-decoration:none; border-bottom:1px solid #004B9E'>e-bidding</a> 시스템에 로그인하여 확인해 주십시오<br><br><br>");
         mailContents.append("            감사합니다.");
         mailContents.append("        </div>");
