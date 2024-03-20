@@ -2,7 +2,10 @@ package iljin.framework.ebid.etc.main.service;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -10,16 +13,22 @@ import java.util.Optional;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import iljin.framework.core.dto.ResultBody;
+import iljin.framework.core.security.user.UserService;
 import iljin.framework.ebid.bid.dto.InterUserInfoDto;
 import iljin.framework.ebid.bid.service.BidProgressService;
+import iljin.framework.ebid.custom.entity.TCoCustUser;
 import iljin.framework.ebid.custom.entity.TCoUser;
+import iljin.framework.ebid.custom.repository.TCoCustUserRepository;
 import iljin.framework.ebid.custom.repository.TCoUserRepository;
 import iljin.framework.ebid.etc.main.dto.BidCntDto;
 import iljin.framework.ebid.etc.main.dto.PartnerBidCntDto;
@@ -33,12 +42,22 @@ public class MainService {
     private TCoUserRepository tCoUserRepository;
 	
 	@Autowired
+    private TCoCustUserRepository tCoUserCustRepository;
+	
+	@Autowired
     private BidProgressService bidProgressService;
+	
+	@Autowired
+	private UserService userService;
+	
+	@Autowired
+    private PasswordEncoder passwordEncoder;
 	
 	@PersistenceContext
     private EntityManager entityManager;
 
 	//전자입찰 건수 조회(계열사메인)
+	@Transactional
 	public BidCntDto selectBidCnt(Map<String, Object> params) {
 		BidCntDto bidCntDto = new BidCntDto();
 		UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -149,6 +168,7 @@ public class MainService {
 	}
 
 	//협력사 업채수 조회(계열사메인)
+	@Transactional
 	public PartnerCntDto selectPartnerCnt(Map<String, Object> params) {
 		UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		Optional<TCoUser> userOptional = tCoUserRepository.findById(principal.getUsername());
@@ -192,6 +212,7 @@ public class MainService {
 	}
 
 	//협력사 전자입찰 건수 조회(협력사메인)
+	@Transactional
 	public PartnerBidCntDto selectPartnerBidCnt(Map<String, Object> params) {
 
 		
@@ -222,6 +243,7 @@ public class MainService {
 	}
 
 	//입찰완료 조회(협력사메인)
+	@Transactional
 	public PartnerCompletedBidCntDto selectCompletedBidCnt(Map<String, Object> params) {
 		
 		PartnerCompletedBidCntDto partnerCompletedBidCntDto = new PartnerCompletedBidCntDto();
@@ -244,5 +266,216 @@ public class MainService {
 		*/
 		return partnerCompletedBidCntDto;
 	}
+
+	//비밀번호 확인
+	@Transactional
+	public boolean checkPwd(Map<String, Object> params) {
+		
+		UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		String userId = principal.getUsername();
+		String password = (String) params.get("password");
+		
+		try {
+			
+			return userService.checkPassword(userId, password);
+		
+		}catch(Exception e){
+			e.printStackTrace();
+			return false;
+		}
+	}
+	
+	//비밀번호 변경
+	@Transactional
+	public boolean changePwd(Map<String, Object> params) {
+		UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		String userId = principal.getUsername();
+		String password = (String) params.get("password");
+		LocalDateTime currentDate = LocalDateTime.now();
+
+
+		try {
+			Optional<TCoUser> userOptional = tCoUserRepository.findById(userId);
+			String encodedPassword = passwordEncoder.encode(password);
+
+			if (userOptional.isPresent()) {//계열사인 경우
+				TCoUser tCoUser = userOptional.get();
+				tCoUser.setUserPwd(encodedPassword);
+				tCoUser.setPwdEditDate(currentDate);
+				tCoUser.setPwdEditYn("Y");
+			}else {//협력사인 경우
+				Optional<TCoCustUser> userOptional2 = tCoUserCustRepository.findById(userId);
+				TCoCustUser tCoCustUser = userOptional2.get();
+				tCoCustUser.setUserPwd(encodedPassword);
+				tCoCustUser.setPwdChgDate(currentDate);
+			}
+			
+			return true;
+
+		}catch(Exception e){
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+	//유저정보 조회
+	@Transactional
+	public ResultBody selectUserInfo(Map<String, Object> params) {
+		ResultBody resultBody = new ResultBody();
+		UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		String userId = principal.getUsername();
+		Map<String,Object> userInfo = new HashMap<>();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+		
+		try {
+			Optional<TCoUser> userOptional = tCoUserRepository.findById(userId);
+	
+			if (userOptional.isPresent()) {//계열사인 경우
+				String formattedDateTime = "";
+				
+				String bidauth = userOptional.get().getBidauth();
+				String deptName = userOptional.get().getDeptName();
+				String openauth = userOptional.get().getOpenauth();
+				LocalDateTime pwdEditDate = userOptional.get().getPwdEditDate();
+				String pwdEditYn = userOptional.get().getPwdEditYn();
+				String userEmail = userOptional.get().getUserEmail();
+				String userHp = userOptional.get().getUserHp();
+				String userPosition = userOptional.get().getUserPosition();
+				String userTel = userOptional.get().getUserTel();
+				
+		        if(pwdEditDate != null) {
+					formattedDateTime = pwdEditDate.format(formatter);
+				}
+				
+				userInfo.put("bidauth", bidauth);
+				userInfo.put("deptName", deptName);
+				userInfo.put("openauth", openauth);
+				userInfo.put("pwdEditDate", formattedDateTime);
+				userInfo.put("pwdEditYn", pwdEditYn);
+				userInfo.put("userEmail", userEmail);
+				userInfo.put("userHp", userHp);
+				userInfo.put("userPosition",userPosition);
+				userInfo.put("userTel", userTel);
+				
+				resultBody.setData(userInfo);
+				
+				return resultBody;
+				
+			}else {//협력사인 경우
+				
+				Optional<TCoCustUser> userOptional2 = tCoUserCustRepository.findById(userId);
+				String formattedDateTime = "";
+				
+				String userTel = userOptional2.get().getUserHp();
+				String userHp = userOptional2.get().getUserHp();
+				String userEmail = userOptional2.get().getUserEmail();
+				LocalDateTime pwdChgDate = userOptional2.get().getPwdChgDate();
+				String userBuseo = userOptional2.get().getUserBuseo();
+				String userPosition = userOptional2.get().getUserPosition();
+				
+				if(pwdChgDate != null) {
+					formattedDateTime = pwdChgDate.format(formatter);
+				}
+		        
+				userInfo.put("userTel", userTel);
+				userInfo.put("userHp", userHp);
+				userInfo.put("userEmail", userEmail);
+				userInfo.put("pwdChgDate", formattedDateTime);
+				userInfo.put("userBuseo", userBuseo);
+				userInfo.put("userPosition", userPosition);
+				
+				resultBody.setData(userInfo);
+				
+				return resultBody;
+			}
+	
+		}catch(Exception e){
+			e.printStackTrace();
+			resultBody.setCode("ERROR");
+	        resultBody.setStatus(500);
+	        resultBody.setMsg("An error occurred while selecting the user info.");
+	        resultBody.setData(e.getMessage());
+	        
+	        return resultBody;
+		}
+	}
+
+	//유저 정보 변경
+	@Transactional
+	public ResultBody saveUserInfo(Map<String, Object> params) {
+		ResultBody resultBody = new ResultBody();
+		UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		String userId = principal.getUsername();
+		
+		try {
+			Optional<TCoUser> userOptional = tCoUserRepository.findById(userId);
+	
+			if (userOptional.isPresent()) {//계열사인 경우
+				
+				TCoUser tCoUser = userOptional.get();
+
+				String bidauth = "";
+				String openauth = "";
+				String deptName = (String) params.get("deptName");
+				String userEmail = (String) params.get("userEmail");
+				String userHp = (String) params.get("userHp");
+				String userPosition = (String) params.get("userPosition");
+				String userTel = (String) params.get("userTel");
+				
+				if((boolean) params.get("bidauth")) {
+					bidauth = "1";
+				}else {
+					bidauth = "";
+				}
+				
+				if((boolean) params.get("openauth")) {
+					openauth = "1";
+				}else {
+					openauth = "";
+				}
+				
+				tCoUser.setBidauth(bidauth);
+				tCoUser.setDeptName(deptName);
+				tCoUser.setOpenauth(openauth);
+				tCoUser.setUserEmail(userEmail);
+				tCoUser.setUserHp(userHp);
+				tCoUser.setUserPosition(userPosition);
+				tCoUser.setUserTel(userTel);
+				
+				return resultBody;
+				
+			}else {//협력사인 경우
+				
+				Optional<TCoCustUser> userOptional2 = tCoUserCustRepository.findById(userId);
+				
+				TCoCustUser tCoCustUser = userOptional2.get();
+				
+				String userTel = (String) params.get("userTel");
+				String userHp = (String) params.get("userHp");
+				String userEmail = (String) params.get("userEmail");
+				String userBuseo = (String) params.get("userBuseo");
+				String userPosition = (String) params.get("userPosition");
+				
+				tCoCustUser.setUserTel(userTel);
+				tCoCustUser.setUserHp(userHp);
+				tCoCustUser.setUserEmail(userEmail);
+				tCoCustUser.setUserBuseo(userBuseo);
+				tCoCustUser.setUserPosition(userPosition);
+				
+				return resultBody;
+			}
+	
+		}catch(Exception e){
+			e.printStackTrace();
+			resultBody.setCode("ERROR");
+	        resultBody.setStatus(500);
+	        resultBody.setMsg("An error occurred while updating the user info.");
+	        resultBody.setData(e.getMessage());
+	        
+	        return resultBody;
+		}
+	}
+	
+	
 
 }

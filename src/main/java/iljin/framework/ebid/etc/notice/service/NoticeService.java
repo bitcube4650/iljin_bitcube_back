@@ -164,7 +164,7 @@ public class NoticeService {
 			            sbCount.append(
 			            		                                   " and ( "
 			            		      );
-			            
+			            //감사사용자의 계열사 조건 추가
 			            sbCount.append(" tcbc.interrelated_cust_code = " + interrelatedCode );
 			            
 			            //감사사용자에 해당하는 계열사 조건 추가
@@ -258,7 +258,7 @@ public class NoticeService {
 						sbList.append(
             		                                              " and ( "
             		             	  );
-            
+						//감사사용자의 계열사 조건 추가
 						sbList.append(" tcbc.interrelated_cust_code = " + interrelatedCode );
 						
 						//감사사용자에 해당하는 계열사 조건 추가
@@ -312,7 +312,6 @@ public class NoticeService {
 			sbCount.append(sbWhere);
 			Query queryTotal = entityManager.createNativeQuery(sbCount.toString());
 
-			System.out.println("여태까지 쿼리 " + sbCount);
 			//공지사항 제목
 			if (!StringUtils.isEmpty(params.get("title"))) {
 				queryList.setParameter("title", params.get("title"));

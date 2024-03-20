@@ -245,4 +245,24 @@ public class UserServiceImpl implements UserService {
         UserDto data = new JpaResultMapper().uniqueResult(query, UserDto.class);
         return data;
     }
+    
+    //비밀번호 확인
+    public boolean checkPassword(String userId, String password) {
+        try {
+            // 사용자명과 비밀번호를 사용하여 UsernamePasswordAuthenticationToken 생성
+            UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(userId, password);
+            
+            // AuthenticationManager를 사용하여 인증 시도
+            Authentication authentication = authenticationManager.authenticate(token);
+
+            // 인증이 성공하면 SecurityContextHolder에 인증 정보 설정
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            // 사용자가 인증되었는지 확인
+            return authentication.isAuthenticated();
+        } catch (AuthenticationException e) {
+            // 인증에 실패한 경우
+            return false;
+        }
+    }
 }
