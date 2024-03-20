@@ -1,11 +1,7 @@
-package iljin.framework.core.security.aes;
+package iljin.framework.ebid.etc.util.common.file;
 
-import javax.crypto.Cipher;
-import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -27,35 +23,19 @@ public class AES_FileEncryption {
         //파일 경로 추출
         String directoryPath = path.getParent().toString();
 
+        //임시로 생성될 파일 경로 생성
         String encryptedFilePath = directoryPath +  "/" + "test" + fileName;
 
         File originalFile = new File(filePath);
         File encryptedFile = new File(encryptedFilePath);
 
         Key secretKey = new SecretKeySpec(toBytes(KEY, 16), ALGORITHM);
-        Cipher cipher = Cipher.getInstance(TRANSFORMATION);
-        cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+        FileCrypt coder = new FileCrypt(secretKey);
 
-        // Get the initialization vector
-        byte[] iv = cipher.getIV();
-        try (FileInputStream inputStream = new FileInputStream(originalFile);
-             FileOutputStream outputStream = new FileOutputStream(encryptedFile)) {
-            // Write the IV to the beginning of the file
-            outputStream.write(iv);
-
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                byte[] encryptedBytes = cipher.update(buffer, 0, bytesRead);
-                if (encryptedBytes != null) {
-                    outputStream.write(encryptedBytes);
-                }
-            }
-
-            byte[] finalBytes = cipher.doFinal();
-            if (finalBytes != null) {
-                outputStream.write(finalBytes);
-            }
+        try {
+            coder.encrypt(originalFile, encryptedFile);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
         // 기존 원본 파일 삭제
@@ -65,7 +45,7 @@ public class AES_FileEncryption {
         Files.move(Paths.get(encryptedFilePath), Paths.get(filePath));
     }
 
-    public static String decryptFile(String filePath) throws Exception {
+    public static String decryptFile(String filePath) throws Exception  {
         //파일 경로를 Path 객체로 변환
         Path path = Paths.get(filePath);
 
@@ -75,45 +55,30 @@ public class AES_FileEncryption {
         //파일 경로 추출
         String directoryPath = path.getParent().toString();
 
-        //복호화 파일 경로 생성
+        //임시로 복호화 파일 경로 생성
         String decryptedFilePath = directoryPath + "/tempDir/" + fileName;
+
+        // tempDir 디렉토리가 없으면 생성
+        Path tempDir = Paths.get(directoryPath, "tempDir");
+
+        if (!Files.exists(tempDir)) {
+            Files.createDirectories(tempDir);
+        }
 
         File encryptedFile = new File(filePath);
         File decryptedFile = new File(decryptedFilePath);
 
         Key secretKey = new SecretKeySpec(toBytes(KEY, 16), ALGORITHM);
-        Cipher cipher = Cipher.getInstance(TRANSFORMATION);
+        FileCrypt coder = new FileCrypt(secretKey);
 
-        byte[] iv;
-        try (FileInputStream inputStream = new FileInputStream(filePath)) {
-            iv = new byte[16];
-            inputStream.read(iv); // Read the IV from the beginning of the file
-        }
-
-        cipher.init(Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(iv));
-
-        try (FileInputStream inputStream = new FileInputStream(encryptedFile);
-             FileOutputStream outputStream = new FileOutputStream(decryptedFile)) {
-
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                byte[] decryptedBytes = cipher.update(buffer, 0, bytesRead);
-                if (decryptedBytes != null) {
-                    outputStream.write(decryptedBytes);
-                }
-            }
-
-            byte[] finalBytes = cipher.doFinal();
-            if (finalBytes != null) {
-                outputStream.write(finalBytes);
-            }
+        try {
+            coder.decrypt(encryptedFile, decryptedFile);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
         return decryptedFilePath;
     }
-
-
 
     /**
      * <p>문자열을 바이트배열로 바꾼다.</p>

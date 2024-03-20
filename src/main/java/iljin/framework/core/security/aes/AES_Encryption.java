@@ -1,18 +1,27 @@
 package iljin.framework.core.security.aes;
 
+import org.springframework.util.FileCopyUtils;
+import org.springframework.web.multipart.MultipartFile;
+
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.security.SecureRandom;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.Arrays;
 import java.util.Base64;
 
+import javax.crypto.spec.SecretKeySpec;
+
 public class AES_Encryption {
 
     static String key = "12345678901234567890123456789012";
+    //private static final String SYSTEM_FILEENCRYPT_KEY = "626974637562656669676874696E6721";
 
     public static String encrypt(String plainText) throws Exception {
         SecretKey keyspec = new SecretKeySpec(key.getBytes("UTF-8"), "AES");
@@ -81,4 +90,10 @@ public class AES_Encryption {
 
         return new String(origin, "UTF-8");
     }
+
+
+
+
+
+
 }
