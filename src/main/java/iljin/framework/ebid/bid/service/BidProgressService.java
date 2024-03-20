@@ -409,9 +409,9 @@ public class BidProgressService {
                         "WHERE a.use_yn = 'Y' ");
 
         StringBuilder sbCustList = new StringBuilder(
-                "SELECT a.bi_no AS bi_no, CAST(a.cust_code AS CHAR) AS cust_code, b.cust_name AS cust_name, d.code_name AS esmt_curr, e.user_name AS user_name, "
+                "SELECT a.bi_no AS bi_no, CAST(a.cust_code AS CHAR) AS cust_code, b.cust_name AS cust_name, d.code_name AS esmt_curr, a.esmt_amt AS esmt_amt, e.user_name AS user_name, "
                         +
-                        "a.esmt_yn AS esmt_yn, c.file_nm AS file_nm, c.file_path AS file_path, a.etc_b_file AS etc_file, a.etc_b_file_path AS etc_path, "
+                        "a.esmt_yn AS esmt_yn, c.file_nm AS file_nm, c.file_path AS file_path, a.etc_b_file AS etc_file, a.etc_b_file_path AS etc_path, a.succ_yn AS succ_yn, "
                         +
                         "DATE_FORMAT(a.submit_date, '%Y-%m-%d %H:%i') AS submit_date " +
                         "FROM t_bi_info_mat_cust a " +
@@ -584,11 +584,14 @@ public class BidProgressService {
         Query queryList = entityManager.createNativeQuery(sbList.toString());
         queryList.setParameter("biNo", biNo);
         int rowsUpdated = queryList.executeUpdate();
+        UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String userId = principal.getUsername();
 
         if (rowsUpdated > 0) {
             Map<String, String> logParams = new HashMap<>();
             logParams.put("msg", "[본사]입찰공고");
             logParams.put("biNo", biNo);
+            logParams.put("userId", userId);
             updateLog(logParams);
         }
 
@@ -1096,9 +1099,8 @@ public class BidProgressService {
     public void updateLog(Map<String, String> params) {
         String msg = params.get("msg");
         String biNo = params.get("biNo");
+        String userId = params.get("userId");
 
-        UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String userId = principal.getUsername();
 
         StringBuilder sbList = new StringBuilder(
                 "INSERT INTO t_bi_log (bi_no, user_id, log_text, create_date) VALUES " +
