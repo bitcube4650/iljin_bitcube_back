@@ -30,4 +30,8 @@ public class BidPartnerStatusController {
     public Page statuslist(@RequestBody Map<String, Object> params) {
         return bidPartnerStatusService.statuslist(params);
     }
+
+    @PostMapping("/checkBid")
+    public void checkBid(@RequestBody Map<String, Object> params) {
+    }
 }

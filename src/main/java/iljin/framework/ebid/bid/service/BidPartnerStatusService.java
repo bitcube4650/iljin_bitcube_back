@@ -130,48 +130,47 @@ public class BidPartnerStatusService {
 
             sbWhere.append(" and ( ");
             if ((Boolean) params.get("noticeYn") && !(Boolean) params.get("participateYn")
-            && !(Boolean) (params.get("rebidYn"))) {
+                    && !(Boolean) (params.get("rebidYn"))) {
                 sbWhere.append(" a.ing_tag = 'A0' ");
             }
             if ((Boolean) params.get("noticeYn") && (Boolean) params.get("participateYn")
-            && !(Boolean) (params.get("rebidYn"))) {
+                    && !(Boolean) (params.get("rebidYn"))) {
                 sbWhere.append(" a.ing_tag = 'A0' or d.esmt_yn = '2' ");
             }
             if ((Boolean) params.get("noticeYn") && (Boolean) params.get("participateYn")
-            && (Boolean) (params.get("rebidYn"))) {
+                    && (Boolean) (params.get("rebidYn"))) {
                 sbWhere.append(" a.ing_tag = 'A0' or d.esmt_yn = '2' or a.ing_tag = 'A3' ");
             }
             if ((Boolean) params.get("noticeYn") && !(Boolean) params.get("participateYn")
-            && (Boolean) (params.get("rebidYn"))) {
+                    && (Boolean) (params.get("rebidYn"))) {
                 sbWhere.append(" a.ing_tag = 'A0' or a.ing_tag = 'A3' ");
             }
             if (!(Boolean) params.get("noticeYn") && (Boolean) params.get("participateYn")
-            && !(Boolean) (params.get("rebidYn"))) {
+                    && !(Boolean) (params.get("rebidYn"))) {
                 sbWhere.append(" d.esmt_yn = '2' ");
             }
             if (!(Boolean) params.get("noticeYn") && (Boolean) params.get("participateYn")
-            && (Boolean) (params.get("rebidYn"))) {
+                    && (Boolean) (params.get("rebidYn"))) {
                 sbWhere.append(" d.esmt_yn = '2' or a.ing_tag = 'A3' ");
             }
             if (!(Boolean) params.get("noticeYn") && !(Boolean) params.get("participateYn")
-            && (Boolean) (params.get("rebidYn"))) {
+                    && (Boolean) (params.get("rebidYn"))) {
                 sbWhere.append(" a.ing_tag = 'A3' ");
             }
             sbWhere.append(" ) ");
-            } else {// 아무것도 체크하지 않은 경우
+        } else {// 아무것도 체크하지 않은 경우
 
             sbWhere.append(" and a.ing_tag = '99' ");
         }
 
-            sbWhere.append(
-                    "and (a.create_user = :userid " +
-                    "or a.open_att1 = :userid " +
-                    "or a.open_att2 = :userid " +
-                    "or a.gongo_id = :userid " +
-                    "or a.est_bidder = :userid " +
-                    "or a.est_opener = :userid)");
+        sbWhere.append(
+                "and (a.create_user = :userid " +
+                        "or a.open_att1 = :userid " +
+                        "or a.open_att2 = :userid " +
+                        "or a.gongo_id = :userid " +
+                        "or a.est_bidder = :userid " +
+                        "or a.est_opener = :userid)");
 
-     
         sbList.append(sbWhere);
         sbCount.append(sbWhere);
 
@@ -198,4 +197,24 @@ public class BidPartnerStatusService {
 
         BigInteger count = (BigInteger) queryTotal.getSingleResult();
         return new PageImpl(list, pageable, count.intValue());
-    }}
+    }
+
+    public void checkBid(@RequestBody Map<String, Object> params) {
+        UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String userId = principal.getUsername();
+
+        String biNo = (String) params.get("biNo");
+
+        StringBuilder updateBid = new StringBuilder(
+            "UPDATE t_bi_info_mat_cust set esmt_yn = '1' where bi_no = :biNo and cust_code = :custCode");
+        Query updateQ = entityManager.createNativeQuery(updateBid.toString());   
+        updateQ.setParameter("biNo", biNo);
+        updateQ.setParameter("custCode", (String) params.get("custCode"));
+
+        Map<String, String> logParams = new HashMap<>();
+        logParams.put("msg", "[업체]공고확인");
+        logParams.put("biNo", biNo);
+        logParams.put("userId", userId);
+        bidProgressService.updateLog(logParams);
+    }
+}

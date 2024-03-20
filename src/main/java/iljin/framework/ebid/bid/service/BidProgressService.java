@@ -584,11 +584,14 @@ public class BidProgressService {
         Query queryList = entityManager.createNativeQuery(sbList.toString());
         queryList.setParameter("biNo", biNo);
         int rowsUpdated = queryList.executeUpdate();
+        UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String userId = principal.getUsername();
 
         if (rowsUpdated > 0) {
             Map<String, String> logParams = new HashMap<>();
             logParams.put("msg", "[본사]입찰공고");
             logParams.put("biNo", biNo);
+            logParams.put("userId", userId);
             updateLog(logParams);
         }
 
@@ -1096,9 +1099,8 @@ public class BidProgressService {
     public void updateLog(Map<String, String> params) {
         String msg = params.get("msg");
         String biNo = params.get("biNo");
+        String userId = params.get("userId");
 
-        UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String userId = principal.getUsername();
 
         StringBuilder sbList = new StringBuilder(
                 "INSERT INTO t_bi_log (bi_no, user_id, log_text, create_date) VALUES " +
