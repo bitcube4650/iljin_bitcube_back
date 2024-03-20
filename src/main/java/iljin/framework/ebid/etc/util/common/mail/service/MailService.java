@@ -1,4 +1,4 @@
-package iljin.framework.ebid.etc.util.common.mail.service;v
+package iljin.framework.ebid.etc.util.common.mail.service;
 
 import iljin.framework.ebid.etc.util.common.mail.repository.MailRepository;
 import lombok.RequiredArgsConstructor;
