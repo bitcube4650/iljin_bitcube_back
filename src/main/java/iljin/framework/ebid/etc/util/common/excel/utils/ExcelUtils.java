@@ -379,8 +379,9 @@ public final class ExcelUtils implements ExcelSupport {
          */
         String estStartDate    = CommonUtils.getString(result.get("estStartDate"), "");  //제출 시작일시
         String estCloseDate    = CommonUtils.getString(result.get("estCloseDate"), "");  //제출 마감일시
-        String estOpener       = CommonUtils.getString(result.get("estOpener"), "");     //개찰자, 낙찰자
+        String estOpener       = CommonUtils.getString(result.get("estOpener"), "");     //개찰자
         String gongoId         = CommonUtils.getString(result.get("gongoId"), "");       //입찰 공고자
+        String estBidder       = CommonUtils.getString(result.get("estBidder"), "");     //낙찰자
         String openAtt1        = CommonUtils.getString(result.get("openAtt1"), "");      //입회자1
         String openAtt2        = CommonUtils.getString(result.get("openAtt2"), "");      //입회자2
         String supplyCond      = CommonUtils.getString(result.get("supplyCond"), "");    //납품 조건
@@ -409,13 +410,14 @@ public final class ExcelUtils implements ExcelSupport {
         */
         xssfSheet.getRow(19).getCell(1).setCellValue(estStartDate);  //제출시작일시
         xssfSheet.getRow(20).getCell(1).setCellValue(estCloseDate);  //제출마감일시
-        xssfSheet.getRow(21).getCell(1).setCellValue(estOpener);     //개찰자/낙찰자
+        xssfSheet.getRow(21).getCell(1).setCellValue(estOpener);     //개찰자
         xssfSheet.getRow(22).getCell(1).setCellValue(gongoId);       //입찰공고자
-        xssfSheet.getRow(23).getCell(1).setCellValue(openAtt1);      //입회자1
-        xssfSheet.getRow(24).getCell(1).setCellValue(openAtt2);      //입회자2
-        xssfSheet.getRow(25).getCell(1).setCellValue(supplyCond);    //납품조건
-        xssfSheet.getRow(26).getCell(1).setCellValue(insMode);       //내역방식
-        xssfSheet.getRow(27).getCell(1).setCellValue(insModeContent);//내역사항
+        xssfSheet.getRow(23).getCell(1).setCellValue(estBidder);     //낙찰자
+        xssfSheet.getRow(24).getCell(1).setCellValue(openAtt1);      //입회자1
+        xssfSheet.getRow(25).getCell(1).setCellValue(openAtt2);      //입회자2
+        xssfSheet.getRow(26).getCell(1).setCellValue(supplyCond);    //납품조건
+        xssfSheet.getRow(27).getCell(1).setCellValue(insMode);       //내역방식
+        xssfSheet.getRow(28).getCell(1).setCellValue(insModeContent);//내역사항
 
         response.setCharacterEncoding("UTF-8");
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
