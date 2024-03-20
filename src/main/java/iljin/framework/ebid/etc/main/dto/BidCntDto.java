@@ -8,22 +8,18 @@ import lombok.Data;
 public class BidCntDto {
 
 	private BigInteger planning;
-    private BigInteger progress;
-    private BigInteger opening;
+    private BigInteger noticing;
     private BigInteger beforeOpening;
-    private BigInteger beforeReopening;
-    private BigInteger rebid;
+    private BigInteger opening;
     private BigInteger completed;
     private BigInteger unsuccessful;
 
-    public BidCntDto(BigInteger planning, BigInteger progress, BigInteger opening, BigInteger beforeOpening,BigInteger beforeReopening,
-                     BigInteger rebid, BigInteger completed, BigInteger unsuccessful) {
+    public BidCntDto(BigInteger planning, BigInteger noticing, BigInteger beforeOpening,BigInteger opening,
+                     BigInteger completed, BigInteger unsuccessful) {
         this.planning = planning;
-        this.progress = progress;
-        this.opening = opening;
+        this.noticing = noticing;
         this.beforeOpening = beforeOpening;
-        this.beforeReopening = beforeReopening;
-        this.rebid = rebid;
+        this.opening = opening;
         this.completed = completed;
         this.unsuccessful = unsuccessful;
     }

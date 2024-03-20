@@ -1,8 +1,10 @@
 package iljin.framework.ebid.bid.controller;
 
+import java.io.IOException;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,12 +24,18 @@ public class BidCompleteController {
 	private BidCompleteService bidCompleteSvc;
 	
 	@PostMapping("/list")
-    public Page complateBidList(@RequestBody Map<String, Object> params) {
-    	return bidCompleteSvc.complateBidList(params);
-    }
-    
-    @PostMapping("/detail")
-    public ResultBody complateBidDetail(@RequestBody Map<String, Object> params) {
-    	return bidCompleteSvc.complateBidDetail(params);
-    }
+	public Page complateBidList(@RequestBody Map<String, Object> params) {
+		return bidCompleteSvc.complateBidList(params);
+	}
+	
+	@PostMapping("/detail")
+	public ResultBody complateBidDetail(@RequestBody Map<String, Object> params) {
+		return bidCompleteSvc.complateBidDetail(params);
+	}
+	
+	@PostMapping("/fileDown")
+	public ByteArrayResource downloadFile(@RequestBody Map<String, Object> params) throws IOException {
+
+		return bidCompleteSvc.fileDown(params);
+	}
 }

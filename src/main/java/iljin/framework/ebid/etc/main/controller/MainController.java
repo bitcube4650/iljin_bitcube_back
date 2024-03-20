@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import iljin.framework.ebid.etc.main.dto.BidCntDto;
+import iljin.framework.ebid.etc.main.dto.PartnerBidCntDto;
 import iljin.framework.ebid.etc.main.dto.PartnerCntDto;
+import iljin.framework.ebid.etc.main.dto.PartnerCompletedBidCntDto;
 import iljin.framework.ebid.etc.main.service.MainService;
 
 @RestController
@@ -35,5 +37,19 @@ public class MainController {
     public PartnerCntDto selectPartnerCnt(@RequestBody Map<String, Object> params) throws IOException {
 
         return mainService.selectPartnerCnt(params);
+    }
+	
+	//협력사 전자입찰 건수 조회
+	@PostMapping("/selectPartnerBidCnt")
+    public PartnerBidCntDto selectPartnerBidCnt(@RequestBody Map<String, Object> params) throws IOException {
+
+        return mainService.selectPartnerBidCnt(params);
+    }
+	
+	//입찰완료 조회
+	@PostMapping("/selectCompletedBidCnt")
+    public PartnerCompletedBidCntDto selectCompletedBidCnt(@RequestBody Map<String, Object> params) throws IOException {
+
+        return mainService.selectCompletedBidCnt(params);
     }
 }

@@ -2,28 +2,37 @@ package iljin.framework.core.security.user;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+@Data
 public class CustomUserDetails implements UserDetails {
 
-    private String userName;
+    private String username;
+    private String custType;
+    private String custCode;
+    private String custName;
+    private String password;
+    private String userNm;
+    private String userAuth;
+
+    /* UserServiceImpl.getAuthToken */
+    public CustomUserDetails(String custType, String custCode, String custName, String userNm, String loginId, String loginPw, String userAuth) {
+        this.custType = custType;
+        this.custCode = custCode;
+        this.custName = custName;
+        this.userNm = userNm;
+        this.username = loginId;
+        this.password = loginPw;
+        this.userAuth = userAuth;
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         ArrayList<GrantedAuthority> auth = new ArrayList<GrantedAuthority>();
         auth.add(new SimpleGrantedAuthority("ADMIN"));
         return auth;
-    }
-
-    @Override
-    public String getPassword() {
-        return "$2a$10$pnpwixs4igTRuvxsco9Zq.MEEEWpKIusKNJHqVYJkBhyQD5V4UFFe";
-    }
-
-    @Override
-    public String getUsername() {
-        return userName;
     }
 
     @Override
@@ -44,10 +53,6 @@ public class CustomUserDetails implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
-    }
-
-    public void setName(String userName) {
-        this.userName = userName;
     }
 
 }

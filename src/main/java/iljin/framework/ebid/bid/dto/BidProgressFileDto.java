@@ -28,4 +28,10 @@ public class BidProgressFileDto {
             this.fileNm = fileNm;
             this.filePath = filePath;
     }
+    
+    public BidProgressFileDto(String fileFlag, String fileNm, String filePath){
+        this.fileFlag = fileFlag;
+        this.fileNm = fileNm;
+        this.filePath = filePath;
+    }
 }

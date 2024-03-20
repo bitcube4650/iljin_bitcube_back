@@ -13,23 +13,11 @@ import java.util.Map;
 import java.util.Optional;
 
 public interface UserService {
-    List<UserDto> getUsers();
-    Optional<User> getUser(Long id);
-    Optional<User> getUserByLoginId(String loginId);
-    List<User> getSearchUser(String loginId);
-    @Modifying
-    @Transactional
-    ResponseEntity<Object> addUser(UserDto dto);
-    @Modifying
-    @Transactional
-    ResponseEntity<String> deleteUser(String loginId);
-    @Modifying
-    @Transactional
-    ResponseEntity<User> updateUser(String id, UserDto dto);
     ResponseEntity<AuthToken> login(UserDto userDto, HttpSession session, HttpServletRequest request);
     ResponseEntity<AuthToken> ssoLogin(UserDto userDto, HttpSession session, HttpServletRequest request);
     void logout(HttpSession session);
     Map idSearch(Map<String, String> params);
     Map pwSearch(Map<String, String> params);
     Map custSave(Map<String, String> params);
+    UserDto findUser(String loginId);
 }

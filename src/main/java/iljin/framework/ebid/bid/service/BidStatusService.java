@@ -14,6 +14,7 @@ import iljin.framework.ebid.bid.dto.CoUserInfoDto;
 import iljin.framework.ebid.bid.dto.EmailDto;
 import iljin.framework.ebid.bid.dto.InterUserInfoDto;
 import iljin.framework.ebid.bid.dto.InterrelatedCustDto;
+import iljin.framework.ebid.bid.dto.SubmitHistDto;
 import iljin.framework.ebid.custom.entity.TCoUser;
 import iljin.framework.ebid.custom.repository.TCoUserRepository;
 import iljin.framework.ebid.etc.util.PagaUtils;
@@ -86,7 +87,7 @@ public class BidStatusService {
         String userId = principal.getUsername();
 
         StringBuilder sbCount = new StringBuilder(
-                " select count(1) from t_bi_info_mat a where a.ing_tag = 'A1' ");
+                " select count(1) from t_bi_info_mat a where 1=1 ");
         StringBuilder sbList = new StringBuilder(
                 "SELECT a.bi_no AS bi_no, a.bi_name AS bi_name, " +
                         "DATE_FORMAT(a.est_start_date, '%Y-%m-%d %H:%i') AS est_start_date, " +
@@ -110,17 +111,50 @@ public class BidStatusService {
         if (!StringUtils.isEmpty(params.get("bidName"))) {
             sbWhere.append(" and a.bi_name like concat('%',:bidName,'%') ");
         }
-        sbWhere.append("and ( a.ing_tag = 'A1' ");
-        if ((Boolean) (params.get("rebidYn"))) {
-            sbWhere.append(" or a.ing_tag = 'A3' ");
+        // 재입찰 포함, 개찰대상, 업체선정대상 플래그 값 하나라도 체크가 되어있는 경우
+        if ((Boolean) params.get("rebidYn") || (Boolean) params.get("openBidYn")
+                || (Boolean) (params.get("dateOverYn"))) {
+
+            // 괄호열기
+            sbWhere.append(" and ( ");
+
+            // 재입찰 포함, 개찰대상중 하나라도 체크된 경우
+            if ((Boolean) params.get("rebidYn") || (Boolean) params.get("dateOverYn")) {
+
+                // 무조건 A1 포함
+                sbWhere.append(" a.ing_tag = 'A1' ");
+
+                // 재입찰 체크한 경우
+                if ((Boolean) params.get("rebidYn")) {
+                    sbWhere.append(" or a.ing_tag = 'A3' ");
+                }
+
+                // 업체선정대상 체크한 경우
+                if ((Boolean) params.get("rebidYn")) {
+                    sbWhere.append(" or a.ing_tag = 'A2' ");
+                }
+
+            } else {// 업체선정대상만 체크된 경우
+
+                // 무조건 A2 포함
+                sbWhere.append(" a.ing_tag = 'A2' ");
+
+            }
+
+            // 괄호닫기
+            sbWhere.append(" ) ");
+
+        } else {// 아무것도 체크하지 않은 경우
+
+            // A1(입찰진행)만 출력
+            sbWhere.append(" and a.ing_tag = 'A1' ");
+            ;
+
         }
 
-        if ((Boolean) (params.get("openBidYn"))) {
-            sbWhere.append(" or a.ing_tag = 'A2' ");
-        }
-        sbWhere.append(" ) ");
-        if (!(Boolean) (params.get("dateOverYn"))) {
-            sbWhere.append(" and a.est_close_date >= sysdate() ");
+        // 개찰대상 체크한 경우
+        if ((Boolean) params.get("dateOverYn")) {
+            sbWhere.append(" and a.est_close_date < sysdate() ");
         }
 
         if (userAuth.equals("1") || userAuth.equals("2") || userAuth.equals("3")) {
@@ -146,6 +180,7 @@ public class BidStatusService {
                     sbWhere.append(" or ");
                 }
                 sbWhere.append("a.interrelated_cust_code = :custCode").append(i);
+                sbWhere.append(" or a.interrelated_cust_code = :interrelatedCustCode");
             }
             sbWhere.append(")");
 
@@ -158,6 +193,7 @@ public class BidStatusService {
                             "or a.est_opener = :userid)");
         }
         sbList.append(sbWhere);
+        sbCount.append(sbWhere);
 
         Query queryList = entityManager.createNativeQuery(sbList.toString());
         sbCount.append(sbWhere);
@@ -188,6 +224,8 @@ public class BidStatusService {
                 queryList.setParameter("custCode" + i, custCodes.get(i));
                 queryTotal.setParameter("custCode" + i, custCodes.get(i));
             }
+            queryList.setParameter("interrelatedCustCode", interrelatedCode);
+            queryTotal.setParameter("interrelatedCustCode", interrelatedCode);
             queryList.setParameter("userid", userId);
             queryTotal.setParameter("userid", userId);
         }
@@ -317,5 +355,53 @@ public class BidStatusService {
 
         ResultBody resultBody = new ResultBody();
         return resultBody;
+    }
+
+    public Page submitHist(@RequestBody Map<String, Object> params) {
+        String biNo = (String) params.get("biNo");
+        String custCode = (String) params.get("custCode");
+
+        StringBuilder sbCount = new StringBuilder("");
+        StringBuilder sbList = new StringBuilder("");
+
+        StringBuilder ins = new StringBuilder(
+                "SELECT ins_mode from t_bi_info_mat where bi_no = :biNo");
+        Query insList = entityManager.createNativeQuery(ins.toString());
+        insList.setParameter("biNo", biNo);
+        String insMode = (String) insList.getSingleResult();
+
+        if (insMode.equals("1")) {
+            sbCount.append(
+                    "SELECT count(1) from t_bi_info_mat_cust_temp where bi_no = :biNo and cust_code = :custCode");
+            sbList.append(
+                    "SELECT '1' AS insMode, bi_order, esmt_curr, esmt_amt, DATE_FORMAT(submit_date, '%Y-%m-%d %H:%i') AS submit_date from t_bi_info_mat_cust_temp "
+                            +
+                            "where bi_no = :biNo and cust_code = :custCode");
+        }
+
+        else if (insMode.equals("2")) {
+            sbCount.append(
+                    "SELECT count(1) from t_bi_detail_mat_cust_temp a, t_bi_info_mat_cust b " +
+                            "where a.bi_no = :biNo and a.cust_code = :custCode and (a.bi_no =b.bi_no and a.cust_code = b.cust_code)");
+            sbList.append(
+                    "SELECT '2' AS insMode, a.bi_order AS bi_order, 'KRW' AS esmt_curr, a.esmt_uc AS esmt_amt, DATE_FORMAT(b.submit_date, '%Y-%m-%d %H:%i') AS submit_date "
+                            +
+                            "from t_bi_detail_mat_cust_temp a, t_bi_info_mat_cust b " +
+                            "where a.bi_no = :biNo and a.cust_code = :custCode and (a.bi_no =b.bi_no and a.cust_code = b.cust_code)");
+        }
+        Query queryList = entityManager.createNativeQuery(sbList.toString());
+        Query queryCountList = entityManager.createNativeQuery(sbCount.toString());
+        queryList.setParameter("biNo", biNo);
+        queryCountList.setParameter("biNo", biNo);
+        queryList.setParameter("custCode", custCode);
+        queryCountList.setParameter("custCode", custCode);
+
+        Pageable pageable = PagaUtils.pageable(params);
+        queryList.setFirstResult(pageable.getPageNumber() * pageable.getPageSize())
+                .setMaxResults(pageable.getPageSize()).getResultList();
+        List list = new JpaResultMapper().list(queryList, SubmitHistDto.class);
+
+        BigInteger count = (BigInteger) queryCountList.getSingleResult();
+        return new PageImpl(list, pageable, count.intValue());
     }
 }
