@@ -34,9 +34,9 @@ public class TCoUserDto {
 	/**
 	 * 목록 (/api/v1/couser/userList)
 	 */
-	public TCoUserDto(String userName, String userPosition, String deptName, String userTel, String userHp, String userAuth, String useYn, String interrelatedCustNm) {
-		this.userId = userId;
+	public TCoUserDto(String userName, String userId, String userPosition, String deptName, String userTel, String userHp, String userAuth, String useYn, String interrelatedCustNm) {
 		this.userName = userName;
+		this.userId = userId;
 		this.userPosition = userPosition;
 		this.deptName = deptName;
 		this.userTel = userTel;
@@ -47,24 +47,9 @@ public class TCoUserDto {
 	}
 
 	/**
-	 * 상세 (/api/v1/couser/detail)
-	 */
-	public TCoUserDto(String userId, String userName, String userPosition, String deptName, String userTel, String userHp, String userAuth, String useYn, String interrelatedCustCode) {
-		this.userId = userId;
-		this.userName = userName;
-		this.userPosition = userPosition;
-		this.deptName = deptName;
-		this.userTel = userTel;
-		this.userHp = userHp;
-		this.userAuth = userAuth;
-		this.useYn = useYn;
-		this.interrelatedCustCode = interrelatedCustCode;
-	}
-
-	/**
 	 * ??
 	 */
-	public TCoUserDto(String userId, String userName, String userPosition, String deptName, String userTel, String userHp, String userAuth, String useYn, String interrelatedCustCode, String openauth, String userEmail) {
+	public TCoUserDto(String userId, String userName, String userPosition, String deptName, String userTel, String userHp, String userAuth, String useYn, String interrelatedCustCode, String openauth, String userEmail, String userType) {
 		this.userId = userId;
 		this.userName = userName;
 		this.userPosition = userPosition;

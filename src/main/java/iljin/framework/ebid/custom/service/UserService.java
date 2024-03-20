@@ -144,7 +144,7 @@ public class UserService {
         query.executeUpdate();
 
         // 고유 키가 없기에 매번 지워야 한다.
-        sbQuery = new StringBuilder(" delete from t_co_user_interrealated where user_id = :userId");
+        sbQuery = new StringBuilder(" delete from t_co_user_interrelated where user_id = :userId");
         query = entityManager.createNativeQuery(sbQuery.toString());
         query.setParameter("userId", params.get("userId"));
         query.executeUpdate();
@@ -153,13 +153,24 @@ public class UserService {
             List<Map> list = (List) params.get("userInterrelatedList");
             for (Map<String, Object> data : list) {
                 if (data.get("check") != null) {
-                    sbQuery = new StringBuilder(" insert into t_co_user_interrealated (interrelated_cust_code, user_id) values (:interrelatedCustCode, :userId)");
+                    sbQuery = new StringBuilder(" insert into t_co_user_interrelated (interrelated_cust_code, user_id) values (:interrelatedCustCode, :userId)");
                     query = entityManager.createNativeQuery(sbQuery.toString());
                     query.setParameter("interrelatedCustCode", data.get("key"));
                     query.setParameter("userId", params.get("userId"));
                     query.executeUpdate();
                 }
             }
+        }
+        return resultBody;
+    }
+    public ResultBody idcheck(Map<String, Object> params) {
+        ResultBody resultBody = new ResultBody();
+        StringBuilder sb = new StringBuilder(" SELECT (SELECT COUNT(1) FROM t_co_user WHERE user_id = :userId) + (SELECT COUNT(1) FROM t_co_cust_user WHERE user_id = :userId)");
+        Query query = entityManager.createNativeQuery(sb.toString());
+        query.setParameter("userId", params.get("userId"));
+        BigInteger cnt = (BigInteger) query.getSingleResult();
+        if (cnt.longValue() > 0) {
+            resultBody.setCode("DUP"); // 아이디중복됨
         }
         return resultBody;
     }

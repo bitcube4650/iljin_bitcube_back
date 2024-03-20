@@ -15,7 +15,7 @@ public class TCoCustUser {
 	@Column(name="user_id")
 	String userId;
 	@Column(name="cust_code")
-	String custCode;
+	int custCode;
 	@Column(name="user_name")
 	String userName;
 	@Column(name="user_tel")

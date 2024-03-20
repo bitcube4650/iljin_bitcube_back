@@ -79,15 +79,66 @@ public class CustService {
         return new PageImpl(list, pageable, count.intValue());
     }
 
+    public Page otherCustList(Map<String, Object> params) {
+        StringBuilder sbCount = new StringBuilder(" SELECT count(1) FROM t_co_cust_master a WHERE interrelated_cust_code != :custCode");
+        StringBuilder sbList = new StringBuilder(" SELECT cust_code \n" +
+                "     , cust_name \n" +
+                "     , CONCAT((SELECT CONCAT('1. ', item_name, '<br/>') FROM t_co_item x WHERE x.item_code = a.cust_type1)\n" +
+                "     , (SELECT CONCAT('2. ', item_name) FROM t_co_item x WHERE x.item_code = a.cust_type2)) AS cust_type1\n" +
+                "     , CONCAT(SUBSTR(regnum, 1, 3), '-', SUBSTR(regnum, 4, 2), '-', SUBSTR(regnum, 6, 5)) AS regnum\n" +
+                "     , pres_name \n" +
+                "     , (SELECT GROUP_CONCAT(interrelated_nm SEPARATOR '<br/>') FROM t_co_cust_ir x, t_co_interrelated y WHERE x.cust_code = a.cust_code AND x.interrelated_cust_code = y.interrelated_cust_code) AS interrelated_nm\n" +
+                "  FROM t_co_cust_master a\n" +
+                " WHERE interrelated_cust_code != :custCode");
+        StringBuilder sbWhere = new StringBuilder();
+
+        if (!StringUtils.isEmpty(params.get("custType"))) {
+            sbWhere.append(" AND (cust_type1 = :custType OR cust_type2 = :custType)");
+        }
+        if (!StringUtils.isEmpty(params.get("custName"))) {
+            sbWhere.append(" AND cust_name like concat('%',:custName,'%')");
+        }
+        sbList.append(sbWhere);
+        sbList.append(" order by create_date desc");
+        Query queryList = entityManager.createNativeQuery(sbList.toString());
+        sbCount.append(sbWhere);
+        Query queryTotal = entityManager.createNativeQuery(sbCount.toString());
+
+        queryList.setParameter("custCode", params.get("custCode"));
+        queryTotal.setParameter("custCode", params.get("custCode"));
+
+        if (!StringUtils.isEmpty(params.get("custType"))) {
+            queryList.setParameter("custType", params.get("custType"));
+            queryTotal.setParameter("custType", params.get("custType"));
+        }
+        if (!StringUtils.isEmpty(params.get("custName"))) {
+            queryList.setParameter("custName", params.get("custName"));
+            queryTotal.setParameter("custName", params.get("custName"));
+        }
+
+        Pageable pageable = PagaUtils.pageable(params);
+        queryList.setFirstResult(pageable.getPageNumber() * pageable.getPageSize()).setMaxResults(pageable.getPageSize()).getResultList();
+        List list = new JpaResultMapper().list(queryList, TCoCustMasterDto.class);
+
+        BigInteger count = (BigInteger) queryTotal.getSingleResult();
+        return new PageImpl(list, pageable, count.intValue());
+    }
+
     public TCoCustMasterDto custDetail(String id) {
         StringBuilder sb = new StringBuilder(" SELECT a.cust_code \n" +
                 "     , cust_name \n" +
                 "     , (SELECT interrelated_nm FROM t_co_interrelated x WHERE x.interrelated_cust_code = a.interrelated_cust_code) AS interrelated_nm\n" +
-                "     , (SELECT item_name FROM t_co_item x WHERE x.item_code = a.cust_type1) AS cust_type1\n" +
-                "     , (SELECT item_name FROM t_co_item x WHERE x.item_code = a.cust_type2) AS cust_type2\n" +
+                "     , cust_type1, cust_type2\n" +
+                "     , (SELECT item_name FROM t_co_item x WHERE x.item_code = a.cust_type1) AS cust_type_nm1\n" +
+                "     , (SELECT item_name FROM t_co_item x WHERE x.item_code = a.cust_type2) AS cust_type_nm2\n" +
                 "     , CONCAT(SUBSTR(regnum, 1, 3), '-', SUBSTR(regnum, 4, 2), '-', SUBSTR(regnum, 6, 5)) AS regnum\n" +
+                "     , SUBSTR(regnum, 1, 3) AS regnum1\n" +
+                "     , SUBSTR(regnum, 4, 2) AS regnum2\n" +
+                "     , SUBSTR(regnum, 6, 5) AS regnum3\n" +
                 "     , pres_name \n" +
                 "     , CONCAT(SUBSTR(pres_jumin_no, 1, 6), '-', SUBSTR(pres_jumin_no, 7, 7)) AS pres_jumin_no\n" +
+                "     , SUBSTR(pres_jumin_no, 1, 6) AS pres_jumin_no1\n" +
+                "     , SUBSTR(pres_jumin_no, 7, 7) AS pres_jumin_no2\n" +
                 "     , capital\n" +
                 "     , found_year \n" +
                 "     , tel\n" +
@@ -113,16 +164,10 @@ public class CustService {
         TCoCustMasterDto data = new JpaResultMapper().uniqueResult(query, TCoCustMasterDto.class);
         return data;
     }
-
-    @Transactional
-    public ResultBody save(Map<String, String> params) {
-        ResultBody resultBody = new ResultBody();
-        return resultBody;
-    }
     @Transactional
     public ResultBody approval(Map<String, Object> params) {
         ResultBody resultBody = new ResultBody();
-        StringBuilder sbQuery = new StringBuilder(" UPDATE  t_co_cust_master SET cert_yn = 'Y', update_user = :userId, update_date = now() WHERE cust_code = :custCode LIMIT 1");
+        StringBuilder sbQuery = new StringBuilder(" UPDATE t_co_cust_master SET cert_yn = 'Y', update_user = :userId, update_date = now() WHERE cust_code = :custCode LIMIT 1");
         Query query = entityManager.createNativeQuery(sbQuery.toString());
         query.setParameter("custCode", params.get("custCode"));
         UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -139,6 +184,97 @@ public class CustService {
         query.setParameter("custCode", params.get("custCode"));
         UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         query.setParameter("userId", principal.getUsername());
+        query.executeUpdate();
+        return resultBody;
+    }
+    @Transactional
+    public ResultBody insert(Map<String, Object> params) {
+        ResultBody resultBody = new ResultBody();
+        StringBuilder sbQuery = new StringBuilder(" INSERT INTO t_co_cust_master (cust_type1, cust_type2, cust_name, regnum, pres_name, pres_jumin_no, tel, fax, zipcode, addr, addr_detail, capital, found_year, cert_yn, etc, create_user, create_date, update_user, update_date, interrelated_cust_code, b_file, b_file_path, regnum_file, regnum_path)" +
+                " VALUES (:custType1, :custType2, :custName, :regnum, :presName, :presJuminNo, :tel, :fax, :zipcode, :addr, :addrDetail, :capital, :foundYear, :certYn, :etc, :userId, now(), :userId, now(), :interrelatedCustCode, :bFile, :bFilePath, :regnumFile, :regnumPath)");
+        Query query = entityManager.createNativeQuery(sbQuery.toString());
+        query.setParameter("custType1", params.get("custType1"));
+        query.setParameter("custType2", params.get("custType2"));
+        query.setParameter("custName", params.get("custName"));
+        query.setParameter("regnum", params.get("regnum1").toString()+params.get("regnum2").toString()+params.get("regnum3").toString());
+        query.setParameter("presName", params.get("presName"));
+        query.setParameter("presJuminNo", params.get("presJuminNo1").toString()+params.get("presJuminNo2").toString());
+        query.setParameter("tel", params.get("tel"));
+        query.setParameter("fax", params.get("fax"));
+        query.setParameter("zipcode", params.get("zipcode"));
+        query.setParameter("addr", params.get("addr"));
+        query.setParameter("addrDetail", params.get("addrDetail"));
+        query.setParameter("capital", params.get("capital"));
+        query.setParameter("foundYear", params.get("foundYear"));
+        query.setParameter("certYn", "Y");
+        query.setParameter("etc", "");
+        query.setParameter("interrelatedCustCode", params.get("interrelatedCustCode"));
+        query.setParameter("bFile", params.get("bFile"));
+        query.setParameter("bFilePath", params.get("bFilePath"));
+        query.setParameter("regnumFile", params.get("regnumFile"));
+        query.setParameter("regnumPath", params.get("regnumPath"));
+        UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        query.setParameter("userId", principal.getUsername());
+        query.executeUpdate();
+
+        query = entityManager.createNativeQuery("SELECT LAST_INSERT_ID()");
+        BigInteger custCode = (BigInteger) query.getSingleResult();
+
+        // 관리자 등록 처리
+        sbQuery = new StringBuilder(" INSERT INTO t_co_cust_user (user_id, cust_code, user_pwd, user_name, user_tel, user_hp, user_email, user_type, user_buseo, user_position, create_user, create_date, update_user, update_date, pwd_chg_date, use_yn)" +
+                " VALUES (:userId, :custCode, :userPwd, :userName, :userTel, :userHp, :userEmail, :userType, :userBuseo, :userPosition, :updUserId, now(), :updUserId, now(), now(), :useYn)");
+        query = entityManager.createNativeQuery(sbQuery.toString());
+        query.setParameter("userId", params.get("userId"));
+        query.setParameter("custCode", custCode.intValue());
+        query.setParameter("userPwd", params.get("userPwd"));
+        query.setParameter("userName", params.get("userName"));
+        query.setParameter("userTel", params.get("userTel"));
+        query.setParameter("userHp", params.get("userHp"));
+        query.setParameter("userEmail", params.get("userEmail"));
+        query.setParameter("userType", "1"); // 관리자
+        query.setParameter("userBuseo", params.get("userBuseo"));
+        query.setParameter("userPosition", params.get("userPosition"));
+        query.setParameter("updUserId", principal.getUsername());
+        query.setParameter("useYn", "Y");
+        query.executeUpdate();
+        return resultBody;
+    }
+    @Transactional
+    public ResultBody update(Map<String, Object> params) {
+        ResultBody resultBody = new ResultBody();
+        StringBuilder sbQuery = new StringBuilder(" UPDATE t_co_cust_master SET cust_name = :custName, regnum = :regnum, pres_name = :presName, pres_jumin_no = :presJuminNo, tel = :tel, fax = :fax, zipcode = :zipcode, addr = :addr, addr_detail = :addrDetail, capital = :capital" +
+                " , found_year = :foundYear, update_user = :userId, update_date = now(), b_file = :bFile, b_file_path = :bFilePath, regnum_file = :regnumFile, regnum_path = :regnumPath WHERE cust_code = :custCode");
+        Query query = entityManager.createNativeQuery(sbQuery.toString());
+        query.setParameter("custName", params.get("custName"));
+        query.setParameter("regnum", params.get("regnum1").toString()+params.get("regnum2").toString()+params.get("regnum3").toString());
+        query.setParameter("presName", params.get("presName"));
+        query.setParameter("presJuminNo", params.get("presJuminNo1").toString()+params.get("presJuminNo2").toString());
+        query.setParameter("tel", params.get("tel"));
+        query.setParameter("fax", params.get("fax"));
+        query.setParameter("zipcode", params.get("zipcode"));
+        query.setParameter("addr", params.get("addr"));
+        query.setParameter("addrDetail", params.get("addrDetail"));
+        query.setParameter("capital", params.get("capital"));
+        query.setParameter("foundYear", params.get("foundYear"));
+        query.setParameter("bFile", params.get("bFile"));
+        query.setParameter("bFilePath", params.get("bFilePath"));
+        query.setParameter("regnumFile", params.get("regnumFile"));
+        query.setParameter("regnumPath", params.get("regnumPath"));
+        UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        query.setParameter("userId", principal.getUsername());
+        query.setParameter("custCode", params.get("custCode"));
+        query.executeUpdate();
+
+        sbQuery = new StringBuilder(" UPDATE t_co_cust_user SET user_name = :userName, user_tel = :userTel, user_hp = :userHp, user_email = :userEmail, user_buseo = :userBuseo, user_position = :userPosition, update_user = :updUserId, update_date = now() WHERE user_id = :userId");
+        query = entityManager.createNativeQuery(sbQuery.toString());
+        query.setParameter("userName", params.get("userName"));
+        query.setParameter("userTel", params.get("userTel"));
+        query.setParameter("userHp", params.get("userHp"));
+        query.setParameter("userEmail", params.get("userEmail"));
+        query.setParameter("userBuseo", params.get("userBuseo"));
+        query.setParameter("userPosition", params.get("userPosition"));
+        query.setParameter("updUserId", principal.getUsername());
+        query.setParameter("userId", params.get("userId"));
         query.executeUpdate();
         return resultBody;
     }

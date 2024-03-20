@@ -1,6 +1,7 @@
 package iljin.framework.ebid.custom.controller;
 
 import iljin.framework.ebid.custom.repository.TCoCustUserRepository;
+import iljin.framework.ebid.custom.service.CustUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -16,20 +17,11 @@ import java.util.Map;
 public class CustUserController {
 
     @Autowired
-    private TCoCustUserRepository tCoCustUserRepository;
+    private CustUserService custUserService;
 
 
     @PostMapping("/userList")
     public Page userList(@RequestBody Map<String, Object> params) {
-        int page = 0;
-        int size = 5;
-        if (params.get("page") != null) {
-            page = (Integer) params.get("page");
-        }
-        if (params.get("size") != null) {
-            size = Integer.parseInt((String) params.get("size"));
-        }
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "userId"));
-        return tCoCustUserRepository.findAllByCustCode((String) params.get("custCode"), pageable);
+        return custUserService.userList(params);
     }
 }

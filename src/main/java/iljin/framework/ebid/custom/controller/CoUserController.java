@@ -39,4 +39,9 @@ public class CoUserController {
     public ResultBody save(@RequestBody Map<String, Object> params) {
         return userService.save(params);
     }
+
+    @PostMapping("/idcheck")
+    public ResultBody idcheck(@RequestBody Map<String, Object> params) {
+        return userService.idcheck(params);
+    }
 }
