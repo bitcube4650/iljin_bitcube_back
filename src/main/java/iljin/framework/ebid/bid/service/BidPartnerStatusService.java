@@ -11,6 +11,7 @@ import iljin.framework.ebid.bid.dto.BidProgressDto;
 import iljin.framework.ebid.bid.dto.BidProgressFileDto;
 import iljin.framework.ebid.bid.dto.BidProgressTableDto;
 import iljin.framework.ebid.bid.dto.CoUserInfoDto;
+import iljin.framework.ebid.bid.dto.CurrDto;
 import iljin.framework.ebid.bid.dto.EmailDto;
 import iljin.framework.ebid.bid.dto.InterUserInfoDto;
 import iljin.framework.ebid.bid.dto.InterrelatedCustDto;
@@ -206,15 +207,35 @@ public class BidPartnerStatusService {
         String biNo = (String) params.get("biNo");
 
         StringBuilder updateBid = new StringBuilder(
-            "UPDATE t_bi_info_mat_cust set esmt_yn = '1' where bi_no = :biNo and cust_code = :custCode");
-        Query updateQ = entityManager.createNativeQuery(updateBid.toString());   
+                "UPDATE t_bi_info_mat_cust set esmt_yn = '1', rebid_att = 'N' " +
+                        "submit_date = null, file_id =null, enx_qutn =null, " +
+                        "semt_curr = null, etc_b_file =null, file_hash_value =null, " +
+                        "etc_b_file_path = null " +
+                        "where bi_no = :biNo and cust_code = :custCode");
+        Query updateQ = entityManager.createNativeQuery(updateBid.toString());
         updateQ.setParameter("biNo", biNo);
         updateQ.setParameter("custCode", (String) params.get("custCode"));
+        updateQ.executeUpdate();
+
+        StringBuilder delBid = new StringBuilder(
+                "DELETE FROM t_bi_detail_mat_cust where bi_no = :biNo and cust_code = :custCode");
+        Query delQ = entityManager.createNativeQuery(delBid.toString());
+        delQ.setParameter("biNo", biNo);
+        delQ.setParameter("custCode", (String) params.get("custCode"));
+        delQ.executeUpdate();
 
         Map<String, String> logParams = new HashMap<>();
         logParams.put("msg", "[업체]공고확인");
         logParams.put("biNo", biNo);
         logParams.put("userId", userId);
         bidProgressService.updateLog(logParams);
+        
+    }
+
+    public List<CurrDto> currlist() {
+        StringBuilder currlist = new StringBuilder(
+                "SELECT code_val, code_name from t_co_code where col_code = 'T_CO_RATE'");
+        Query currlistQ = entityManager.createNativeQuery(currlist.toString());
+        return new JpaResultMapper().list(currlistQ, CurrDto.class);
     }
 }

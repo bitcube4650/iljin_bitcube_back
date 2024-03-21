@@ -40,5 +40,15 @@ public class BidStatusController {
     public Page submitHist(@RequestBody Map<String, Object> params) {
         return bidStatusService.submitHist(params);
     }
+
+    @PostMapping("/rebid")
+    public ResultBody rebid(@RequestBody Map<String, Object> params) {
+        return bidStatusService.rebid(params);
+    }
+
+    @PostMapping("/rebidCust")
+    public ResultBody rebidCust(@RequestBody List<Map<String, Object>> params) {
+        return bidStatusService.rebidCust(params);
+    }
     
 }

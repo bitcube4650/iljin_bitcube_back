@@ -2,6 +2,7 @@ package iljin.framework.ebid.bid.controller;
 
 import iljin.framework.core.dto.ResultBody;
 import iljin.framework.ebid.bid.dto.BidProgressDetailDto;
+import iljin.framework.ebid.bid.dto.CurrDto;
 import iljin.framework.ebid.bid.service.BidPartnerStatusService;
 import iljin.framework.ebid.bid.service.BidProgressService;
 import iljin.framework.ebid.bid.service.BidStatusService;
@@ -33,5 +34,10 @@ public class BidPartnerStatusController {
 
     @PostMapping("/checkBid")
     public void checkBid(@RequestBody Map<String, Object> params) {
+    }
+
+    @PostMapping("/currlist")
+    public List<CurrDto> currlist() {
+        return bidPartnerStatusService.currlist();
     }
 }
