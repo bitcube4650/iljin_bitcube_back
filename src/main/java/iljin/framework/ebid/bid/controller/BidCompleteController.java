@@ -38,4 +38,10 @@ public class BidCompleteController {
 
 		return bidCompleteSvc.fileDown(params);
 	}
+	
+	@PostMapping("/updRealAmt")
+	public ResultBody updRealAmt(@RequestBody Map<String, Object> params) throws IOException {
+
+		return bidCompleteSvc.updRealAmt(params);
+	}
 }
