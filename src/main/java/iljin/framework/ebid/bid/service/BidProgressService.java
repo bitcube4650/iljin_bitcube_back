@@ -1055,7 +1055,7 @@ public class BidProgressService {
 
         switch (type) {
             case "del":
-                titleType = "계획 삭제";
+                titleType = "입찰 계획 삭제";
                 contentBody = "입찰명 [" + biName + "] 입찰계획을\n삭제하였습니다.\n아래 삭제사유를 확인해 주십시오.\n\n";
                 contentReason = "-삭제사유\n" + reason;
                 break;
@@ -1081,7 +1081,7 @@ public class BidProgressService {
                         "로그인하여 다시 한번 투찰해 주십시오\n\n";
                 contentReason = "-재입찰사유\n" + reason;
         }
-        String title = "[일진그룹 e-bidding] 입찰" + titleType + "(" + biName + ")";
+        String title = "[일진그룹 e-bidding]" + titleType + "(" + biName + ")";
         String content = contentBody + contentReason;
 
         System.out.println(content);
