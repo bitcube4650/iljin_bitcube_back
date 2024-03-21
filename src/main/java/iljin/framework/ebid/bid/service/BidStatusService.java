@@ -337,11 +337,12 @@ public class BidStatusService {
         System.out.println(11111111 + biNo);
         StringBuilder sbList = new StringBuilder(
                 "UPDATE t_bi_info_mat set bid_open_date = sysdate()," +
-                        "ing_tag = 'A7' " +
+                        "ing_tag = 'A7', why_a7 = :reason " +
                         "WHERE bi_no = :biNo");
 
         Query queryList = entityManager.createNativeQuery(sbList.toString());
         queryList.setParameter("biNo", biNo);
+        queryList.setParameter("reason", (String) params.get("reason"));
         int rowsUpdated = queryList.executeUpdate();
 
         if (rowsUpdated > 0) {
@@ -482,9 +483,24 @@ public class BidStatusService {
         queryList1.setParameter("matFactory", (String) params.get("matFactory"));
         queryList1.setParameter("matFactoryLine", (String) params.get("matFactoryLine"));
         queryList1.setParameter("matFactoryCnt", (String) params.get("matFactoryCnt"));
-        queryList.setParameter("whyA3", (String) params.get("whyA3"));
+        queryList1.setParameter("whyA3", (String) params.get("whyA3"));
 
-        queryList1.executeUpdate();
+        int rowsUpdated = queryList1.executeUpdate();
+        if (rowsUpdated > 0) {
+            Map<String, String> logParams = new HashMap<>();
+            logParams.put("msg", "[본사] 재입찰");
+            logParams.put("biNo", (String) params.get("biNo"));
+            bidProgressService.updateLog(logParams);
+
+            Map<String, String> mailParams = new HashMap<>();
+            mailParams.put("biNo", (String) params.get("biNo"));
+            mailParams.put("type", (String) params.get("type"));
+            mailParams.put("biName", (String) params.get("biName"));
+            mailParams.put("reason", (String) params.get("whyA7"));
+            mailParams.put("interNm", (String) params.get("interNm"));
+            bidProgressService.updateEmail(mailParams);
+        }
+
 
         ResultBody resultBody = new ResultBody();
         return resultBody;
