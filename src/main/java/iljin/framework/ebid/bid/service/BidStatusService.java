@@ -11,9 +11,11 @@ import iljin.framework.ebid.bid.dto.BidProgressDto;
 import iljin.framework.ebid.bid.dto.BidProgressFileDto;
 import iljin.framework.ebid.bid.dto.BidProgressTableDto;
 import iljin.framework.ebid.bid.dto.CoUserInfoDto;
+import iljin.framework.ebid.bid.dto.CurrDto;
 import iljin.framework.ebid.bid.dto.EmailDto;
 import iljin.framework.ebid.bid.dto.InterUserInfoDto;
 import iljin.framework.ebid.bid.dto.InterrelatedCustDto;
+import iljin.framework.ebid.bid.dto.ItemDto;
 import iljin.framework.ebid.bid.dto.SubmitHistDto;
 import iljin.framework.ebid.custom.entity.TCoUser;
 import iljin.framework.ebid.custom.repository.TCoUserRepository;
@@ -407,7 +409,7 @@ public class BidStatusService {
     }
 
     @Transactional
-    public ResultBody rebid(@RequestBody Map<String, Object> params) {  //rebid 페이지에서 disabled 조건인 칼럼 모두 제외
+    public ResultBody rebid(@RequestBody Map<String, Object> params) { // rebid 페이지에서 disabled 조건인 칼럼 모두 제외
 
         UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String userId = principal.getUsername();
@@ -417,7 +419,8 @@ public class BidStatusService {
                         "bid_join_spec = :bidJoinSpec, special_cond = :specialCond, supply_cond = :supplyCond, " +
                         "spot_date = STR_TO_DATE(:spotDate, '%Y-%m-%d %H:%i'), spot_area = :spotArea, " +
                         "succ_deci_meth = :succDeciMethCode, amt_basis = :amtBasis, bd_amt = :bdAmt, " +
-                        "update_user = :userId, update_date = sysdate(), pay_cond = :payCond, ing_tag = 'A3', why_a3 = :whyA3 " +
+                        "update_user = :userId, update_date = sysdate(), pay_cond = :payCond, ing_tag = 'A3', why_a3 = :whyA3 "
+                        +
                         "WHERE bi_no = :biNo");
 
         Query queryList = entityManager.createNativeQuery(sbList.toString());
@@ -501,7 +504,6 @@ public class BidStatusService {
             bidProgressService.updateEmail(mailParams);
         }
 
-
         ResultBody resultBody = new ResultBody();
         return resultBody;
     }
@@ -529,5 +531,17 @@ public class BidStatusService {
 
         ResultBody resultBody = new ResultBody();
         return resultBody;
+    }
+
+    public List<ItemDto> itemlist(@RequestBody Map<String, Object> params) {
+        StringBuilder itemlist = new StringBuilder(
+                "SELECT a.bi_no, a.seq, a.order_qty, a.name, a.ssize, a.unitcode, b.esmt_uc, b.cust_code " +
+                            "from t_bi_spec_mat a, t_bi_detail_mat_cust b " +
+                            "where a.bi_no = :biNo and b.cust_code = :custCode " +
+                            "and (a.bi_no = b.bi_no and a.seq = b.seq)");
+        Query itemlistQ = entityManager.createNativeQuery(itemlist.toString());
+        itemlistQ.setParameter("biNo", (String) params.get("biNo"));
+        itemlistQ.setParameter("custCode", (String) params.get("custCode"));
+        return new JpaResultMapper().list(itemlistQ, ItemDto.class);
     }
 }

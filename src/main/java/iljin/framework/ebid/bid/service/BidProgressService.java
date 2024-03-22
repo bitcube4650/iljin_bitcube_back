@@ -1028,7 +1028,7 @@ public class BidProgressService {
     @Transactional
     public void updateEmail(Map<String, String> params) {
         String biNo = params.get("biNo");
-        String type = params.get("type"); // del : 입찰삭제 , notice : 입찰공고, insert: 입찰등록, fail: 유찰, rebid:재입찰
+        String type = params.get("type"); // del : 입찰삭제 , notice : 입찰공고, insert: 입찰등록, fail: 유찰, rebid:재입찰,succ:낙찰
         String biName = params.get("biName");
         String reason = params.get("reason");
         String interNm = params.get("interNm");
@@ -1080,6 +1080,14 @@ public class BidProgressService {
                         "아래 재입찰사유를 확인해 주시고 e-bidding 시스템에\n" +
                         "로그인하여 다시 한번 투찰해 주십시오\n\n";
                 contentReason = "-재입찰사유\n" + reason;
+                break;
+            case "succ":
+                titleType = "낙찰";
+                contentBody = "입찰명 [" + biName + "]에 업체선정\n되었습니다.\n" +
+                        "자세한 사항은 e-bidding 시스템에  로그인하여 입찰내용 확인 및\n" +
+                        "낙찰확인을 하시기 바랍니다.\n(낙찰확인은 계약과 관련없는 내부절차 입니다.)\n\n";
+                contentReason = "-추가합의사항\n" + reason;
+                break;
         }
         String title = "[일진그룹 e-bidding]" + titleType + "(" + biName + ")";
         String content = contentBody + contentReason;

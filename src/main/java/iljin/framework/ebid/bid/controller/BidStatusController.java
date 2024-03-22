@@ -2,6 +2,7 @@ package iljin.framework.ebid.bid.controller;
 
 import iljin.framework.core.dto.ResultBody;
 import iljin.framework.ebid.bid.dto.BidProgressDetailDto;
+import iljin.framework.ebid.bid.dto.ItemDto;
 import iljin.framework.ebid.bid.service.BidProgressService;
 import iljin.framework.ebid.bid.service.BidStatusService;
 import iljin.framework.ebid.custom.entity.TCoItem;
@@ -49,6 +50,11 @@ public class BidStatusController {
     @PostMapping("/rebidCust")
     public ResultBody rebidCust(@RequestBody List<Map<String, Object>> params) {
         return bidStatusService.rebidCust(params);
+    }
+
+    @PostMapping("/itemlist")
+    public List<ItemDto> itemlist(@RequestBody Map<String, Object> params) {
+        return bidStatusService.itemlist(params);
     }
     
 }
