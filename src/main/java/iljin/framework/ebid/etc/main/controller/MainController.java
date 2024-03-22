@@ -94,4 +94,13 @@ public class MainController {
 		return mainService.saveUserInfo(params);
 				
 	}
+	
+	//계열사 정보 조회
+	@PostMapping("/selectCompInfo")
+	public ResultBody selectCompInfo(@RequestBody Map<String, Object> params) {
+		
+		return mainService.selectCompInfo(params);
+				
+	}
+	
 }

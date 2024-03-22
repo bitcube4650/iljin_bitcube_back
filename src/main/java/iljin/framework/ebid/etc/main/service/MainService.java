@@ -27,8 +27,10 @@ import iljin.framework.core.security.user.UserService;
 import iljin.framework.ebid.bid.dto.InterUserInfoDto;
 import iljin.framework.ebid.bid.service.BidProgressService;
 import iljin.framework.ebid.custom.entity.TCoCustUser;
+import iljin.framework.ebid.custom.entity.TCoInterrelated;
 import iljin.framework.ebid.custom.entity.TCoUser;
 import iljin.framework.ebid.custom.repository.TCoCustUserRepository;
+import iljin.framework.ebid.custom.repository.TCoInterrelatedRepository;
 import iljin.framework.ebid.custom.repository.TCoUserRepository;
 import iljin.framework.ebid.etc.main.dto.BidCntDto;
 import iljin.framework.ebid.etc.main.dto.PartnerBidCntDto;
@@ -43,6 +45,9 @@ public class MainService {
 	
 	@Autowired
     private TCoCustUserRepository tCoUserCustRepository;
+	
+	@Autowired
+	private TCoInterrelatedRepository tCoInterrelatedRepository;
 	
 	@Autowired
     private BidProgressService bidProgressService;
@@ -184,16 +189,14 @@ public class MainService {
 		StringBuilder sbCnt = new StringBuilder(" select COUNT(CASE WHEN tccm.cert_yn = 'N' THEN 1 END) as 'request', "
 													 + " COUNT(CASE WHEN tccm.cert_yn = 'Y' THEN 1 END) as 'approval', "
 													 + " COUNT(CASE WHEN tccm.cert_yn = 'D' THEN 1 END) as 'deletion' "
-											  + " from t_co_cust_ir tcci "
-											  + " inner join t_co_cust_master tccm "
-											  + " on tcci.cust_code = tccm.cust_code "
+											  + " from t_co_cust_master tccm "
 											  + " where 1=1 "
 											   );
 		
 		StringBuilder sbWhere = new StringBuilder();
 	
 		//계열사 조건
-		sbWhere.append(" and tcci.interrelated_cust_code = :interrelatedCustCode ");
+		sbWhere.append(" and tccm.interrelated_cust_code = :interrelatedCustCode ");
 		
 		sbCnt.append(sbWhere);
 		
@@ -215,30 +218,54 @@ public class MainService {
 	@Transactional
 	public PartnerBidCntDto selectPartnerBidCnt(Map<String, Object> params) {
 
+		UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		Optional<TCoCustUser> userOptional = tCoUserCustRepository.findById(principal.getUsername());
+		int custCode = -1;
+		TCoCustUser tCoCustUser = null;
 		
+		if(userOptional.isPresent()) {
+			tCoCustUser = userOptional.get();
+			custCode = tCoCustUser.getCustCode();
+		}
+
 		PartnerBidCntDto partnerBidCntDto = new PartnerBidCntDto();
-/*
-		StringBuilder sbCnt = new StringBuilder(" select (select COUNT(1) from t_bi_info_mat tbim where tbim.ING_TAG IN ('A1')) AS noticing, "
-												     + " (select COUNT(1) from t_bi_info_mat tbim inner join t_bi_info_mat_cust tbimc on tbim.BI_NO = tbimc.BI_NO where tbim.ING_TAG IN ('A1', 'A2', 'A3', 'A7') and tbimc.CUST_CODE = :custCode) AS count2, "
-												     + " (select COUNT(1) from t_bi_info_mat tbim inner join t_bi_info_mat_cust tbimc on tbim.BI_NO = tbimc.BI_NO where tbim.ING_TAG IN ('A5') and tbimc.CUST_CODE = :custCode) AS count3, "
-												     + " (select COUNT(1) from t_bi_info_mat tbim inner join t_bi_info_mat_cust tbimc on tbim.BI_NO = tbimc.BI_NO where tbim.ING_TAG IN ('A5') and tbimc.SUCC_YN = 'Y' and (tbimc.UPDATE_DATE >= CURDATE() - INTERVAL 12 MONTH ) and tbimc.CUST_CODE = :custCode) AS count4, "
-												     + " (select COUNT(1) from t_bi_info_mat tbim inner join t_bi_info_mat_cust tbimc on tbim.BI_NO = tbimc.BI_NO where tbim.ING_TAG IN ('A7') and (tbim.UPDATE_DATE >= CURDATE() - INTERVAL 12 month) and tbimc.CUST_CODE = :custCode) AS count5 "
+
+		StringBuilder sbCnt = new StringBuilder(" select (select SUM(cnt) from ( "
+				                                                                   //일반경쟁
+																			   + " select COUNT(1) as cnt "
+																			   + " from t_bi_info_mat "
+																			   + " where ing_tag IN ('A1', 'A3') "
+																			   + " and bi_mode = 'B' "
+																			   
+																			   + " union all "
+																			   
+																			       //지명경쟁
+																			   + " select COUNT(1) as cnt "
+																			   + " from t_bi_info_mat tbim "
+																			   + " inner join t_bi_info_mat_cust tbimc "
+																			   + " on tbim.bi_no = tbimc.bi_no "
+																			   + " where tbim.ing_tag IN ('A1', 'A3') "
+																			   + " and tbim.bi_mode = 'A' "
+																			   + " and tbimc.CUST_CODE = :custCode "
+																		   + " ) as noticing "
+													 + " ) as total_count, "//입찰공고 
+												     + " (select COUNT(1) from t_bi_info_mat_cust where esmt_yn = '2' and cust_code = :custCode) as submitted, "//투찰한 입찰
+												     + " (select COUNT(1) from t_bi_info_mat tbim inner join t_bi_info_mat_cust tbimc on tbim.bi_no = tbimc.bi_no where tbim.ing_tag = 'A5' and tbimc.cust_code = :custCode) as confirmation, "//낙찰확인대상
+												     + " (select COUNT(1) from t_bi_info_mat tbim inner join t_bi_info_mat_cust tbimc on tbim.bi_no = tbimc.bi_no where tbim.ing_tag = 'A5' and tbimc.succ_yn = 'Y' and tbimc.cust_code = :custCode and tbim.update_date >= CURDATE() - INTERVAL 12 month) AS awarded, "//낙찰(12개월)
+												     + " (select COUNT(1) from t_bi_info_mat tbim inner join t_bi_info_mat_cust tbimc on tbim.bi_no = tbimc.bi_no where tbim.ing_tag = 'A7' and tbimc.cust_code = :custCode and tbim.update_date >= CURDATE() - INTERVAL 12 month) AS unsuccessful "//유찰(12개월)
 											   );
 		
 		Query queryCnt = entityManager.createNativeQuery(sbCnt.toString());
 
-		if(!StringUtils.isEmpty(params.get("custCode"))) {
-
-			queryCnt.setParameter("custCode", params.get("custCode"));
-		}
+		queryCnt.setParameter("custCode", custCode);
 	    Object[] result = (Object[]) queryCnt.getSingleResult();
 	    
-	    partnerBidCntDto.setNoticing((BigInteger) result[0]);
+	    partnerBidCntDto.setNoticing(((BigDecimal) result[0]).toBigInteger());
 	    partnerBidCntDto.setSubmitted((BigInteger) result[1]);
 	    partnerBidCntDto.setConfirmation((BigInteger) result[2]);
 	    partnerBidCntDto.setAwarded((BigInteger) result[3]);
 	    partnerBidCntDto.setUnsuccessful((BigInteger) result[4]);
-*/
+
 	    return partnerBidCntDto;
 	}
 
@@ -246,24 +273,56 @@ public class MainService {
 	@Transactional
 	public PartnerCompletedBidCntDto selectCompletedBidCnt(Map<String, Object> params) {
 		
+		UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		Optional<TCoCustUser> userOptional = tCoUserCustRepository.findById(principal.getUsername());
+		int custCode = -1;
+		TCoCustUser tCoCustUser = null;
+		
+		if(userOptional.isPresent()) {
+			tCoCustUser = userOptional.get();
+			custCode = tCoCustUser.getCustCode();
+		}
+		
 		PartnerCompletedBidCntDto partnerCompletedBidCntDto = new PartnerCompletedBidCntDto();
-		/*
-		StringBuilder sbCnt = new StringBuilder(" select (select COUNT(1) from t_bi_info_mat tbim where tbim.ING_TAG IN ('A5') and (tbim.UPDATE_DATE >= CURDATE() - INTERVAL 12 MONTH)) AS posted, "
-													 + " (select COUNT(1) from t_bi_info_mat tbim inner join t_bi_info_mat_cust tbimc on(tbim.BI_NO = tbimc.BI_NO) where tbim.ING_TAG IN ('A5') and (tbim.UPDATE_DATE >= CURDATE() - INTERVAL 12 MONTH) and tbimc.CUST_CODE = :custCode) AS submitted, "
-													 + " (select COUNT(1) from t_bi_info_mat tbim inner join t_bi_info_mat_cust tbimc on(tbim.BI_NO = tbimc.BI_NO) where tbim.ING_TAG IN ('A5') and (tbim.UPDATE_DATE >= CURDATE() - INTERVAL 12 MONTH) and tbimc.SUCC_YN = 'Y' and tbimc.CUST_CODE = :custCode) AS awarded "
+		
+		StringBuilder sbCnt = new StringBuilder(" select ( "
+															 //지명경쟁
+														  + "(select COUNT(1) "
+														  + " from t_bi_info_mat tbim "
+														  + " inner join t_bi_info_mat_cust tbimc "
+														  + " on tbim.bi_no = tbimc.bi_no "
+														  + " where tbim.ING_TAG IN ('A5') "
+														  + " and (tbim.UPDATE_DATE >= CURDATE() - INTERVAL 12 MONTH) "
+														  + " and tbim.bi_mode = 'A' "
+														  + " and tbimc.cust_code = :custCode "
+														  + ") "
+														  
+														  + " + "
+														  
+														     //일반경쟁
+														  + "(select COUNT(1) "
+														  + " from t_bi_info_mat tbim "
+														  + " inner join t_bi_info_mat_cust tbimc "
+														  + " on tbim.bi_no = tbimc.bi_no "
+														  + " where tbim.ING_TAG IN ('A5') "
+														  + " and (tbim.UPDATE_DATE >= CURDATE() - INTERVAL 12 MONTH) "
+														  + " and tbim.bi_mode = 'B' "
+														  + ")"
+														  
+													  + ") as posted, "//공고되었던 입찰
+													 + " (select COUNT(1) from t_bi_info_mat tbim inner join t_bi_info_mat_cust tbimc on(tbim.bi_no = tbimc.bi_no) where tbim.ing_tag IN ('A5') and (tbim.update_date >= CURDATE() - INTERVAL 12 MONTH) and tbimc.cust_code = :custCode) as submitted, "//투찰했던 입찰
+													 + " (select COUNT(1) from t_bi_info_mat tbim inner join t_bi_info_mat_cust tbimc on(tbim.bi_no = tbimc.bi_no) where tbim.ing_tag IN ('A5') and (tbim.update_date >= CURDATE() - INTERVAL 12 MONTH) and tbimc.succ_yn = 'Y' and tbimc.cust_code = :custCode) as awarded "//낙찰했던 입찰
 											   );
 		Query queryCnt = entityManager.createNativeQuery(sbCnt.toString());
-
-		if(!StringUtils.isEmpty(params.get("custCode"))) {
-
-			queryCnt.setParameter("custCode", params.get("custCode"));
-		}
+		System.out.println("쿼리출력!! " + sbCnt);
+		queryCnt.setParameter("custCode", custCode);
+		
 		Object[] result = (Object[]) queryCnt.getSingleResult();
 		
 		partnerCompletedBidCntDto.setPosted((BigInteger) result[0]);
 		partnerCompletedBidCntDto.setSubmitted((BigInteger) result[1]);
 		partnerCompletedBidCntDto.setAwarded((BigInteger) result[2]);
-		*/
+		
 		return partnerCompletedBidCntDto;
 	}
 
@@ -474,6 +533,29 @@ public class MainService {
 	        
 	        return resultBody;
 		}
+	}
+
+	//계열사 정보 조회
+	public ResultBody selectCompInfo(Map<String, Object> params) {
+		ResultBody resultBody = new ResultBody();
+		String custCode = "";
+		 
+		try {
+			if (!StringUtils.isEmpty(params.get("custCode"))) {
+				custCode = (String) params.get("custCode");
+			}
+			Optional<TCoInterrelated> tCoInterrelated = tCoInterrelatedRepository.findById(custCode);
+			
+			resultBody.setData(tCoInterrelated.get());
+			
+		}catch(Exception e) {
+			resultBody.setCode("ERROR");
+	        resultBody.setStatus(500);
+	        resultBody.setMsg("An error occurred while selecting the company info.");
+	        resultBody.setData(e.getMessage());
+		}
+		
+		return resultBody;
 	}
 	
 	
