@@ -518,7 +518,7 @@ public class BidStatusService {
 
             for (Map<String, Object> data : params) {
                 StringBuilder sbList = new StringBuilder(
-                        "UPDATE t_bi_info_mat_cust rebid_att = 'Y', esmt_yn = '0', esmt_amt = 0, update_user = :userId, update_date = sysdate() "
+                        "UPDATE t_bi_info_mat_cust SET rebid_att = 'Y', esmt_yn = '0', esmt_amt = 0, update_user = :userId, update_date = sysdate() "
                                 +
                                 "where bi_no = :biNo and cust_code = :custCode");
                 Query queryList = entityManager.createNativeQuery(sbList.toString());
@@ -536,12 +536,119 @@ public class BidStatusService {
     public List<ItemDto> itemlist(@RequestBody Map<String, Object> params) {
         StringBuilder itemlist = new StringBuilder(
                 "SELECT a.bi_no, a.seq, a.order_qty, a.name, a.ssize, a.unitcode, b.esmt_uc, b.cust_code " +
-                            "from t_bi_spec_mat a, t_bi_detail_mat_cust b " +
-                            "where a.bi_no = :biNo and b.cust_code = :custCode " +
-                            "and (a.bi_no = b.bi_no and a.seq = b.seq)");
+                        "from t_bi_spec_mat a, t_bi_detail_mat_cust b " +
+                        "where a.bi_no = :biNo and b.cust_code = :custCode " +
+                        "and (a.bi_no = b.bi_no and a.seq = b.seq)");
         Query itemlistQ = entityManager.createNativeQuery(itemlist.toString());
         itemlistQ.setParameter("biNo", (String) params.get("biNo"));
         itemlistQ.setParameter("custCode", (String) params.get("custCode"));
         return new JpaResultMapper().list(itemlistQ, ItemDto.class);
     }
+
+    public ResultBody bidSucc(@RequestBody Map<String, Object> params) {
+        UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication()
+                .getPrincipal();
+        String userId = principal.getUsername();
+
+        StringBuilder sbList = new StringBuilder( // 입찰 업데이트
+                "UPDATE t_bi_info_mat SET ing_tag = 'A5', update_user = :userId, update_date = sysdate(), add_aceept = :reason, "
+                        +
+                        "succ_amt = :esmtAmt where bi_no = :biNo ");
+        Query queryList = entityManager.createNativeQuery(sbList.toString());
+        queryList.setParameter("userId", userId);
+        queryList.setParameter("reason", (String) params.get("reason"));
+        queryList.setParameter("esmtAmt", params.get("esmtAmt"));
+        queryList.setParameter("biNo", (String) params.get("biNo"));
+
+        queryList.executeUpdate();
+
+        StringBuilder sbList1 = new StringBuilder( // 입찰 hist 업데이트
+                "INSERT into t_bi_info_mat_hist (bi_no, bi_name, bi_mode, ins_mode, bid_join_spec, special_cond, supply_cond, spot_date, "
+                        +
+                        "spot_area, succ_deci_meth, amt_basis, bd_amt, est_start_date, est_close_date, est_opener, est_bidder, "
+                        +
+                        "open_att1, open_att2, ing_tag, update_user, update_date, item_code, " +
+                        "gongo_id, pay_cond, bi_open, mat_dept, mat_proc, mat_cls, mat_factory, mat_factory_line, mat_factory_cnt, add_accept, succ_amt) "
+                        +
+                        "values (:biNo, :biName, :biModeCode, :insModeCode, :bidJoinSpec, :specialCond, :supplyCond, " +
+                        "STR_TO_DATE(:spotDate, '%Y-%m-%d %H:%i'), :spotArea, :succDeciMethCode, :amtBasis, :bdAmt, "
+                        +
+                        "est_start_date =STR_TO_DATE(:estStartDate, '%Y-%m-%d %H:%i'), est_close_date =STR_TO_DATE(:estCloseDate, '%Y-%m-%d %H:%i'), :estOpenerCode, :estBidderCode, "
+                        +
+                        ":openAtt1Code, :openAtt2Code, 'A5', :userId, sysdate(), :itemCode, :gongoIdCode, :payCond, 'Y', :matDept, :matProc, :matCls, :matFactory, "
+                        +
+                        ":matFactoryLine, :matFactoryCnt, :reason, :esmtAmt)");
+
+        Query queryList1 = entityManager.createNativeQuery(sbList1.toString());
+        queryList1.setParameter("biNo", (String) params.get("biNo"));
+        queryList1.setParameter("biName", (String) params.get("biName"));
+        queryList1.setParameter("biModeCode", (String) params.get("biModeCode"));
+        queryList1.setParameter("insModeCode", (String) params.get("insModeCode"));
+        queryList1.setParameter("bidJoinSpec", (String) params.get("bidJoinSpec"));
+        queryList1.setParameter("specialCond", (String) params.get("specialCond"));
+        queryList1.setParameter("supplyCond", (String) params.get("supplyCond"));
+        queryList1.setParameter("spotDate", (String) params.get("spotDate"));
+        queryList1.setParameter("spotArea", (String) params.get("spotArea"));
+        queryList1.setParameter("succDeciMethCode", (String) params.get("succDeciMethCode"));
+        queryList1.setParameter("amtBasis", (String) params.get("amtBasis"));
+        queryList1.setParameter("bdAmt", params.get("bdAmt"));
+        queryList1.setParameter("estStartDate", (String) params.get("estStartDate"));
+        queryList1.setParameter("estCloseDate", (String) params.get("estCloseDate"));
+        queryList1.setParameter("estOpenerCode", (String) params.get("estOpenerCode"));
+        queryList1.setParameter("estBidderCode", (String) params.get("estBidderCode"));
+        queryList1.setParameter("openAtt1Code", (String) params.get("openAtt1Code"));
+        queryList1.setParameter("openAtt2Code", (String) params.get("openAtt2Code"));
+        queryList1.setParameter("userId", userId);
+        queryList1.setParameter("itemCode", (String) params.get("itemCode"));
+        queryList1.setParameter("gongoIdCode", (String) params.get("gongoIdCode"));
+        queryList1.setParameter("payCond", (String) params.get("payCond"));
+        queryList1.setParameter("matDept", (String) params.get("matDept"));
+        queryList1.setParameter("matProc", (String) params.get("matProc"));
+        queryList1.setParameter("matCls", (String) params.get("matCls"));
+        queryList1.setParameter("matFactory", (String) params.get("matFactory"));
+        queryList1.setParameter("matFactoryLine", (String) params.get("matFactoryLine"));
+        queryList1.setParameter("matFactoryCnt", (String) params.get("matFactoryCnt"));
+        queryList1.setParameter("reason", (String) params.get("reason"));
+        queryList1.setParameter("esmtAmt", params.get("esmtAmt"));
+
+        queryList1.executeUpdate();
+
+        StringBuilder sbList2 = new StringBuilder( // 업체정보 업데이트
+                "UPDATE t_bi_info_mat_cust SET succ_yn ='Y', update_user = :userId, update_date = sysdate() " +
+                        "where bi_no = :biNo and cust_code = :custCode");
+        Query queryList2 = entityManager.createNativeQuery(sbList2.toString());
+        queryList2.setParameter("userId", userId);
+        queryList2.setParameter("biNo", (String) params.get("biNo"));
+        queryList2.setParameter("custCode", (String) params.get("custCode"));
+
+        queryList2.executeUpdate();
+
+        StringBuilder sbList3 = new StringBuilder( // 업체정보차수 업데이트
+                "UPDATE t_bi_info_mat_cust_temp SET succ_yn ='Y', update_user = :userId, update_date = sysdate() " +
+                        "where bi_no = :biNo and cust_code = :custCode");
+        Query queryList3 = entityManager.createNativeQuery(sbList3.toString());
+        queryList3.setParameter("userId", userId);
+        queryList3.setParameter("biNo", (String) params.get("biNo"));
+        queryList3.setParameter("custCode", (String) params.get("custCode"));
+
+        int q = queryList3.executeUpdate();
+        if (q > 0) {
+            Map<String, String> logParams = new HashMap<>();
+            logParams.put("msg", "[본사] 낙찰");
+            logParams.put("biNo", (String) params.get("biNo"));
+            bidProgressService.updateLog(logParams);
+
+            Map<String, String> mailParams = new HashMap<>();
+            mailParams.put("biNo", (String) params.get("biNo"));
+            mailParams.put("type", (String) params.get("type"));
+            mailParams.put("biName", (String) params.get("biName"));
+            mailParams.put("reason", (String) params.get("reason"));
+            mailParams.put("interNm", (String) params.get("interNm"));
+            bidProgressService.updateEmail(mailParams);
+        }
+
+        ResultBody resultBody = new ResultBody();
+        return resultBody;
+    }
+
 }

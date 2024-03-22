@@ -56,5 +56,10 @@ public class BidStatusController {
     public List<ItemDto> itemlist(@RequestBody Map<String, Object> params) {
         return bidStatusService.itemlist(params);
     }
+
+    @PostMapping("/bidSucc")
+    public ResultBody bidSucc(@RequestBody Map<String, Object> params) {
+        return bidStatusService.bidSucc(params);
+    }
     
 }
