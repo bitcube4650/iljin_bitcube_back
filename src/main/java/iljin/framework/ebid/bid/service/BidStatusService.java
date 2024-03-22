@@ -100,8 +100,7 @@ public class BidStatusService {
                         +
                         "b.user_name AS cuser, b.user_email AS cuser_email, " +
                         "c.user_name AS gongo_id, c.user_email AS gongo_email, " +
-                        "a.interrelated_cust_code AS interrelated_cust_code, " +
-                        "a.open_att1 AS openAtt1, a.open_att2 AS openAtt2 " +
+                        "a.interrelated_cust_code AS interrelated_cust_code " +
                         "FROM t_bi_info_mat a LEFT JOIN t_co_user b ON a.create_user = b.user_id LEFT JOIN t_co_user c ON a.gongo_id = c.user_id "
                         +
                         "WHERE 1=1 ");

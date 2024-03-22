@@ -23,8 +23,6 @@ public class BidProgressDto {
     String gongoId;
     String gongoEmail;
     String interrelatedCustCode;
-    String openAtt1;
-    String openAtt2;
 
     /**
 	 * 목록 (/api/v1/bid/progressList)
@@ -32,7 +30,7 @@ public class BidProgressDto {
     public BidProgressDto(
         String biNo, String biName, String estStartDate, String estCloseDate, String biMode,
         String insMode, String ingTag, String cuser, String cuserEmail, String gongoId, 
-        String gongoEmail, String interrelatedCustCode, String openAtt1, String openAtt2){
+        String gongoEmail, String interrelatedCustCode){
             this.biNo = biNo;
             this.biName = biName;
             this.estStartDate = estStartDate;
@@ -45,7 +43,5 @@ public class BidProgressDto {
             this.gongoId = gongoId;
             this.gongoEmail = gongoEmail;
             this.interrelatedCustCode = interrelatedCustCode;
-            this.openAtt1 = openAtt1;
-            this.openAtt2 = openAtt2;
     }
 }

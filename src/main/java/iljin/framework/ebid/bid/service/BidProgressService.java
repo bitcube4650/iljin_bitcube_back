@@ -209,16 +209,6 @@ public class BidProgressService {
         queryCountList.setParameter("interrelatedCode", interrelatedCode);
         queryList.setParameter("userId", userId);
         queryCountList.setParameter("userId", userId);
-        queryList.setParameter("userId", userId);
-        queryCountList.setParameter("userId", userId);
-        queryList.setParameter("userId", userId);
-        queryCountList.setParameter("userId", userId);
-        queryList.setParameter("userId", userId);
-        queryCountList.setParameter("userId", userId);
-        queryList.setParameter("userId", userId);
-        queryCountList.setParameter("userId", userId);
-        queryList.setParameter("userId", userId);
-        queryCountList.setParameter("userId", userId);
 
         if (!StringUtils.isEmpty(params.get("biNo"))) {
             queryList.setParameter("biNo", params.get("biNo"));
