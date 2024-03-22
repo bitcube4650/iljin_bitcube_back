@@ -100,7 +100,8 @@ public class BidStatusService {
                         +
                         "b.user_name AS cuser, b.user_email AS cuser_email, " +
                         "c.user_name AS gongo_id, c.user_email AS gongo_email, " +
-                        "a.interrelated_cust_code AS interrelated_cust_code " +
+                        "a.interrelated_cust_code AS interrelated_cust_code, " +
+                        "a.open_att1 AS openAtt1, a.open_att2 AS openAtt2 " +
                         "FROM t_bi_info_mat a LEFT JOIN t_co_user b ON a.create_user = b.user_id LEFT JOIN t_co_user c ON a.gongo_id = c.user_id "
                         +
                         "WHERE 1=1 ");
@@ -649,6 +650,25 @@ public class BidStatusService {
 
         ResultBody resultBody = new ResultBody();
         return resultBody;
+    }
+
+    public void updateSign(@RequestBody Map<String, Object> params) {
+        StringBuilder sbList = new StringBuilder(
+            "UPDATE t_bi_info_mat SET ");
+        if((Boolean) params.get("att1")){
+            sbList.append("open_att1_sign = 'Y' ");
+        }    
+        if((Boolean) params.get("att1") && (Boolean) params.get("att2")){
+            sbList.append(",");
+        }  
+        if((Boolean) params.get("att2")){
+            sbList.append("open_att2_sign = 'Y' ");
+        }
+        sbList.append("where bi_no = :biNo");
+        
+        Query queryList = entityManager.createNativeQuery(sbList.toString());
+        queryList.setParameter("biNo", (String) params.get("biNo"));
+        queryList.executeUpdate();
     }
 
 }

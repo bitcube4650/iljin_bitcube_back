@@ -61,5 +61,9 @@ public class BidStatusController {
     public ResultBody bidSucc(@RequestBody Map<String, Object> params) {
         return bidStatusService.bidSucc(params);
     }
+
+    @PostMapping("/updateSign")
+    public void updateSign(@RequestBody Map<String, Object> params) {
+    }
     
 }
