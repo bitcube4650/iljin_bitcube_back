@@ -17,10 +17,15 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.transaction.Transactional;
+
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +35,9 @@ import java.util.Optional;
 @Slf4j
 public class ItemService {
 
+    @PersistenceContext
+    private EntityManager entityManager;
+    
     @Autowired
     private TCoItemRepository tCoItemRepository;
     @Autowired
@@ -77,6 +85,7 @@ public class ItemService {
         return tCoItemRepository.findById(id);
     }
 
+    // 품목 등록
     @SneakyThrows
     @Transactional
     public ResultBody save(TCoItem tCoItem) {
@@ -84,8 +93,34 @@ public class ItemService {
         UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         TCoUser user = tCoUserRepository.findById(principal.getUsername()).get();
         tCoItem.setCreateUser(user);
-        log.info(tCoItem.toString());
-        tCoItemRepository.save(tCoItem);
+        
+        // 조회 후, 존재하는 품목코드면 return
+        StringBuilder sb = new StringBuilder(" SELECT COUNT(1) FROM t_co_item WHERE ITEM_CODE = :itemCode");
+        Query query = entityManager.createNativeQuery(sb.toString());
+        query.setParameter("itemCode", tCoItem.getItemCode());
+        BigInteger cnt = (BigInteger) query.getSingleResult();
+        if (cnt.longValue() > 0) {
+            resultBody.setCode("DUP"); // 품목코드 중복됨 -- 이미 등록된 품목코드가 존재합니다.
+        } else {
+        	// 저장
+            tCoItemRepository.save(tCoItem);
+        }
+        
         return resultBody;
     }
+
+    // 품목 수정
+    @SneakyThrows
+    @Transactional
+	public ResultBody saveUpdate(TCoItem tCoItem) {
+		ResultBody resultBody = new ResultBody();
+        UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        TCoUser user = tCoUserRepository.findById(principal.getUsername()).get();
+        tCoItem.setCreateUser(user);
+        
+        // 저장
+        tCoItemRepository.save(tCoItem);
+        
+        return resultBody;
+	}
 }
