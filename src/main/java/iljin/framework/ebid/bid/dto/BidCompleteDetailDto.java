@@ -37,6 +37,7 @@ public class BidCompleteDetailDto {
 	List<BidProgressFileDto> specFile;			//세부사항 - 파일등록
 	List<BidCompleteSpecDto> specInput;			//세부사항 - 직접입력
 	List<BidProgressFileDto> fileList;			//첨부파일
+	String deptName;							//입찰담당부서
 	
 	public BidCompleteDetailDto(
 			String biNo, String biName, String itemName, String biMode, String bidJoinSpec, 
@@ -71,5 +72,30 @@ public class BidCompleteDetailDto {
 		this.whyA7 = whyA7;
 		this.addAccept = addAccept;
 	}
-	
+		
+	public BidCompleteDetailDto(
+			String biNo, String biName, String itemName, String biMode, String succDeciMeth, String bidJoinSpec, String spotDate, String spotArea, 
+			String specialCond, String supplyCond, String amtBasis, String payCond, String damdangName, String deptName, String whyA3,
+			String estStartDate, String estCloseDate, String insMode, String addAccept
+	) {
+		this.biNo = biNo;
+		this.biName = biName;
+		this.itemName = itemName; 
+		this.biMode = biMode; 
+		this.succDeciMeth = succDeciMeth; 
+		this.bidJoinSpec = bidJoinSpec; 
+		this.spotDate = spotDate; 
+		this.spotArea = spotArea; 
+		this.specialCond = specialCond; 
+		this.supplyCond = supplyCond; 
+		this.amtBasis = amtBasis; 
+		this.payCond = payCond; 
+		this.damdangName = damdangName; 
+		this.deptName = deptName; 
+		this.whyA3 = whyA3;
+		this.estStartDate = estStartDate; 
+		this.estCloseDate = estCloseDate; 
+		this.insMode = insMode; 
+		this.addAccept = addAccept;
+	}
 }

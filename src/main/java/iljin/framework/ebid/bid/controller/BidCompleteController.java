@@ -24,7 +24,7 @@ public class BidCompleteController {
 	private BidCompleteService bidCompleteSvc;
 	
 	@PostMapping("/list")
-	public Page complateBidList(@RequestBody Map<String, Object> params) {
+	public ResultBody complateBidList(@RequestBody Map<String, Object> params) {
 		return bidCompleteSvc.complateBidList(params);
 	}
 	
@@ -44,4 +44,21 @@ public class BidCompleteController {
 
 		return bidCompleteSvc.updRealAmt(params);
 	}
+	
+	@PostMapping("/lotteMatCode")
+	public ResultBody lotteMatCode(@RequestBody Map<String, Object> params) throws IOException {
+
+		return bidCompleteSvc.lotteMatCode(params);
+	}
+	
+	@PostMapping("/history")
+	public ResultBody complateBidhistory(@RequestBody Map<String, Object> params) {
+		return bidCompleteSvc.complateBidhistory(params);
+	}
+	
+	@PostMapping("/joinCustList")
+	public ResultBody joinCustList(@RequestBody Map<String, Object> params) {
+		return bidCompleteSvc.joinCustList(params);
+	}
+
 }
