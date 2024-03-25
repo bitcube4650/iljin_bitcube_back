@@ -15,11 +15,12 @@ public class TCoCustUserDto {
 	String userTel;
 	String userHp;
 	String userType;
+	String useYn;
 
 	/**
 	 * 목록 (/api/v1/cocustuser/userList)
 	 */
-	public TCoCustUserDto(String userName, String userId, String userBuseo, String userPosition, String userEmail, String userTel, String userHp, String userType) {
+	public TCoCustUserDto(String userName, String userId, String userBuseo, String userPosition, String userEmail, String userTel, String userHp, String userType, String useYn) {
 		this.userName = userName;
 		this.userId = userId;
 		this.userBuseo = userBuseo;
@@ -28,5 +29,6 @@ public class TCoCustUserDto {
 		this.userTel = userTel;
 		this.userHp = userHp;
 		this.userType = userType;
+		this.useYn = useYn;
 	}
 }

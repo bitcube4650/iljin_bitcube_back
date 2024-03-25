@@ -1,23 +1,31 @@
 package iljin.framework.ebid.custom.controller;
 
 import iljin.framework.core.dto.ResultBody;
+import iljin.framework.core.security.user.CustomUserDetails;
 import iljin.framework.ebid.custom.dto.TCoCustMasterDto;
 import iljin.framework.ebid.custom.entity.TCoCustMaster;
 import iljin.framework.ebid.custom.repository.TCoCustMasterRepository;
 import iljin.framework.ebid.custom.service.CustService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.AuthenticatedPrincipal;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.security.Principal;
 import java.util.Map;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/cust")
 @CrossOrigin
+@Slf4j
 public class CustController {
     @Autowired
     private CustService custService;
@@ -46,6 +54,10 @@ public class CustController {
     public TCoCustMasterDto management(@PathVariable String id) {
         return custService.custDetail(id);
     }
+    @PostMapping("/info")
+    public TCoCustMasterDto info(@AuthenticationPrincipal CustomUserDetails user) {
+        return custService.custDetail(user.getCustCode());
+    }
 
     @PostMapping("/approval")
     public ResultBody approval(@RequestBody Map<String, Object> params) {
@@ -62,11 +74,11 @@ public class CustController {
         return custService.approval(params);
     }
     @PostMapping("/save")
-    public ResultBody save(@RequestBody Map<String, Object> params) {
+    public ResultBody save(@RequestPart(value = "regnumFile", required = false) MultipartFile regnumFile, @RequestPart(value = "bFile", required = false) MultipartFile bFile, @RequestPart("data") Map<String, Object> params) {
         if (params.get("custCode") == null) {
-            return custService.insert(params);
+            return custService.insert(params, regnumFile, bFile);
         } else {
-            return custService.update(params);
+            return custService.update(params, regnumFile, bFile);
         }
     }
 }

@@ -26,6 +26,12 @@ public class TCoCustMasterDto {
     String zipcode;
     String addr;
     String addrDetail;
+    String regnumFile;
+    String regnumPath;
+    String bFile;
+    String bFilePath;
+    String certYn;
+    String etc;
     BigInteger capital;
     String foundYear;
     String createDate;
@@ -67,9 +73,9 @@ public class TCoCustMasterDto {
      * 업체 상세 (/api/v1/cust/approvalDetail)
      */
     public TCoCustMasterDto(int custCode, String custName, String interrelatedNm, String custType1, String custType2, String custTypeNm1, String custTypeNm2, String regnum
-            , String regnum1, String regnum2, String regnum3, String presName, String presJuminNo, String presJuminNo1, String presJuminNo2
-            , BigInteger capital, String foundYear, String tel, String fax, String zipcode, String addr, String addrDetail
-            , String userName, String userEmail, String userId, String userHp, String userTel, String userBuseo, String userPosition) {
+            , String regnum1, String regnum2, String regnum3, String presName, String presJuminNo, String presJuminNo1, String presJuminNo2, BigInteger capital
+            , String foundYear, String tel, String fax, String zipcode, String addr, String addrDetail, String regnumFile, String regnumPath, String bFile, String bFilePath
+            , String certYn, String etc, String userName, String userEmail, String userId, String userHp, String userTel, String userBuseo, String userPosition) {
         this.custCode = custCode;
         this.custName = custName;
         this.interrelatedNm = interrelatedNm;
@@ -92,6 +98,12 @@ public class TCoCustMasterDto {
         this.zipcode = zipcode;
         this.addr = addr;
         this.addrDetail = addrDetail;
+        this.regnumFile = regnumFile;
+        this.regnumPath = regnumPath;
+        this.bFile = bFile;
+        this.bFilePath = bFilePath;
+        this.certYn = certYn;
+        this.etc = etc;
 
         this.userName = userName;
         this.userEmail = userEmail;

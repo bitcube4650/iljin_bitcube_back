@@ -32,7 +32,7 @@ public class CustUserService {
 
     public Page userList(Map<String, Object> params) {
         StringBuilder sbCount = new StringBuilder(" SELECT COUNT(1) FROM t_co_cust_user a WHERE cust_code = :custCode");
-        StringBuilder sbList = new StringBuilder(" SELECT user_name, user_id, user_buseo, user_position, user_email, user_tel, user_hp, user_type FROM t_co_cust_user a WHERE cust_code = :custCode");
+        StringBuilder sbList = new StringBuilder(" SELECT user_name, user_id, user_buseo, user_position, user_email, user_tel, user_hp, user_type, use_yn FROM t_co_cust_user a WHERE cust_code = :custCode");
         StringBuilder sbWhere = new StringBuilder();
 
         if (!StringUtils.isEmpty(params.get("userName"))) {
@@ -40,6 +40,9 @@ public class CustUserService {
         }
         if (!StringUtils.isEmpty(params.get("userId"))) {
             sbWhere.append(" AND user_id like concat('%',:userId,'%')");
+        }
+        if (!StringUtils.isEmpty(params.get("useYn"))) {
+            sbWhere.append(" AND use_yn = :useYn");
         }
         sbList.append(sbWhere);
         sbList.append(" ORDER BY create_date DESC");
@@ -58,6 +61,10 @@ public class CustUserService {
             queryList.setParameter("userId", params.get("userId"));
             queryTotal.setParameter("userId", params.get("userId"));
         }
+        if (!StringUtils.isEmpty(params.get("useYn"))) {
+            queryList.setParameter("useYn", params.get("useYn"));
+            queryTotal.setParameter("useYn", params.get("useYn"));
+        }
 
         Pageable pageable = PagaUtils.pageable(params);
         queryList.setFirstResult(pageable.getPageNumber() * pageable.getPageSize()).setMaxResults(pageable.getPageSize()).getResultList();
@@ -65,5 +72,14 @@ public class CustUserService {
 
         BigInteger count = (BigInteger) queryTotal.getSingleResult();
         return new PageImpl(list, pageable, count.intValue());
+    }
+
+    public TCoCustUserDto detail(String custCode, String id) {
+        StringBuilder sb = new StringBuilder(" select user_name, user_id, user_buseo, user_position, user_email, user_tel, user_hp, user_type, use_yn from t_co_cust_user where cust_code = :custCode AND user_id = :userId");
+        Query query = entityManager.createNativeQuery(sb.toString());
+        query.setParameter("custCode", custCode);
+        query.setParameter("userId", id);
+        TCoCustUserDto data = new JpaResultMapper().uniqueResult(query, TCoCustUserDto.class);
+        return data;
     }
 }
