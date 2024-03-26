@@ -990,13 +990,18 @@ public class BidProgressService {
         String interNm = params.get("interNm");
 
         String titleType = "";
-
         String contentBody = "";
         String contentReason = "";
+        StringBuilder userList = new StringBuilder("");
 
-        StringBuilder userList = new StringBuilder(
-                "SELECT b.user_email from (SELECT bi_no, cust_code from t_bi_info_mat_cust where bi_no =:biNo) a, t_co_cust_user b where b.cust_code = a.cust_code ");
-
+        if (type.equals("del")) {
+            // 삭제인 경우 메일보내는 대상 등록
+            userList.append(
+                    "SELECT b.user_email from (SELECT * from t_bi_info_mat where bi_no = :biNo) a, t_co_user b where (a.gongo_id = b.user_id or a.est_opener = b.user_id or a.est_bidder = b.user_id or a.open_att1 = b.user_id or a.open_att2 = b.user_id)");
+        } else {
+            userList.append(
+                    "SELECT b.user_email from (SELECT bi_no, cust_code from t_bi_info_mat_cust where bi_no =:biNo) a, t_co_cust_user b where b.cust_code = a.cust_code ");
+        }
         Query query = entityManager.createNativeQuery(userList.toString());
         query.setParameter("biNo", biNo);
         List<String> receiverList = query.getResultList();
@@ -1061,6 +1066,7 @@ public class BidProgressService {
                 queryList.setParameter("userEmail", userEmail);
                 queryList.executeUpdate();
             }
+
         }
 
     }
