@@ -31,8 +31,8 @@ public class CustUserService {
     private EntityManager entityManager;
 
     public Page userList(Map<String, Object> params) {
-        StringBuilder sbCount = new StringBuilder(" SELECT COUNT(1) FROM t_co_cust_user a WHERE cust_code = :custCode");
-        StringBuilder sbList = new StringBuilder(" SELECT user_name, user_id, user_buseo, user_position, user_email, user_tel, user_hp, user_type, use_yn FROM t_co_cust_user a WHERE cust_code = :custCode");
+        StringBuilder sbCount = new StringBuilder(" SELECT COUNT(1) FROM t_co_cust_user a WHERE cust_code = :custCode and use_yn ='Y'");
+        StringBuilder sbList = new StringBuilder(" SELECT user_name, user_id, user_buseo, user_position, user_email, user_tel, user_hp, user_type, use_yn FROM t_co_cust_user a WHERE cust_code = :custCode and use_yn ='Y'");
         StringBuilder sbWhere = new StringBuilder();
 
         if (!StringUtils.isEmpty(params.get("userName"))) {
