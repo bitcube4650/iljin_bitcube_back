@@ -80,21 +80,21 @@ public class BidProgressService {
         String interrelatedCode = userOptional.get().getInterrelatedCustCode();
 
         StringBuilder sbCount = new StringBuilder(
-                " select count(1) FROM t_co_cust_ir a, t_co_cust_master b WHERE a.interrelated_cust_code = :interrelatedCode and a.interrelated_cust_code = b.interrelated_cust_code");
+                " select count(1) FROM t_co_cust_ir a, t_co_cust_master b WHERE a.interrelated_cust_code = :interrelatedCode and a.interrelated_cust_code = b.interrelated_cust_code and b.cert_yn='Y'");
         StringBuilder sbList = new StringBuilder(
                 "SELECT CAST(a.cust_code AS CHAR) AS cust_code, b.cust_name AS cust_name, b.pres_name AS pres_name," +
                         "CONCAT('(', b.zipcode, ')', b.addr, ' ', b.addr_detail) AS combined_addr, " +
                         "a.interrelated_cust_code AS interrelated_cust_code " +
-                        "FROM t_co_cust_ir a, t_co_cust_master b WHERE a.interrelated_cust_code = :interrelatedCode and a.interrelated_cust_code = b.interrelated_cust_code");
+                        "FROM t_co_cust_ir a, t_co_cust_master b WHERE a.interrelated_cust_code = :interrelatedCode and a.interrelated_cust_code = b.interrelated_cust_code and b.cert_yn='Y'");
 
         StringBuilder sbWhere = new StringBuilder();
 
         if (!StringUtils.isEmpty(params.get("custName"))) {
-            sbWhere.append(" and a.cust_name like concat('%',:custName,'%')");
+            sbWhere.append(" and b.cust_name like concat('%',:custName,'%') ");
         }
 
         if (!StringUtils.isEmpty(params.get("chairman"))) {
-            sbWhere.append(" and a.pres_name like concat('%',:chairman,'%')");
+            sbWhere.append(" and b.pres_name like concat('%',:chairman,'%') ");
         }
         sbList.append(sbWhere);
         sbCount.append(sbWhere);
@@ -414,8 +414,8 @@ public class BidProgressService {
                 "SELECT a.user_id AS user_id, a.user_name AS user_name, a.dept_name AS dept_name, a.user_auth AS user_auth, a.interrelated_cust_code AS interrelated_cust_code, a.openauth AS open_auth "
                         +
                         "FROM t_co_user a " +
-                        "WHERE 1=1 ");
-        StringBuilder sbCount = new StringBuilder("SELECT count(1) FROM t_co_user a WHERE 1=1 ");
+                        "WHERE use_yn = 'Y' ");
+        StringBuilder sbCount = new StringBuilder("SELECT count(1) FROM t_co_user a WHERE use_yn = 'Y' ");
         StringBuilder sbWhere = new StringBuilder();
 
         switch (searchType) {

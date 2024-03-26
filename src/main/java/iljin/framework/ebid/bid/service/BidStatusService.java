@@ -150,8 +150,6 @@ public class BidStatusService {
 
             // A1(입찰진행)만 출력
             sbWhere.append(" and a.ing_tag = 'A1' ");
-            ;
-
         }
 
         // 개찰대상 체크한 경우
