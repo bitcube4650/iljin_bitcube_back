@@ -50,8 +50,8 @@ public class CustUserService {
         sbCount.append(sbWhere);
         Query queryTotal = entityManager.createNativeQuery(sbCount.toString());
 
-        queryList.setParameter("custCode", params.get("custCode"));
-        queryTotal.setParameter("custCode", params.get("custCode"));
+        queryList.setParameter("custCode", (String) params.get("custCode"));
+        queryTotal.setParameter("custCode", (String) params.get("custCode"));
 
         if (!StringUtils.isEmpty(params.get("userName"))) {
             queryList.setParameter("userName", params.get("userName"));
