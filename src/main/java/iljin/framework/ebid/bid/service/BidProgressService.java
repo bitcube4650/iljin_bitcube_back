@@ -5,6 +5,7 @@ import iljin.framework.core.security.user.UserDto;
 import iljin.framework.core.security.user.UserRepository;
 import iljin.framework.core.security.user.UserRepositoryCustom;
 import iljin.framework.core.util.Util;
+import iljin.framework.ebid.bid.dto.BidPastDto;
 import iljin.framework.ebid.bid.dto.BidProgressCustDto;
 import iljin.framework.ebid.bid.dto.BidProgressDetailDto;
 import iljin.framework.ebid.bid.dto.BidProgressDto;
@@ -130,15 +131,7 @@ public class BidProgressService {
         StringBuilder sbCount = new StringBuilder(
                 "SELECT count(1) " +
                         "FROM t_bi_info_mat a " +
-                        "LEFT JOIN t_co_user b ON a.est_opener = b.user_id " +
-                        "LEFT JOIN t_co_user c ON a.open_att1 = c.user_id " +
-                        "LEFT JOIN t_co_user d ON a.open_att2 = d.user_id " +
-                        "LEFT JOIN t_co_user e ON a.gongo_id = e.user_id " +
-                        "LEFT JOIN t_co_item f ON a.item_code = f.item_code " +
-                        "LEFT JOIN t_co_user g ON a.gongo_id = g.user_id " +
-                        "LEFT JOIN t_co_user i ON a.create_user = i.user_id " +
-                        "JOIN t_co_interrelated h ON a.interrelated_cust_code = h.interrelated_cust_code " +
-                        "WHERE a.ing_tag in ('A5', 'A7') AND a.interrelated_cust_code = :interrelatedCode " +
+                        "WHERE a.interrelated_cust_code = :interrelatedCode " +
                         "and (a.create_user = :userId " +
                         "or a.open_att1 = :userId " +
                         "or a.open_att2 = :userId " +
@@ -148,41 +141,14 @@ public class BidProgressService {
 
         StringBuilder sbList = new StringBuilder(
                 "SELECT a.bi_no AS bi_no, a.bi_name AS bi_name, " +
-                        "CASE WHEN a.bi_mode = 'A' THEN '지명경쟁입찰' ELSE '일반경쟁입찰' END AS bi_mode, a.bi_mode AS bi_mode_code, "
-                        +
-                        "CASE WHEN a.ins_mode = '1' THEN '파일등록' ELSE '직접입력' END AS ins_mode, a.ins_mode AS ins_mode_code, "
-                        +
-                        "a.bid_join_spec AS bid_join_spec, a.special_cond AS special_cond, a.supply_cond AS supply_cond, "
-                        +
-                        "DATE_FORMAT(a.spot_date, '%Y-%m-%d %H:%i') AS spot_date, a.spot_area AS spot_area, " +
-                        "CASE WHEN a.succ_deci_meth = '1' THEN '최저가' WHEN a.succ_deci_meth = '2' THEN '최고가' " +
-                        "WHEN a.succ_deci_meth = '3' THEN '내부적격심사' WHEN a.succ_deci_meth = '4' THEN '최고가&내부적격심사' " +
-                        "ELSE '최저가&내부적격심사' END AS succ_deci_meth, a.succ_deci_meth AS succ_deci_meth_code, DATE_FORMAT(a.est_start_date, '%Y-%m-%d %H:%i') AS est_start_date, "
-                        +
-                        "DATE_FORMAT(a.est_close_date, '%Y-%m-%d %H:%i') AS est_close_date, b.user_name AS est_opener, a.est_opener AS est_opener_code, i.user_name AS cuser, a.create_user AS cuser_code, "
-                        +
-                        "DATE_FORMAT(a.est_open_date, '%Y-%m-%d %H:%i') AS est_open_date, c.user_name AS open_att1, a.open_att1 AS open_att1_code,"
-                        +
-                        "a.open_att1_sign AS open_att1_sign, d.user_name AS open_att2, a.open_att2 AS open_att2_code, a.open_att2_sign AS open_att2_sign, "
-                        +
-                        "a.ing_tag AS ing_tag, a.item_code AS item_code, f.item_name AS item_name, e.user_name AS gongo_id, a.gongo_id AS gongo_id_code, i.dept_name AS cuser_dept, a.pay_cond AS pay_cond, a.why_A3 AS why_A3, "
-                        +
-                        "a.why_A7 AS why_A7, a.bi_open AS bi_open, a.interrelated_cust_code AS interrelated_cust_code, h.interrelated_nm AS interrelated_nm, a.real_amt AS real_amt, a.amt_basis AS amt_basis, a.bd_amt AS bd_amt,"
-                        +
-                        "a.add_accept AS add_accept, a.mat_dept AS mat_dept, a.mat_proc AS mat_proc, a.mat_cls AS mat_cls, "
-                        +
-                        "a.mat_factory AS mat_factory, a.mat_factory_line AS mat_factory_line, a.mat_factory_cnt AS mat_factory_cnt "
-                        +
+                        "CASE WHEN a.bi_mode = 'A' THEN '지명경쟁입찰' ELSE '일반경쟁입찰' END AS bi_mode, " +
+                        "CASE WHEN a.ins_mode = '1' THEN '파일등록' ELSE '직접입력' END AS ins_mode, " +
+                        "DATE_FORMAT(a.est_close_date, '%Y-%m-%d %H:%i') AS est_close_date, " +
+                        "CASE WHEN a.ing_tag = 'A0' THEN '입찰계획' WHEN a.ing_tag = 'A1' THEN '입찰진행' " +
+                        "WHEN a.ing_tag = 'A2' THEN '개찰' WHEN ing_tag = 'A3' THEN '재입찰' " +
+                        "WHEN a.ing_tag = 'A5' THEN '입찰완료' ELSE '유찰' END AS ing_tag " +
                         "FROM t_bi_info_mat a " +
-                        "LEFT JOIN t_co_user b ON a.est_opener = b.user_id " +
-                        "LEFT JOIN t_co_user c ON a.open_att1 = c.user_id " +
-                        "LEFT JOIN t_co_user d ON a.open_att2 = d.user_id " +
-                        "LEFT JOIN t_co_user e ON a.gongo_id = e.user_id " +
-                        "LEFT JOIN t_co_item f ON a.item_code = f.item_code " +
-                        "LEFT JOIN t_co_user g ON a.gongo_id = g.user_id " +
-                        "LEFT JOIN t_co_user i ON a.create_user = i.user_id " +
-                        "JOIN t_co_interrelated h ON a.interrelated_cust_code = h.interrelated_cust_code " +
-                        "WHERE a.ing_tag in ('A5', 'A7') AND a.interrelated_cust_code = :interrelatedCode " +
+                        "WHERE a.interrelated_cust_code = :interrelatedCode " +
                         "and (a.create_user = :userId " +
                         "or a.open_att1 = :userId " +
                         "or a.open_att2 = :userId " +
@@ -223,7 +189,7 @@ public class BidProgressService {
         Pageable pageable = PagaUtils.pageable(params);
         queryList.setFirstResult(pageable.getPageNumber() * pageable.getPageSize())
                 .setMaxResults(pageable.getPageSize()).getResultList();
-        List list = new JpaResultMapper().list(queryList, InterrelatedCustDto.class);
+        List list = new JpaResultMapper().list(queryList, BidPastDto.class);
 
         BigInteger count = (BigInteger) queryCountList.getSingleResult();
         return new PageImpl(list, pageable, count.intValue());
