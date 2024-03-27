@@ -461,7 +461,12 @@ public class NoticeService {
 	public ResultBody updateNotice(MultipartFile file, Map<String, Object> params) {
 		ResultBody resultBody = new ResultBody();
 		UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        TCoUser user = tCoUserRepository.findById(principal.getUsername()).get();//로그인한 유저정보
+		Optional<TCoUser> tCoUser = tCoUserRepository.findById(principal.getUsername());
+        TCoUser user = null;
+        
+        if(tCoUser.isPresent()) {
+        	user = tCoUserRepository.findById(principal.getUsername()).get();//로그인한 유저정보
+        }
         
 	    try {
 	

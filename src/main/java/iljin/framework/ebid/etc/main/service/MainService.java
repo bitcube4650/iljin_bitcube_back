@@ -425,23 +425,26 @@ public class MainService {
 				Optional<TCoCustUser> userOptional2 = tCoUserCustRepository.findById(userId);
 				String formattedDateTime = "";
 				
-				String userTel = userOptional2.get().getUserHp();
-				String userHp = userOptional2.get().getUserHp();
-				String userEmail = userOptional2.get().getUserEmail();
-				LocalDateTime pwdChgDate = userOptional2.get().getPwdChgDate();
-				String userBuseo = userOptional2.get().getUserBuseo();
-				String userPosition = userOptional2.get().getUserPosition();
+				if(userOptional2.isPresent()) {
 				
-				if(pwdChgDate != null) {
-					formattedDateTime = pwdChgDate.format(formatter);
+					String userTel = userOptional2.get().getUserHp();
+					String userHp = userOptional2.get().getUserHp();
+					String userEmail = userOptional2.get().getUserEmail();
+					LocalDateTime pwdChgDate = userOptional2.get().getPwdChgDate();
+					String userBuseo = userOptional2.get().getUserBuseo();
+					String userPosition = userOptional2.get().getUserPosition();
+					
+					if(pwdChgDate != null) {
+						formattedDateTime = pwdChgDate.format(formatter);
+					}
+			        
+					userInfo.put("userTel", userTel);
+					userInfo.put("userHp", userHp);
+					userInfo.put("userEmail", userEmail);
+					userInfo.put("pwdChgDate", formattedDateTime);
+					userInfo.put("userBuseo", userBuseo);
+					userInfo.put("userPosition", userPosition);
 				}
-		        
-				userInfo.put("userTel", userTel);
-				userInfo.put("userHp", userHp);
-				userInfo.put("userEmail", userEmail);
-				userInfo.put("pwdChgDate", formattedDateTime);
-				userInfo.put("userBuseo", userBuseo);
-				userInfo.put("userPosition", userPosition);
 				
 				resultBody.setData(userInfo);
 				
