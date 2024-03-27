@@ -29,7 +29,8 @@ public class BidProgressDto {
 	 */
     public BidProgressDto(
         String biNo, String biName, String estStartDate, String estCloseDate, String biMode,
-        String insMode, String ingTag, String cuser, String cuserEmail, String gongoId, String gongoEmail, String interrelatedCustCode){
+        String insMode, String ingTag, String cuser, String cuserEmail, String gongoId, 
+        String gongoEmail, String interrelatedCustCode){
             this.biNo = biNo;
             this.biName = biName;
             this.estStartDate = estStartDate;

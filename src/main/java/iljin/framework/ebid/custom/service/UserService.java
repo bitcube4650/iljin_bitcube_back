@@ -1,38 +1,32 @@
 package iljin.framework.ebid.custom.service;
 
-import com.querydsl.jpa.impl.JPAQueryFactory;
-import iljin.framework.core.dto.ResultBody;
-import iljin.framework.core.util.Pair;
-import iljin.framework.ebid.custom.dto.TCoUserDto;
-import iljin.framework.ebid.custom.entity.TCoItem;
-import iljin.framework.ebid.custom.entity.TCoItemGrp;
-import iljin.framework.ebid.custom.entity.TCoUser;
-import iljin.framework.ebid.custom.repository.TCoItemGrpRepository;
-import iljin.framework.ebid.custom.repository.TCoItemRepository;
-import iljin.framework.ebid.custom.repository.TCoUserRepository;
-import iljin.framework.ebid.etc.util.PagaUtils;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
+import java.math.BigInteger;
+import java.util.List;
+import java.util.Map;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.transaction.Transactional;
+
 import org.qlrm.mapper.JpaResultMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
-import javax.transaction.Transactional;
-import java.math.BigInteger;
-import java.util.*;
+import iljin.framework.core.dto.ResultBody;
+import iljin.framework.core.security.user.UserServiceImpl;
+import iljin.framework.core.util.Pair;
+import iljin.framework.ebid.custom.dto.TCoUserDto;
+import iljin.framework.ebid.etc.util.CommonUtils;
+import iljin.framework.ebid.etc.util.PagaUtils;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
@@ -40,6 +34,12 @@ public class UserService {
 
     @PersistenceContext
     private EntityManager entityManager;
+    
+    @Autowired
+    private UserServiceImpl userServiceImpl;
+    
+	@Autowired
+    private PasswordEncoder passwordEncoder;
 
     public List interrelatedList() {
         StringBuilder sb = new StringBuilder(" select interrelated_cust_code, interrelated_nm from t_co_interrelated where use_yn = 'Y' order by interrelated_nm");
@@ -96,7 +96,24 @@ public class UserService {
     }
 
     public TCoUserDto detail(String id) {
-        StringBuilder sb = new StringBuilder(" select user_id, user_name, user_position, dept_name, user_tel, user_hp, user_auth, use_yn, interrelated_cust_code, ifnull(openauth, '') as openauth, user_email from t_co_user where user_id = :userId");
+    	StringBuilder sb = new StringBuilder(" select a.user_id"
+				+ ", a.user_name"
+				+ ", a.user_position"
+				+ ", a.dept_name"
+				+ ", a.user_tel"
+				+ ", a.user_hp"
+				+ ", a.user_auth"
+				+ ", a.use_yn"
+				+ ", a.interrelated_cust_code"
+				+ ", ifnull(a.openauth, '') as openauth"
+				+ ", ifnull(a.bidauth, '') as bidauth"
+				+ ", a.user_email"
+				+ ", date_format(a.pwd_edit_date, '%Y-%m-%d') as pwd_edit_date_str"
+				+ ", b.interrelated_nm"
+				+ " from t_co_user a "
+				+ " inner join t_co_interrelated b "
+				+ " on a.interrelated_cust_code = b.interrelated_cust_code"
+				+ " where a.user_id = :userId");
         Query query = entityManager.createNativeQuery(sb.toString());
         query.setParameter("userId", id);
         TCoUserDto data = new JpaResultMapper().uniqueResult(query, TCoUserDto.class);
@@ -107,32 +124,54 @@ public class UserService {
     }
 
     public List interrelatedListByUser(String id) {
-        StringBuilder sb = new StringBuilder(" select a.interrelated_cust_code, interrelated_nm from t_co_interrelated a, t_co_user_interrealated b where a.use_yn = 'Y' and a.interrelated_cust_code = b.interrelated_cust_code and b.user_id = :userId order by interrelated_nm");
+        StringBuilder sb = new StringBuilder(" select a.interrelated_cust_code, interrelated_nm from t_co_interrelated a, t_co_user_interrelated b where a.use_yn = 'Y' and a.interrelated_cust_code = b.interrelated_cust_code and b.user_id = :userId order by interrelated_nm");
         Query query = entityManager.createNativeQuery(sb.toString());
         query.setParameter("userId", id);
         return new JpaResultMapper().list(query, Pair.class);
     }
+    
     @Transactional
     public ResultBody save(Map<String, Object> params) {
         ResultBody resultBody = new ResultBody();
         StringBuilder sbQuery = null;
+     // 저장
         if ((boolean) params.get("isCreate")) {
             sbQuery = new StringBuilder(
-            " insert into t_co_user (user_id, user_pwd, user_name, interrelated_cust_code, user_auth, openauth, user_hp, user_tel, user_email, user_position, dept_name, use_yn, create_user, create_date, update_user, update_date) " +
-            " values (:userId, :userPwd, :userName, :interrelatedCustCode, :userAuth, :openauth, :userHp, :userTel, :userEmail, :userPosition, :deptName, :useYn, :updateUser, now(), :updateUser, now())");
-        } else {
+            " insert into t_co_user (user_id, user_pwd, user_name, interrelated_cust_code, user_auth, openauth, bidauth, user_hp, user_tel, user_email, user_position, dept_name, use_yn, create_user, create_date, update_user, update_date, pwd_edit_date, pwd_edit_yn) " +
+            " values (:userId, :userPwd, :userName, :interrelatedCustCode, :userAuth, :openauth, :bidauth, :userHp, :userTel, :userEmail, :userPosition, :deptName, :useYn, :updateUser, now(), :updateUser, now(), now(), 'N')");
+        } 
+        // 수정
+        else {
             sbQuery = new StringBuilder(
-            " update t_co_user set user_name = :userName, interrelated_cust_code = :interrelatedCustCode, user_auth = :userAuth, openauth = :openauth, user_hp = :userHp, user_tel = :userTel, user_email = :userEmail, user_position = :userPosition, dept_name = :deptName, use_yn = :useYn, update_user = :updateUser, update_date = now() where user_id = :userId");
+            " update t_co_user "
+            + "set user_name = :userName"
+            + ", interrelated_cust_code = :interrelatedCustCode"
+            + ", user_auth = :userAuth"
+            + ", openauth = :openauth"
+            + ", bidauth = :bidauth"
+            + ", user_hp = :userHp"
+            + ", user_tel = :userTel"
+            + ", user_email = :userEmail"
+            + ", user_position = :userPosition"
+            + ", dept_name = :deptName"
+            + ", use_yn = :useYn"
+            + ", update_user = :updateUser"
+            + ", update_date = now() "
+            + "where user_id = :userId");
         }
         Query query = entityManager.createNativeQuery(sbQuery.toString());
         query.setParameter("userId", params.get("userId"));
         if ((boolean) params.get("isCreate")) {
-            query.setParameter("userPwd", params.get("userPwd"));
+        	// 비밀번호 암호화
+        	String userPwd = CommonUtils.getString(params.get("userPwd"), "");
+        	String encodedPassword = passwordEncoder.encode(userPwd);
+            query.setParameter("userPwd", encodedPassword);
         }
         query.setParameter("userName", params.get("userName"));
         query.setParameter("interrelatedCustCode", params.get("interrelatedCustCode"));
         query.setParameter("userAuth", params.get("userAuth"));
         query.setParameter("openauth", params.get("openauth"));
+        query.setParameter("bidauth", params.get("bidauth"));
         query.setParameter("userHp", params.get("userHp"));
         query.setParameter("userTel", params.get("userTel"));
         query.setParameter("userEmail", params.get("userEmail"));
@@ -144,7 +183,7 @@ public class UserService {
         query.executeUpdate();
 
         // 고유 키가 없기에 매번 지워야 한다.
-        sbQuery = new StringBuilder(" delete from t_co_user_interrealated where user_id = :userId");
+        sbQuery = new StringBuilder(" delete from t_co_user_interrelated where user_id = :userId");
         query = entityManager.createNativeQuery(sbQuery.toString());
         query.setParameter("userId", params.get("userId"));
         query.executeUpdate();
@@ -153,7 +192,7 @@ public class UserService {
             List<Map> list = (List) params.get("userInterrelatedList");
             for (Map<String, Object> data : list) {
                 if (data.get("check") != null) {
-                    sbQuery = new StringBuilder(" insert into t_co_user_interrealated (interrelated_cust_code, user_id) values (:interrelatedCustCode, :userId)");
+                    sbQuery = new StringBuilder(" insert into t_co_user_interrelated (interrelated_cust_code, user_id) values (:interrelatedCustCode, :userId)");
                     query = entityManager.createNativeQuery(sbQuery.toString());
                     query.setParameter("interrelatedCustCode", data.get("key"));
                     query.setParameter("userId", params.get("userId"));
@@ -163,4 +202,57 @@ public class UserService {
         }
         return resultBody;
     }
+    // 비밀번호 체크
+	public ResultBody pwdCheck(Map<String, Object> params) {
+        ResultBody resultBody = new ResultBody();
+		// 파라미터 정리
+		String userId = ((UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUsername();
+		String pwd = CommonUtils.getString(params.get("pwd"), "");
+		
+		// 비밀번호 체크
+		boolean pwdCheck = userServiceImpl.checkPassword(userId, pwd);
+		//
+		if(!pwdCheck ) {
+            resultBody.setCode("NO"); // 비밀번호 실패
+		}
+		
+		return resultBody;
+	}
+	
+    public ResultBody idcheck(Map<String, Object> params) {
+        ResultBody resultBody = new ResultBody();
+        StringBuilder sb = new StringBuilder(" SELECT (SELECT COUNT(1) FROM t_co_user WHERE user_id = :userId) + (SELECT COUNT(1) FROM t_co_cust_user WHERE user_id = :userId)");
+        Query query = entityManager.createNativeQuery(sb.toString());
+        query.setParameter("userId", params.get("userId"));
+        BigInteger cnt = (BigInteger) query.getSingleResult();
+        if (cnt.longValue() > 0) {
+            resultBody.setCode("DUP"); // 아이디중복됨
+        }
+        return resultBody;
+    }
+    
+    // 비밀번호 변경
+    @Transactional
+	public ResultBody saveChgPwd(Map<String, Object> params) {
+        ResultBody resultBody = new ResultBody();
+        StringBuilder sbQuery = new StringBuilder(
+	            " update t_co_user "
+	            + "set user_pwd = :userPwd"
+	            + ", pwd_edit_yn = 'Y'"
+	            + ", pwd_edit_date = now()"
+	            + ", update_user = :updateUser"
+	            + ", update_date = now() "
+	            + "where user_id = :userId");
+        Query query = entityManager.createNativeQuery(sbQuery.toString());
+        query.setParameter("userId", params.get("userId"));
+        // 비밀번호 암호화
+        String chgPassword = CommonUtils.getString(params.get("chgPassword"), "");
+        String encodedPassword = passwordEncoder.encode(chgPassword);
+        query.setParameter("userPwd", encodedPassword);
+        String createUser = ((UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUsername();
+        query.setParameter("updateUser", createUser);
+        query.executeUpdate();
+        
+		return resultBody;
+	}
 }

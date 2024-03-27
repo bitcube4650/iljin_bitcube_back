@@ -24,6 +24,8 @@ public class BidCompleteCustDto {
 	String etcPath;			//기타첨부파일 경로
 	List<BidCompleteSpecDto> bidSpec;		//협력사 직접입력
 	
+	String biName;			//입찰명
+	
 	public BidCompleteCustDto(String biNo, String custCode, String custName, String presName, String esmtCurr, 
 			BigDecimal esmtAmt, String submitDate, String damdangName, String updateDate, 
 			String esmtYn, String fileNm, String filePath, String succYn, String etcFile, String etcPath){
@@ -42,5 +44,14 @@ public class BidCompleteCustDto {
 		this.succYn = succYn;	
 		this.etcFile = etcFile;	
 		this.etcPath = etcPath;	
+	}
+	
+	public BidCompleteCustDto(String biNo, String biName, String custName, BigDecimal esmtAmt, String submitDate, String succYn) {
+		this.biNo = biNo;
+		this.biName = biName;
+		this.custName = custName;
+		this.esmtAmt = esmtAmt;
+		this.submitDate = submitDate;
+		this.succYn = succYn;
 	}
 }

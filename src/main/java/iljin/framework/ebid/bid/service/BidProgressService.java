@@ -5,6 +5,7 @@ import iljin.framework.core.security.user.UserDto;
 import iljin.framework.core.security.user.UserRepository;
 import iljin.framework.core.security.user.UserRepositoryCustom;
 import iljin.framework.core.util.Util;
+import iljin.framework.ebid.bid.dto.BidPastDto;
 import iljin.framework.ebid.bid.dto.BidProgressCustDto;
 import iljin.framework.ebid.bid.dto.BidProgressDetailDto;
 import iljin.framework.ebid.bid.dto.BidProgressDto;
@@ -79,21 +80,21 @@ public class BidProgressService {
         String interrelatedCode = userOptional.get().getInterrelatedCustCode();
 
         StringBuilder sbCount = new StringBuilder(
-                " select count(1) FROM t_co_cust_master a WHERE a.interrelated_cust_code = :interrelatedCode");
+                " select count(1) FROM t_co_cust_ir a, t_co_cust_master b WHERE a.interrelated_cust_code = :interrelatedCode and a.interrelated_cust_code = b.interrelated_cust_code and b.cert_yn='Y'");
         StringBuilder sbList = new StringBuilder(
-                "SELECT CAST(a.cust_code AS CHAR) AS cust_code, a.cust_name AS cust_name, a.pres_name AS pres_name," +
-                        "CONCAT('(', a.zipcode, ')', a.addr, ' ', a.addr_detail) AS combined_addr, " +
+                "SELECT CAST(b.cust_code AS CHAR) AS cust_code, b.cust_name AS cust_name, b.pres_name AS pres_name," +
+                        "CONCAT('(', b.zipcode, ')', b.addr, ' ', b.addr_detail) AS combined_addr, " +
                         "a.interrelated_cust_code AS interrelated_cust_code " +
-                        "FROM t_co_cust_master a WHERE a.interrelated_cust_code = :interrelatedCode");
+                        "FROM t_co_cust_ir a, t_co_cust_master b WHERE a.interrelated_cust_code = :interrelatedCode and a.cust_code = b.cust_code and b.cert_yn='Y'");
 
         StringBuilder sbWhere = new StringBuilder();
 
         if (!StringUtils.isEmpty(params.get("custName"))) {
-            sbWhere.append(" and a.cust_name like concat('%',:custName,'%')");
+            sbWhere.append(" and b.cust_name like concat('%',:custName,'%') ");
         }
 
         if (!StringUtils.isEmpty(params.get("chairman"))) {
-            sbWhere.append(" and a.pres_name like concat('%',:chairman,'%')");
+            sbWhere.append(" and b.pres_name like concat('%',:chairman,'%') ");
         }
         sbList.append(sbWhere);
         sbCount.append(sbWhere);
@@ -130,15 +131,7 @@ public class BidProgressService {
         StringBuilder sbCount = new StringBuilder(
                 "SELECT count(1) " +
                         "FROM t_bi_info_mat a " +
-                        "LEFT JOIN t_co_user b ON a.est_opener = b.user_id " +
-                        "LEFT JOIN t_co_user c ON a.open_att1 = c.user_id " +
-                        "LEFT JOIN t_co_user d ON a.open_att2 = d.user_id " +
-                        "LEFT JOIN t_co_user e ON a.gongo_id = e.user_id " +
-                        "LEFT JOIN t_co_item f ON a.item_code = f.item_code " +
-                        "LEFT JOIN t_co_user g ON a.gongo_id = g.user_id " +
-                        "LEFT JOIN t_co_user i ON a.create_user = i.user_id " +
-                        "JOIN t_co_interrelated h ON a.interrelated_cust_code = h.interrelated_cust_code " +
-                        "WHERE a.ing_tag in ('A5', 'A7') AND a.interrelated_cust_code = :interrelatedCode " +
+                        "WHERE a.interrelated_cust_code = :interrelatedCode " +
                         "and (a.create_user = :userId " +
                         "or a.open_att1 = :userId " +
                         "or a.open_att2 = :userId " +
@@ -148,41 +141,14 @@ public class BidProgressService {
 
         StringBuilder sbList = new StringBuilder(
                 "SELECT a.bi_no AS bi_no, a.bi_name AS bi_name, " +
-                        "CASE WHEN a.bi_mode = 'A' THEN '지명경쟁입찰' ELSE '일반경쟁입찰' END AS bi_mode, a.bi_mode AS bi_mode_code, "
-                        +
-                        "CASE WHEN a.ins_mode = '1' THEN '파일등록' ELSE '직접입력' END AS ins_mode, a.ins_mode AS ins_mode_code, "
-                        +
-                        "a.bid_join_spec AS bid_join_spec, a.special_cond AS special_cond, a.supply_cond AS supply_cond, "
-                        +
-                        "DATE_FORMAT(a.spot_date, '%Y-%m-%d %H:%i') AS spot_date, a.spot_area AS spot_area, " +
-                        "CASE WHEN a.succ_deci_meth = '1' THEN '최저가' WHEN a.succ_deci_meth = '2' THEN '최고가' " +
-                        "WHEN a.succ_deci_meth = '3' THEN '내부적격심사' WHEN a.succ_deci_meth = '4' THEN '최고가&내부적격심사' " +
-                        "ELSE '최저가&내부적격심사' END AS succ_deci_meth, a.succ_deci_meth AS succ_deci_meth_code, DATE_FORMAT(a.est_start_date, '%Y-%m-%d %H:%i') AS est_start_date, "
-                        +
-                        "DATE_FORMAT(a.est_close_date, '%Y-%m-%d %H:%i') AS est_close_date, b.user_name AS est_opener, a.est_opener AS est_opener_code, i.user_name AS cuser, a.create_user AS cuser_code, "
-                        +
-                        "DATE_FORMAT(a.est_open_date, '%Y-%m-%d %H:%i') AS est_open_date, c.user_name AS open_att1, a.open_att1 AS open_att1_code,"
-                        +
-                        "a.open_att1_sign AS open_att1_sign, d.user_name AS open_att2, a.open_att2 AS open_att2_code, a.open_att2_sign AS open_att2_sign, "
-                        +
-                        "a.ing_tag AS ing_tag, a.item_code AS item_code, f.item_name AS item_name, e.user_name AS gongo_id, a.gongo_id AS gongo_id_code, i.dept_name AS cuser_dept, a.pay_cond AS pay_cond, a.why_A3 AS why_A3, "
-                        +
-                        "a.why_A7 AS why_A7, a.bi_open AS bi_open, a.interrelated_cust_code AS interrelated_cust_code, h.interrelated_nm AS interrelated_nm, a.real_amt AS real_amt, a.amt_basis AS amt_basis, a.bd_amt AS bd_amt,"
-                        +
-                        "a.add_accept AS add_accept, a.mat_dept AS mat_dept, a.mat_proc AS mat_proc, a.mat_cls AS mat_cls, "
-                        +
-                        "a.mat_factory AS mat_factory, a.mat_factory_line AS mat_factory_line, a.mat_factory_cnt AS mat_factory_cnt "
-                        +
+                        "CASE WHEN a.bi_mode = 'A' THEN '지명경쟁입찰' ELSE '일반경쟁입찰' END AS bi_mode, " +
+                        "CASE WHEN a.ins_mode = '1' THEN '파일등록' ELSE '직접입력' END AS ins_mode, " +
+                        "DATE_FORMAT(a.est_close_date, '%Y-%m-%d %H:%i') AS est_close_date, " +
+                        "CASE WHEN a.ing_tag = 'A0' THEN '입찰계획' WHEN a.ing_tag = 'A1' THEN '입찰진행' " +
+                        "WHEN a.ing_tag = 'A2' THEN '개찰' WHEN ing_tag = 'A3' THEN '재입찰' " +
+                        "WHEN a.ing_tag = 'A5' THEN '입찰완료' ELSE '유찰' END AS ing_tag " +
                         "FROM t_bi_info_mat a " +
-                        "LEFT JOIN t_co_user b ON a.est_opener = b.user_id " +
-                        "LEFT JOIN t_co_user c ON a.open_att1 = c.user_id " +
-                        "LEFT JOIN t_co_user d ON a.open_att2 = d.user_id " +
-                        "LEFT JOIN t_co_user e ON a.gongo_id = e.user_id " +
-                        "LEFT JOIN t_co_item f ON a.item_code = f.item_code " +
-                        "LEFT JOIN t_co_user g ON a.gongo_id = g.user_id " +
-                        "LEFT JOIN t_co_user i ON a.create_user = i.user_id " +
-                        "JOIN t_co_interrelated h ON a.interrelated_cust_code = h.interrelated_cust_code " +
-                        "WHERE a.ing_tag in ('A5', 'A7') AND a.interrelated_cust_code = :interrelatedCode " +
+                        "WHERE a.interrelated_cust_code = :interrelatedCode " +
                         "and (a.create_user = :userId " +
                         "or a.open_att1 = :userId " +
                         "or a.open_att2 = :userId " +
@@ -209,16 +175,6 @@ public class BidProgressService {
         queryCountList.setParameter("interrelatedCode", interrelatedCode);
         queryList.setParameter("userId", userId);
         queryCountList.setParameter("userId", userId);
-        queryList.setParameter("userId", userId);
-        queryCountList.setParameter("userId", userId);
-        queryList.setParameter("userId", userId);
-        queryCountList.setParameter("userId", userId);
-        queryList.setParameter("userId", userId);
-        queryCountList.setParameter("userId", userId);
-        queryList.setParameter("userId", userId);
-        queryCountList.setParameter("userId", userId);
-        queryList.setParameter("userId", userId);
-        queryCountList.setParameter("userId", userId);
 
         if (!StringUtils.isEmpty(params.get("biNo"))) {
             queryList.setParameter("biNo", params.get("biNo"));
@@ -233,7 +189,7 @@ public class BidProgressService {
         Pageable pageable = PagaUtils.pageable(params);
         queryList.setFirstResult(pageable.getPageNumber() * pageable.getPageSize())
                 .setMaxResults(pageable.getPageSize()).getResultList();
-        List list = new JpaResultMapper().list(queryList, InterrelatedCustDto.class);
+        List list = new JpaResultMapper().list(queryList, BidPastDto.class);
 
         BigInteger count = (BigInteger) queryCountList.getSingleResult();
         return new PageImpl(list, pageable, count.intValue());
@@ -458,8 +414,8 @@ public class BidProgressService {
                 "SELECT a.user_id AS user_id, a.user_name AS user_name, a.dept_name AS dept_name, a.user_auth AS user_auth, a.interrelated_cust_code AS interrelated_cust_code, a.openauth AS open_auth "
                         +
                         "FROM t_co_user a " +
-                        "WHERE 1=1 ");
-        StringBuilder sbCount = new StringBuilder("SELECT count(1) FROM t_co_user a WHERE 1=1 ");
+                        "WHERE use_yn = 'Y' ");
+        StringBuilder sbCount = new StringBuilder("SELECT count(1) FROM t_co_user a WHERE use_yn = 'Y' ");
         StringBuilder sbWhere = new StringBuilder();
 
         switch (searchType) {
@@ -798,7 +754,7 @@ public class BidProgressService {
                         +
                         "open_att2, ing_tag, create_user, create_date, item_code, gongo_id, pay_cond, bi_open, interrelated_cust_code, mat_dept, "
                         +
-                        "mat_proc, mat_cls, mat_factory, mat_factory_line, mat_factory_cnt) values (:biNo, :biName, :biModeCode, :insModeCode, :bidJoinSpec, "
+                        "mat_proc, mat_cls, mat_factory, mat_factory_line, mat_factory_cnt, open_att1_sign, open_att2_sign) values (:biNo, :biName, :biModeCode, :insModeCode, :bidJoinSpec, "
                         +
                         ":specialCond, :supplyCond, STR_TO_DATE(:spotDate, '%Y-%m-%d %H:%i'), :spotArea, :succDeciMethCode, sysdate(), "
                         +
@@ -806,7 +762,7 @@ public class BidProgressService {
                         +
                         ":estOpenerCode, :estBidderCode, :openAtt1Code, :openAtt2Code, 'A0', :userId, sysdate(), :itemCode, :gongoIdCode, :payCond, 'N', "
                         +
-                        ":interrelatedCustCode, :matDept, :matProc, :matCls, :matFactory, :matFactoryLine, :matFactoryCnt)");
+                        ":interrelatedCustCode, :matDept, :matProc, :matCls, :matFactory, :matFactoryLine, :matFactoryCnt, 'N', 'N')");
 
         Query queryList = entityManager.createNativeQuery(sbList.toString());
         queryList.setParameter("biNo", (String) params.get("biNo"));
@@ -1028,19 +984,24 @@ public class BidProgressService {
     @Transactional
     public void updateEmail(Map<String, String> params) {
         String biNo = params.get("biNo");
-        String type = params.get("type"); // del : 입찰삭제 , notice : 입찰공고, insert: 입찰등록, fail: 유찰,
+        String type = params.get("type"); // del : 입찰삭제 , notice : 입찰공고, insert: 입찰등록, fail: 유찰, rebid:재입찰,succ:낙찰
         String biName = params.get("biName");
         String reason = params.get("reason");
         String interNm = params.get("interNm");
 
         String titleType = "";
-
         String contentBody = "";
         String contentReason = "";
+        StringBuilder userList = new StringBuilder("");
 
-        StringBuilder userList = new StringBuilder(
-                "SELECT b.user_email from (SELECT bi_no, cust_code from t_bi_info_mat_cust where bi_no =:biNo) a, t_co_cust_user b where b.cust_code = a.cust_code ");
-
+        if (type.equals("del")) {
+            // 삭제인 경우 메일보내는 대상 등록
+            userList.append(
+                    "SELECT b.user_email from (SELECT * from t_bi_info_mat where bi_no = :biNo) a, t_co_user b where (a.gongo_id = b.user_id or a.est_opener = b.user_id or a.est_bidder = b.user_id or a.open_att1 = b.user_id or a.open_att2 = b.user_id)");
+        } else {
+            userList.append(
+                    "SELECT b.user_email from (SELECT bi_no, cust_code from t_bi_info_mat_cust where bi_no =:biNo) a, t_co_cust_user b where b.cust_code = a.cust_code ");
+        }
         Query query = entityManager.createNativeQuery(userList.toString());
         query.setParameter("biNo", biNo);
         List<String> receiverList = query.getResultList();
@@ -1055,7 +1016,7 @@ public class BidProgressService {
 
         switch (type) {
             case "del":
-                titleType = "계획 삭제";
+                titleType = "입찰 계획 삭제";
                 contentBody = "입찰명 [" + biName + "] 입찰계획을\n삭제하였습니다.\n아래 삭제사유를 확인해 주십시오.\n\n";
                 contentReason = "-삭제사유\n" + reason;
                 break;
@@ -1074,8 +1035,22 @@ public class BidProgressService {
                         "아래 유찰사유를 확인해 주십시오.\n\n";
                 contentReason = "-유찰사유\n" + reason;
                 break;
+            case "rebid":
+                titleType = "재입찰";
+                contentBody = "입찰명 [" + biName + "]이 재입찰\n되었습니다.\n" +
+                        "아래 재입찰사유를 확인해 주시고 e-bidding 시스템에\n" +
+                        "로그인하여 다시 한번 투찰해 주십시오\n\n";
+                contentReason = "-재입찰사유\n" + reason;
+                break;
+            case "succ":
+                titleType = "낙찰";
+                contentBody = "입찰명 [" + biName + "]에 업체선정\n되었습니다.\n" +
+                        "자세한 사항은 e-bidding 시스템에  로그인하여 입찰내용 확인 및\n" +
+                        "낙찰확인을 하시기 바랍니다.\n(낙찰확인은 계약과 관련없는 내부절차 입니다.)\n\n";
+                contentReason = "-추가합의사항\n" + reason;
+                break;
         }
-        String title = "[일진그룹 e-bidding] 입찰" + titleType + "(" + biName + ")";
+        String title = "[일진그룹 e-bidding]" + titleType + "(" + biName + ")";
         String content = contentBody + contentReason;
 
         System.out.println(content);
@@ -1091,6 +1066,7 @@ public class BidProgressService {
                 queryList.setParameter("userEmail", userEmail);
                 queryList.executeUpdate();
             }
+
         }
 
     }
@@ -1100,7 +1076,6 @@ public class BidProgressService {
         String msg = params.get("msg");
         String biNo = params.get("biNo");
         String userId = params.get("userId");
-
 
         StringBuilder sbList = new StringBuilder(
                 "INSERT INTO t_bi_log (bi_no, user_id, log_text, create_date) VALUES " +

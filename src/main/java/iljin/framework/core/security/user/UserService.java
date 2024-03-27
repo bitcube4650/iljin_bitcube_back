@@ -20,4 +20,5 @@ public interface UserService {
     Map pwSearch(Map<String, String> params);
     Map custSave(Map<String, String> params);
     UserDto findUser(String loginId);
+    boolean checkPassword(String userId, String password);
 }

@@ -20,4 +20,8 @@ public class TCoInterrelated {
 	String interrelatedCustCode;
 	@Column(name="interrelated_nm")
 	String interrelatedNm;
+	@Column(name="logo_path")
+	String logoPath;
+	@Column(name="img_path2")
+	String imgPath2;
 }

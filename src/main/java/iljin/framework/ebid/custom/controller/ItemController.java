@@ -35,7 +35,12 @@ public class ItemController {
     public Optional<TCoItem> findById(@PathVariable String id) {
         return itemService.findById(id);
     }
-
+    // 품목 수정
+    @PostMapping("/saveUpdate")
+    public ResultBody saveUpdate(@RequestBody TCoItem tCoItem) {
+        return itemService.saveUpdate(tCoItem);
+    }
+    // 품목 저장
     @PostMapping("/save")
     public ResultBody save(@RequestBody TCoItem tCoItem) {
         return itemService.save(tCoItem);

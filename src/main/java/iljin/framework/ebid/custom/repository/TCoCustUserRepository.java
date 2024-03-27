@@ -9,5 +9,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface TCoCustUserRepository extends JpaRepository<TCoCustUser, String> {
-    Page<TCoCustUser> findAllByCustCode(String custCode, Pageable pageable);
+    Page<TCoCustUser> findAllByCustCode(int custCode, Pageable pageable);
 }

@@ -86,10 +86,15 @@ public class NoticeService {
 		String userAuth = "";// userAuth(1 = 시스템관리자, 2 = 각사관리자, 3 = 일반사용자, 4 = 감사사용자)
 		String interrelatedCode = "";
 		String company = "";//계열사(inter)인지 협력사(cust)인지
+		String requestPage = "";//공지사항 페이지에서 요청했는지, 메인화면에서 요청했는지(계열사 메인에서 요청했으면 - main)
 		
 		List<InterUserInfoDto> userInfoList = new ArrayList<>(); 
         List<String> custCodes = new ArrayList<>();
         
+        if (!StringUtils.isEmpty(params.get("requestPage"))) {
+        	requestPage = (String) params.get("requestPage");
+        }
+        System.out.println("requestPage >>>>>>>> " + requestPage);
 
         if (userOptional.isPresent()) {//계열사인 경우
         	
@@ -156,15 +161,18 @@ public class NoticeService {
 															     + " on (tcbn2.b_userid = tcu2.user_id) "
 															     + " where tcbn2.b_co = 'CUST' "
 						      );
-				
-				if(!userAuth.equals("1")) {//시스템관리자가 아닌 경우 계열사 공지 조건 추가
+				/*
+				 * 시스템관리자가 아닌 경우 계열사 공지 조건 추가
+				 * 계열사 메인화면에서 공지사항을 조회하는 경우 계열사 공지 조건 추가
+				 */
+				if(!userAuth.equals("1") || requestPage.equals("main")) {
 				
 					if (userAuth.equals("4")) {//감사관리자의 경우(해당하는 계열사 여러개)
 		
 			            sbCount.append(
 			            		                                   " and ( "
 			            		      );
-			            
+			            //감사사용자의 계열사 조건 추가
 			            sbCount.append(" tcbc.interrelated_cust_code = " + interrelatedCode );
 			            
 			            //감사사용자에 해당하는 계열사 조건 추가
@@ -251,14 +259,18 @@ public class NoticeService {
 												 			    + " where tcbn2.b_co = 'CUST' "
 			      );
 	
-				if(!userAuth.equals("1")) {//시스템관리자가 아닌 경우 계열사 공지 조건 추가
+				/*
+				 * 시스템관리자가 아닌 경우 계열사 공지 조건 추가
+				 * 계열사 메인화면에서 공지사항을 조회하는 경우 계열사 공지 조건 추가
+				 */
+				if(!userAuth.equals("1") || requestPage.equals("main")) {
 	
 					if (userAuth.equals("4")) {//감사관리자의 경우(해당하는 계열사 여러개)
 			
 						sbList.append(
             		                                              " and ( "
             		             	  );
-            
+						//감사사용자의 계열사 조건 추가
 						sbList.append(" tcbc.interrelated_cust_code = " + interrelatedCode );
 						
 						//감사사용자에 해당하는 계열사 조건 추가
@@ -312,7 +324,6 @@ public class NoticeService {
 			sbCount.append(sbWhere);
 			Query queryTotal = entityManager.createNativeQuery(sbCount.toString());
 
-			System.out.println("여태까지 쿼리 " + sbCount);
 			//공지사항 제목
 			if (!StringUtils.isEmpty(params.get("title"))) {
 				queryList.setParameter("title", params.get("title"));
@@ -337,7 +348,7 @@ public class NoticeService {
 			//계열사 공지
 			if(company.equals("inter")) {//계열사인 경우
 							
-				if(!userAuth.equals("1")) {//시스템관리자가 아닌 경우
+				if(!userAuth.equals("1") || requestPage.equals("main")) {//시스템관리자가 아닌 경우 또는 계열사메인에서 공지사항 조회시
 					
 					if (userAuth.equals("4")) {//감사관리자인 경우
 			
@@ -462,7 +473,12 @@ public class NoticeService {
 	public ResultBody updateNotice(MultipartFile file, Map<String, Object> params) {
 		ResultBody resultBody = new ResultBody();
 		UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        TCoUser user = tCoUserRepository.findById(principal.getUsername()).get();//로그인한 유저정보
+		Optional<TCoUser> tCoUser = tCoUserRepository.findById(principal.getUsername());
+        TCoUser user = null;
+        
+        if(tCoUser.isPresent()) {
+        	user = tCoUserRepository.findById(principal.getUsername()).get();//로그인한 유저정보
+        }
         
 	    try {
 	

@@ -39,4 +39,17 @@ public class CoUserController {
     public ResultBody save(@RequestBody Map<String, Object> params) {
         return userService.save(params);
     }
+
+    @PostMapping("/pwdCheck")
+    public ResultBody pwdCheck(@RequestBody Map<String, Object> params) {
+        return userService.pwdCheck(params);
+    }
+    @PostMapping("/saveChgPwd")
+    public ResultBody saveChgPwd(@RequestBody Map<String, Object> params) {
+        return userService.saveChgPwd(params);
+    }
+    @PostMapping("/idcheck")
+    public ResultBody idcheck(@RequestBody Map<String, Object> params) {
+        return userService.idcheck(params);
+    }
 }
