@@ -85,7 +85,7 @@ public class BidProgressService {
                 "SELECT CAST(b.cust_code AS CHAR) AS cust_code, b.cust_name AS cust_name, b.pres_name AS pres_name," +
                         "CONCAT('(', b.zipcode, ')', b.addr, ' ', b.addr_detail) AS combined_addr, " +
                         "a.interrelated_cust_code AS interrelated_cust_code " +
-                        "FROM t_co_cust_ir a, t_co_cust_master b WHERE a.interrelated_cust_code = :interrelatedCode and a.interrelated_cust_code = b.interrelated_cust_code and b.cert_yn='Y'");
+                        "FROM t_co_cust_ir a, t_co_cust_master b WHERE a.interrelated_cust_code = :interrelatedCode and a.cust_code = b.cust_code and b.cert_yn='Y'");
 
         StringBuilder sbWhere = new StringBuilder();
 
