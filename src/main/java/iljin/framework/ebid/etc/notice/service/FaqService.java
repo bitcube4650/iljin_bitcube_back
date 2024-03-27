@@ -72,7 +72,10 @@ public class FaqService {
 											   	   + " where 1 = 1 ");
 			
 			StringBuilder sbWhere = new StringBuilder();
-			String adminYn = (String) params.get("admin");
+			String adminYn = "";
+			if (!StringUtils.isEmpty(params.get("admin"))) {
+				adminYn = (String) params.get("admin");
+			}
 			
 			if (!StringUtils.isEmpty(params.get("title"))) {
 				sbWhere.append(" and tf.title like concat('%',:title,'%') ");
@@ -158,6 +161,32 @@ public class FaqService {
 			entityManager.persist(newFaq);
 		}
 
+		return resultBody;
+	}
+
+	//faq 삭제
+	@Transactional
+	public ResultBody delete(Map<String, Object> params) {
+		ResultBody resultBody = new ResultBody();
+
+		try {
+			//faq id
+	        int faqId = (int) params.get("faqId");
+
+	        //faq 정보
+	        TFaq tFaq = entityManager.find(TFaq.class, faqId);
+	        
+	        entityManager.remove(tFaq);
+
+	    } catch (Exception e) {
+	    	e.printStackTrace();
+	        resultBody.setCode("ERROR");
+	        resultBody.setStatus(500);
+	        resultBody.setMsg("An error occurred while deleting the faq.");
+	        resultBody.setData(e.getMessage()); 
+	    }
+
+		
 		return resultBody;
 	}
 

@@ -34,6 +34,12 @@ public class FaqController {
 	public ResultBody save(@RequestBody Map<String, Object> params) {
 		return faqService.save(params);
 	}
+	
+	//faq 삭제
+	@PostMapping("/delete")
+	public ResultBody delete(@RequestBody Map<String, Object> params) {
+		return faqService.delete(params);
+	}
 }
 
 
