@@ -77,8 +77,7 @@ public class BidPartnerStatusService {
     @Value("${file.upload.directory}")
     private String uploadDirectory;
 
-    public Page statuslist(@RequestBody Map<String, Object> params){
-
+    public Page statuslist(@RequestBody Map<String, Object> params) {
 
         StringBuilder sbCount = new StringBuilder(
                 " select count(1) FROM t_bi_info_mat a LEFT JOIN t_co_user b ON a.create_user = b.user_id LEFT JOIN t_co_user c ON a.gongo_id = c.user_id, t_bi_info_mat_cust d  WHERE a.bi_no = d.bi_no and d.cust_code = :custCode  ");
@@ -162,8 +161,6 @@ public class BidPartnerStatusService {
             sbWhere.append(" and a.ing_tag = '99' ");
         }
 
-
-
         sbList.append(sbWhere);
         sbCount.append(sbWhere);
 
@@ -181,7 +178,6 @@ public class BidPartnerStatusService {
             queryTotal.setParameter("bidName", params.get("bidName"));
         }
 
-
         Pageable pageable = PagaUtils.pageable(params);
         queryList.setFirstResult(pageable.getPageNumber() * pageable.getPageSize())
                 .setMaxResults(pageable.getPageSize()).getResultList();
@@ -196,31 +192,42 @@ public class BidPartnerStatusService {
         String userId = principal.getUsername();
 
         String biNo = (String) params.get("biNo");
+        String custCode = (String) params.get("custCode");
 
-        StringBuilder updateBid = new StringBuilder(
-                "UPDATE t_bi_info_mat_cust set esmt_yn = '1', rebid_att = 'N' " +
-                        "submit_date = null, file_id =null, enx_qutn =null, " +
-                        "semt_curr = null, etc_b_file =null, file_hash_value =null, " +
-                        "etc_b_file_path = null " +
-                        "where bi_no = :biNo and cust_code = :custCode");
-        Query updateQ = entityManager.createNativeQuery(updateBid.toString());
-        updateQ.setParameter("biNo", biNo);
-        updateQ.setParameter("custCode", (String) params.get("custCode"));
-        updateQ.executeUpdate();
+        StringBuilder checkBid = new StringBuilder(
+                "SELECT esmt_yn from t_bi_info_mat_cust where bi_no = :biNo and cust_code = :custCode");
 
-        StringBuilder delBid = new StringBuilder(
-                "DELETE FROM t_bi_detail_mat_cust where bi_no = :biNo and cust_code = :custCode");
-        Query delQ = entityManager.createNativeQuery(delBid.toString());
-        delQ.setParameter("biNo", biNo);
-        delQ.setParameter("custCode", (String) params.get("custCode"));
-        delQ.executeUpdate();
+        Query checkQ = entityManager.createNativeQuery(checkBid.toString());
+        checkQ.setParameter("biNo", biNo);
+        checkQ.setParameter("custCode", custCode);
+
+        String esmtYn = (String) checkQ.getSingleResult();
+
+        if (esmtYn.equals("0") || esmtYn == null) {
+            StringBuilder updateBid = new StringBuilder(
+                    "UPDATE t_bi_info_mat_cust set esmt_yn = '1', rebid_att = 'N' " +
+                            "submit_date = null, file_id =null, enx_qutn =null, " +
+                            "semt_curr = null, etc_b_file =null, file_hash_value =null, " +
+                            "etc_b_file_path = null " +
+                            "where bi_no = :biNo and cust_code = :custCode");
+            Query updateQ = entityManager.createNativeQuery(updateBid.toString());
+            updateQ.setParameter("biNo", biNo);
+            updateQ.setParameter("custCode", custCode);
+            updateQ.executeUpdate();
+
+            StringBuilder delBid = new StringBuilder(
+                    "DELETE FROM t_bi_detail_mat_cust where bi_no = :biNo and cust_code = :custCode");
+            Query delQ = entityManager.createNativeQuery(delBid.toString());
+            delQ.setParameter("biNo", biNo);
+            delQ.setParameter("custCode", custCode);
+            delQ.executeUpdate();
+        }
 
         Map<String, String> logParams = new HashMap<>();
         logParams.put("msg", "[업체]공고확인");
         logParams.put("biNo", biNo);
         logParams.put("userId", userId);
         bidProgressService.updateLog(logParams);
-        
     }
 
     public List<CurrDto> currlist() {
