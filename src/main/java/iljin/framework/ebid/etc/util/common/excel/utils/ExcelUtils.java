@@ -5,7 +5,9 @@ import iljin.framework.ebid.etc.util.CommonUtils;
 import iljin.framework.ebid.etc.util.common.excel.dto.BidProgressResponseDto;
 import iljin.framework.ebid.etc.util.common.excel.repository.ExcelRepository;
 import lombok.extern.slf4j.Slf4j;
+
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -18,9 +20,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -30,12 +34,12 @@ import java.util.stream.Collectors;
 @Component
 public final class ExcelUtils implements ExcelSupport {
 
-    private static final int MAX_ROW = 10;
+    private static final int MAX_ROW = 1000;
     private ExcelRepository excelRepository;
 
 
     /**
-     * CSV 다운로드 10000건 이상
+     * CSV 다운로드
      */
     @Override
     public void downLoadCsv(Class<?> clazz, List<?> data, String fileName, HttpServletResponse response) {
@@ -64,7 +68,7 @@ public final class ExcelUtils implements ExcelSupport {
     }
 
     /**
-     * Excel 다운로드 10000건 미만
+     * Excel 다운로드
      */
     @Override
     public void downLoadExcel(Class<?> clazz, List<?> data, String fileName, HttpServletResponse response) {
@@ -96,6 +100,36 @@ public final class ExcelUtils implements ExcelSupport {
         }
     }
 
+    /**
+     * Excel 다운로드 Pagination 적용.
+     */
+    @Override
+    public void downLoadExcelPaging(Class<?> clazz, List<?> data, String fileName, HttpServletResponse response) {
+        try (SXSSFWorkbook workbook = new SXSSFWorkbook()) {
+            int listSize = data.size();
+            int start = 0;
+
+            getWorkBookPaging(clazz, workbook, start, findHeaderNames(clazz), data, listSize);
+
+            response.setCharacterEncoding("UTF-8");  // UTF-8 설정 추가
+            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.setHeader("Content-Disposition", "attachment; filename=" + fileName + ".xlsx");
+
+            ServletOutputStream outputStream = response.getOutputStream();
+            workbook.write(outputStream);
+            workbook.close();
+
+            outputStream.flush();
+            outputStream.close();
+
+        } catch (IOException e) {
+            log.error("Excel Download Error Message = {}", e.getMessage());
+            throw new RuntimeException(e);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private SXSSFWorkbook getWorkBook(Class<?> clazz, SXSSFWorkbook workbook, int rowIdx, List<String> headerNames, List<?> data, int maxSize) throws IllegalAccessException, IOException {
         Sheet sheet = workbook.createSheet("Sheet4"); // 엑셀 sheet 이름
         sheet.setDefaultColumnWidth(10); // 디폴트 너비 설정
@@ -103,18 +137,67 @@ public final class ExcelUtils implements ExcelSupport {
         Row row = null;
         Cell cell = null;
 
-        // 0, 5000, 10000, 15000, 20000 : 5000씩 증가됨
-        //int rowNo = rowIdx % maxSize; // 0, 5000, 10000, 15000, 20000 : 5000씩 증가됨
-
         row = sheet.createRow(0);
 
-        //엑셀 헤더 생성
-        createHeaders(workbook, row, cell, headerNames);
+        //케이스에 따른 엑셀 헤더 생성.
+        if("BidHistoryMatExcelDto".equals(clazz.getSimpleName())) {
+            createHeadersBidHisMat(workbook, row, cell, headerNames);
+        } else if("BidHistoryExcelDto".equals(clazz.getSimpleName())) {
+            createHeadersBidHis(workbook, row, cell, headerNames);
+
+        } else {
+            createHeaders(workbook, row, cell, headerNames);
+        }
+
         //엑셀 내용 생성
         createBody(clazz, workbook, data, sheet, row, cell, rowIdx);
 
         // 주기적인 flush 진행
         ((SXSSFSheet) sheet).flushRows(maxSize);
+
+        return workbook;
+    }
+
+
+    //createBody 부분에 Paging처리.
+    private SXSSFWorkbook getWorkBookPaging(Class<?> clazz, SXSSFWorkbook workbook, int rowIdx, List<String> headerNames, List<?> data, int maxSize) throws IllegalAccessException, IOException {
+        Sheet sheet = workbook.createSheet("Sheet1"); // 엑셀 sheet 이름
+        sheet.setDefaultColumnWidth(10); // 디폴트 너비 설정
+
+        Row row = null;
+        Cell cell = null;
+
+        row = sheet.createRow(0);
+
+        //케이스에 따른 엑셀 헤더 생성.
+        if("BidHistoryMatExcelDto".equals(clazz.getSimpleName())) {
+            createHeadersBidHisMat(workbook, row, cell, headerNames);
+        } else if("BidHistoryExcelDto".equals(clazz.getSimpleName())) {
+            createHeadersBidHis(workbook, row, cell, headerNames);
+
+        } else {
+            createHeaders(workbook, row, cell, headerNames);
+        }
+
+        int listSize = data.size();
+        int start = 0;
+
+
+        /*
+         * 인스턴스 변수 MAX_ROW 상수로 선언되어있음.
+         */
+        for (int i = 0; i < listSize; i += MAX_ROW) {
+            int nextPage = Math.min(listSize, start + MAX_ROW);
+            List<?> list = new ArrayList<>(data.subList(start, nextPage));
+
+            createBodyPaging(clazz, workbook, list, sheet, row, cell, start);
+
+            list.clear();
+            start += MAX_ROW;
+
+            // 주기적인 flush 진행
+            ((SXSSFSheet) sheet).flushRows(MAX_ROW);
+        }
 
         return workbook;
     }
@@ -168,8 +251,190 @@ public final class ExcelUtils implements ExcelSupport {
         }
     }
 
+    private void createHeadersBidHis(SXSSFWorkbook workbook, Row row, Cell cell, List<String> headerNames) {
+
+        /**
+         * header font style
+         */
+        Font headerFont = workbook.createFont();
+        headerFont.setFontHeightInPoints((short) 11);
+
+        /**
+         * header cell style
+         */
+        CellStyle headerCellStyle = workbook.createCellStyle();
+        headerCellStyle.setAlignment(HorizontalAlignment.CENTER);       // 가로 가운데 정렬
+        headerCellStyle.setVerticalAlignment(VerticalAlignment.CENTER); // 세로 가운데 정렬
+        headerCellStyle.setFont(headerFont);
+
+        //테두리 설정
+        headerCellStyle.setBorderLeft(BorderStyle.MEDIUM);
+        headerCellStyle.setBorderRight(BorderStyle.MEDIUM);
+        headerCellStyle.setBorderTop(BorderStyle.MEDIUM);
+        headerCellStyle.setBorderBottom(BorderStyle.MEDIUM);
+
+        headerCellStyle.setFillForegroundColor(IndexedColors.LIGHT_GREEN.getIndex());
+        headerCellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND );
+        headerCellStyle.setAlignment(HorizontalAlignment.CENTER );
+        headerCellStyle.setFont(headerFont);
+
+        // 두 번째 행 생성 (1행)
+        Row secondRow = row.getSheet().createRow(1);
+        Cell cell2 = null;
+
+
+        for (int i = 0, size = headerNames.size(); i < size; i++) {
+            cell = row.createCell(i);
+            cell2 = secondRow.createCell(i);
+
+            headerCellStyle.setBorderBottom(BorderStyle.THIN);
+            headerCellStyle.setBottomBorderColor(IndexedColors.BLACK.getIndex());
+            headerCellStyle.setBorderLeft(BorderStyle.THIN);
+            headerCellStyle.setLeftBorderColor(IndexedColors.BLACK.getIndex());
+            headerCellStyle.setBorderRight(BorderStyle.THIN);
+            headerCellStyle.setRightBorderColor(IndexedColors.BLACK.getIndex());
+            headerCellStyle.setBorderTop(BorderStyle.THIN);
+            headerCellStyle.setTopBorderColor(IndexedColors.BLACK.getIndex());
+
+            cell.setCellStyle(headerCellStyle);
+            cell2.setCellStyle(headerCellStyle);
+
+            cell.setCellType(CellType.STRING);
+            cell2.setCellType(CellType.STRING);
+
+            // 7열까지는 0행과 1행 병합
+            if (i <= 7) {
+                CellRangeAddress mergedRegion = new CellRangeAddress(0, 1, i, i);
+                row.getSheet().addMergedRegion(mergedRegion);
+
+            }
+            // 8열부터는 0행만 병합
+            else if (i == 8) {
+                CellRangeAddress mergedRegion = new CellRangeAddress(0, 0, i, i + 2);
+                row.getSheet().addMergedRegion(mergedRegion);
+
+
+                cell.setCellValue("투찰정보");
+
+
+                cell2.setCellStyle(headerCellStyle);
+                cell2.setCellType(CellType.STRING);
+                cell2.setCellValue(headerNames.get(i));
+                // 1행은 병합하지 않고 그대로 나오도록 병합영역 삭제
+            }
+
+            if(i >= 9) {
+                cell2.setCellStyle(headerCellStyle);
+                cell2.setCellType(CellType.STRING);
+                cell2.setCellValue(headerNames.get(i));
+            }
+
+            // 첫 번째 행과 그 다음 행 병합 잘됨
+          //  CellRangeAddress mergedRegion = new CellRangeAddress(0, 1, i, i);
+          //  row.getSheet().addMergedRegion(mergedRegion);
+
+/*          // 마지막 열과 그 다음 열 병합 (잘됨)
+            if (i == size - 1) {
+                 mergedRegion = new CellRangeAddress(0, 0, i - 1, i);
+                row.getSheet().addMergedRegion(mergedRegion);
+            }*/
+            if(i != 8 ) {
+                cell.setCellValue(headerNames.get(i));
+            }
+        }
+
+    }
+
+    private void createHeadersBidHisMat(SXSSFWorkbook workbook, Row row, Cell cell, List<String> headerNames) {
+
+        /**
+         * header font style
+         */
+        Font headerFont = workbook.createFont();
+        headerFont.setFontHeightInPoints((short) 11);
+
+        /**
+         * header cell style
+         */
+        CellStyle headerCellStyle = workbook.createCellStyle();
+        headerCellStyle.setAlignment(HorizontalAlignment.CENTER);       // 가로 가운데 정렬
+        headerCellStyle.setVerticalAlignment(VerticalAlignment.CENTER); // 세로 가운데 정렬
+        headerCellStyle.setFont(headerFont);
+
+        //테두리 설정
+        headerCellStyle.setBorderLeft(BorderStyle.MEDIUM);
+        headerCellStyle.setBorderRight(BorderStyle.MEDIUM);
+        headerCellStyle.setBorderTop(BorderStyle.MEDIUM);
+        headerCellStyle.setBorderBottom(BorderStyle.MEDIUM);
+
+        //배경 설정
+        headerCellStyle.setFillForegroundColor(IndexedColors.LIGHT_GREEN.getIndex());
+        headerCellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND );
+        headerCellStyle.setAlignment(HorizontalAlignment.CENTER );
+        headerCellStyle.setFont(headerFont);
+
+        // 두 번째 행 생성 (1행)
+        Row secondRow = row.getSheet().createRow(1);
+        Cell cell2 = null;
+
+
+        for (int i = 0, size = headerNames.size(); i < size; i++) {
+            cell = row.createCell(i);
+            cell2 = secondRow.createCell(i);
+
+            headerCellStyle.setBorderBottom(BorderStyle.THIN);
+            headerCellStyle.setBottomBorderColor(IndexedColors.BLACK.getIndex());
+            headerCellStyle.setBorderLeft(BorderStyle.THIN);
+            headerCellStyle.setLeftBorderColor(IndexedColors.BLACK.getIndex());
+            headerCellStyle.setBorderRight(BorderStyle.THIN);
+            headerCellStyle.setRightBorderColor(IndexedColors.BLACK.getIndex());
+            headerCellStyle.setBorderTop(BorderStyle.THIN);
+            headerCellStyle.setTopBorderColor(IndexedColors.BLACK.getIndex());
+
+            cell.setCellStyle(headerCellStyle);
+            cell2.setCellStyle(headerCellStyle);
+
+            cell.setCellType(CellType.STRING);
+            cell2.setCellType(CellType.STRING);
+
+            // 7열까지는 0행과 1행 병합
+            if (i <= 13) {
+                CellRangeAddress mergedRegion = new CellRangeAddress(0, 1, i, i);
+                row.getSheet().addMergedRegion(mergedRegion);
+
+            }
+            // 8열부터는 0행만 병합
+            else if (i == 14) {
+                CellRangeAddress mergedRegion = new CellRangeAddress(0, 0, i, i + 2);
+                row.getSheet().addMergedRegion(mergedRegion);
+
+                cell.setCellValue("투찰정보");
+                cell2.setCellStyle(headerCellStyle);
+                cell2.setCellType(CellType.STRING);
+                cell2.setCellValue(headerNames.get(i));
+            }
+
+            if(i >= 15) {
+                cell2.setCellStyle(headerCellStyle);
+                cell2.setCellType(CellType.STRING);
+                cell2.setCellValue(headerNames.get(i));
+            }
+
+            if(i != 14 ) {
+                cell.setCellValue(headerNames.get(i));
+            }
+        }
+    }
+
+
+
+
+
+
+
+
     private void createBody(Class<?> clazz, SXSSFWorkbook workbook,List<?> data, Sheet sheet, Row row, Cell cell, int rowNo) throws IllegalAccessException, IOException {
-        int startRow = 0;
+        int startRow = 1;
 
         /**
          * body font style
@@ -188,6 +453,9 @@ public final class ExcelUtils implements ExcelSupport {
         bodyCellStyle.setVerticalAlignment(VerticalAlignment.CENTER); // 세로 가운데 정렬
         bodyCellStyle.setFont(bodyFont);
 
+        // 통화 서식 생성
+        short currencyFormat = workbook.createDataFormat().getFormat("#,##0.00");
+
         for (Object o : data) {
             List<Object> fields = findFieldValue(clazz, o);
             row = sheet.createRow(++startRow);
@@ -205,17 +473,83 @@ public final class ExcelUtils implements ExcelSupport {
 
                 cell.setCellStyle(bodyCellStyle);
 
-                cell.setCellType(CellType.STRING);
-                cell.setCellValue(String.valueOf(fields.get(i)));
-
+                Object fieldValue = fields.get(i);
+                if (fieldValue instanceof BigDecimal) {
+                    // BigDecimal 값을 통화 형식으로 변환하여 셀에 설정
+                    BigDecimal decimalValue = (BigDecimal) fieldValue;
+                    String currencyValue = NumberFormat.getCurrencyInstance().format(decimalValue.doubleValue());
+                    cell.setCellValue(currencyValue);
+                } else {
+                    // 다른 형식의 데이터는 그대로 셀에 설정
+                    cell.setCellType(CellType.STRING);
+                    cell.setCellValue(CommonUtils.getString(fieldValue, " "));
+                }
 
                 // 주기적인 flush 진행
                 if (rowNo % MAX_ROW == 0) {
                     ((SXSSFSheet) sheet).flushRows(MAX_ROW);
                 }
+
             }
         }
     }
+    private void createBodyPaging(Class<?> clazz, SXSSFWorkbook workbook,List<?> data, Sheet sheet, Row row, Cell cell, int rowNo) throws IllegalAccessException, IOException {
+        int startRow = rowNo + 1;
+
+        /**
+         * body font style
+         */
+
+        Font bodyFont = workbook.createFont();
+        bodyFont.setBold(false);
+        bodyFont.setFontHeightInPoints((short) 10);
+        //font.setColor((short) 255);
+
+        /**
+         * body cell style
+         */
+        CellStyle bodyCellStyle = workbook.createCellStyle();
+        bodyCellStyle.setAlignment(HorizontalAlignment.CENTER);       // 가로 가운데 정렬
+        bodyCellStyle.setVerticalAlignment(VerticalAlignment.CENTER); // 세로 가운데 정렬
+        bodyCellStyle.setFont(bodyFont);
+
+        // 통화 서식 생성
+        short currencyFormat = workbook.createDataFormat().getFormat("#,##0.00");
+
+        for (Object o : data) {
+            List<Object> fields = findFieldValue(clazz, o);
+            row = sheet.createRow(++startRow);
+            for (int i = 0, fieldSize = fields.size(); i < fieldSize; i++) {
+                cell = row.createCell(i);
+
+                bodyCellStyle.setBorderBottom(BorderStyle.THIN);
+                bodyCellStyle.setBottomBorderColor(IndexedColors.BLACK.getIndex());
+                bodyCellStyle.setBorderLeft(BorderStyle.THIN);
+                bodyCellStyle.setLeftBorderColor(IndexedColors.BLACK.getIndex());
+                bodyCellStyle.setBorderRight(BorderStyle.THIN);
+                bodyCellStyle.setRightBorderColor(IndexedColors.BLACK.getIndex());
+                bodyCellStyle.setBorderTop(BorderStyle.THIN);
+                bodyCellStyle.setTopBorderColor(IndexedColors.BLACK.getIndex());
+
+
+
+                cell.setCellStyle(bodyCellStyle);
+
+                Object fieldValue = fields.get(i);
+                if (fieldValue instanceof BigDecimal) {
+                    // BigDecimal 값을 통화 형식으로 변환하여 셀에 설정
+                    BigDecimal decimalValue = (BigDecimal) fieldValue;
+                    String currencyValue = NumberFormat.getCurrencyInstance().format(decimalValue.doubleValue());
+                    cell.setCellValue(currencyValue);
+                } else {
+                    // 다른 형식의 데이터는 그대로 셀에 설정
+                    cell.setCellType(CellType.STRING);
+                    cell.setCellValue(CommonUtils.getString(fieldValue, " "));
+                }
+            }
+        }
+    }
+
 
     /**
      * 엑셀의 헤더 명칭을 찾는 로직
@@ -278,7 +612,7 @@ public final class ExcelUtils implements ExcelSupport {
         //데이터 값 추출
         for (Object o : data) {
             List<Object> fields = findFieldValue(clazz, o);
-            String[] rowData = new String[8];
+            String[] rowData = new String[fields.size()];
             for (int i = 0, fieldSize = fields.size(); i < fieldSize; i++) {
 
                 rowData[i] = (fields.get(i) != null) ? fields.get(i).toString() : null;

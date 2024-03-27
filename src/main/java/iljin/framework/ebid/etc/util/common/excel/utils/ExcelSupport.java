@@ -8,4 +8,6 @@ public interface ExcelSupport {
     void downLoadExcel(Class<?> clazz, List<?> data, String fileName, HttpServletResponse response);
 
     void downLoadCsv(Class<?> clazz, List<?> data, String fileName, HttpServletResponse response) throws IOException, IllegalAccessException;
+
+    void downLoadExcelPaging(Class<?> clazz, List<?> data, String fileName, HttpServletResponse response);
 }
