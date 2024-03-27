@@ -264,7 +264,7 @@ public class BidProgressService {
             sbWhere.append(")");
         }
         sbList.append(sbWhere);
-
+        sbList.append(" order by a.create_date desc");
         Query queryList = entityManager.createNativeQuery(sbList.toString());
         sbCount.append(sbWhere);
         Query queryTotal = entityManager.createNativeQuery(sbCount.toString());
@@ -740,8 +740,7 @@ public class BidProgressService {
 
     @Transactional
     public ResultBody insertBid(@RequestBody Map<String, Object> params) {
-        System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@");
-        System.out.println(Integer.parseInt((String) params.get("bdAmt")));
+
 
         UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication()
                 .getPrincipal();
@@ -908,7 +907,9 @@ public class BidProgressService {
         String userId = principal.getUsername();
 
         String biNo = (String) params.get(0).get("biNo");
-
+        int orderUc = 0;
+        int orderQty = 0;
+      
         StringBuilder init = new StringBuilder(
                 "DELETE from t_bi_spec_mat where bi_no = :biNo");
 
@@ -917,6 +918,11 @@ public class BidProgressService {
         initQuery.executeUpdate();
 
         for (Map<String, Object> data : params) {
+        	// orderUc 값이 null이거나 비어 있는 경우 0으로 초기화
+            orderUc = !StringUtils.isEmpty(data.get("orderUc")) ? Integer.parseInt(data.get("orderUc").toString()) : 0;
+            // orderQty 값이 null이거나 비어 있는 경우 0으로 초기화
+            orderQty = !StringUtils.isEmpty(data.get("orderQty")) ? Integer.parseInt(data.get("orderQty").toString()) : 0;
+            
             StringBuilder sbList = new StringBuilder(
                     "INSERT into t_bi_spec_mat (bi_no, seq, name, ssize, unitcode, order_uc, create_user, create_date, order_qty) "
                             +
@@ -927,9 +933,9 @@ public class BidProgressService {
             queryList.setParameter("name", (String) data.get("name"));
             queryList.setParameter("ssize", (String) data.get("ssize"));
             queryList.setParameter("unitcode", (String) data.get("unitcode"));
-            queryList.setParameter("orderUc", data.get("orderUc"));
+            queryList.setParameter("orderUc", orderUc);
             queryList.setParameter("userId", userId);
-            queryList.setParameter("orderQty", data.get("orderQty"));
+            queryList.setParameter("orderQty", orderQty);
             queryList.executeUpdate();
         }
         ResultBody resultBody = new ResultBody();
