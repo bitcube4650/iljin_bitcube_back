@@ -202,7 +202,7 @@ public class BidProgressService {
 
         String userAuth = userOptional.get().getUserAuth();
         String interrelatedCode = userOptional.get().getInterrelatedCustCode();
-        System.out.println("code111111111111111111111=" + interrelatedCode);
+
         String userId = principal.getUsername();
 
         StringBuilder sbCount = new StringBuilder(
@@ -531,7 +531,6 @@ public class BidProgressService {
     public ResultBody bidNotice(Map<String, String> params) {
         String biNo = params.get("biNo");
 
-        System.out.println(11111111 + biNo);
         StringBuilder sbList = new StringBuilder(
                 "UPDATE t_bi_info_mat set bid_open_date = sysdate()," +
                         "ing_tag = 'A1' " +
@@ -562,6 +561,12 @@ public class BidProgressService {
 
         UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String userId = principal.getUsername();
+        String bdAmtStr = (String) params.get("bdAmt");
+        
+        BigDecimal bdAmt = null;
+        if (!bdAmtStr.isEmpty()) {
+            bdAmt = new BigDecimal(bdAmtStr);
+        }
 
         StringBuilder sbList = new StringBuilder( // 입찰 업데이트
                 "UPDATE t_bi_info_mat SET bi_name = :biName, bi_mode = :biModeCode, ins_mode = :insModeCode, " +
@@ -590,7 +595,7 @@ public class BidProgressService {
         queryList.setParameter("spotArea", (String) params.get("spotArea"));
         queryList.setParameter("succDeciMethCode", (String) params.get("succDeciMethCode"));
         queryList.setParameter("amtBasis", (String) params.get("amtBasis"));
-        queryList.setParameter("bdAmt", params.get("bdAmt"));
+        queryList.setParameter("bdAmt", bdAmt);
         queryList.setParameter("estStartDate", (String) params.get("estStartDate"));
         queryList.setParameter("estCloseDate", (String) params.get("estCloseDate"));
         queryList.setParameter("estOpenerCode", (String) params.get("estOpenerCode"));
@@ -640,7 +645,7 @@ public class BidProgressService {
         queryList1.setParameter("spotArea", (String) params.get("spotArea"));
         queryList1.setParameter("succDeciMethCode", (String) params.get("succDeciMethCode"));
         queryList1.setParameter("amtBasis", (String) params.get("amtBasis"));
-        queryList1.setParameter("bdAmt", params.get("bdAmt"));
+        queryList1.setParameter("bdAmt", bdAmt);
         queryList1.setParameter("estStartDate", (String) params.get("estStartDate"));
         queryList1.setParameter("estCloseDate", (String) params.get("estCloseDate"));
         queryList1.setParameter("estOpenerCode", (String) params.get("estOpenerCode"));
