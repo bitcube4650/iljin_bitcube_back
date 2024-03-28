@@ -195,7 +195,7 @@ public class StatisticsService {
 			
 			//조건문 쿼리 삽입
 			StringBuilder sbWhere = new StringBuilder();
-			sbWhere.append("where 1=1 ");
+			sbWhere.append("where tbim.ING_TAG = 'A5' ");
 			
 			//입찰완료일
 			sbWhere.append("and tbim.UPDATE_DATE BETWEEN :startDate and :endDate ");
