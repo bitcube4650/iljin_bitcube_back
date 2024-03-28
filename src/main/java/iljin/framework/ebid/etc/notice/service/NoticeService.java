@@ -87,6 +87,8 @@ public class NoticeService {
 		String interrelatedCode = "";
 		String company = "";//계열사(inter)인지 협력사(cust)인지
 		String requestPage = "";//공지사항 페이지에서 요청했는지, 메인화면에서 요청했는지(계열사 메인에서 요청했으면 - main)
+								//계열사 시스템 관리자가 로그인했으면 메인화면에는 공통공지와 로그인 한 유저의 계열사와 관련된 계열사 공지만 출력(메인화면에는 유저 계열사 관련해서 정보들이 나오니 일관성 유지를 위해)
+								//계열사 시스템 관리자가 로그인했으면 공지사항 목록페이지에는 공통공지와 모든 계열사 공지가 출력 
 		
 		List<InterUserInfoDto> userInfoList = new ArrayList<>(); 
         List<String> custCodes = new ArrayList<>();
@@ -94,8 +96,7 @@ public class NoticeService {
         if (!StringUtils.isEmpty(params.get("requestPage"))) {
         	requestPage = (String) params.get("requestPage");
         }
-        System.out.println("requestPage >>>>>>>> " + requestPage);
-
+        
         if (userOptional.isPresent()) {//계열사인 경우
         	
         	userAuth = userOptional.get().getUserAuth();// userAuth(1 = 시스템관리자, 2 = 각사관리자, 3 = 일반사용자, 4 = 감사사용자)

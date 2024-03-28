@@ -745,7 +745,13 @@ public class BidProgressService {
         UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication()
                 .getPrincipal();
         String userId = principal.getUsername();
-
+        String bdAmtStr = (String) params.get("bdAmt");
+        
+        BigDecimal bdAmt = null;
+        if (!bdAmtStr.isEmpty()) {
+            bdAmt = new BigDecimal(bdAmtStr);
+        }
+        
         StringBuilder sbList = new StringBuilder( // 입찰 insert
                 "INSERT into t_bi_info_mat (bi_no, bi_name, bi_mode, ins_mode, bid_join_spec, special_cond, supply_cond, spot_date, "
                         +
@@ -775,7 +781,7 @@ public class BidProgressService {
         queryList.setParameter("spotArea", (String) params.get("spotArea"));
         queryList.setParameter("succDeciMethCode", (String) params.get("succDeciMethCode"));
         queryList.setParameter("amtBasis", (String) params.get("amtBasis"));
-        queryList.setParameter("bdAmt", params.get("bdAmt"));
+        queryList.setParameter("bdAmt", bdAmt);
         queryList.setParameter("estStartDate", (String) params.get("estStartDate"));
         queryList.setParameter("estCloseDate", (String) params.get("estCloseDate"));
         queryList.setParameter("estOpenerCode", (String) params.get("estOpenerCode"));
@@ -825,7 +831,7 @@ public class BidProgressService {
         queryList1.setParameter("spotArea", (String) params.get("spotArea"));
         queryList1.setParameter("succDeciMethCode", (String) params.get("succDeciMethCode"));
         queryList1.setParameter("amtBasis", (String) params.get("amtBasis"));
-        queryList1.setParameter("bdAmt", params.get("bdAmt"));
+        queryList1.setParameter("bdAmt", bdAmt);
         queryList1.setParameter("estStartDate", (String) params.get("estStartDate"));
         queryList1.setParameter("estCloseDate", (String) params.get("estCloseDate"));
         queryList1.setParameter("estOpenerCode", (String) params.get("estOpenerCode"));
@@ -1003,7 +1009,7 @@ public class BidProgressService {
         if (type.equals("del")) {
             // 삭제인 경우 메일보내는 대상 등록
             userList.append(
-                    "SELECT b.user_email from (SELECT * from t_bi_info_mat where bi_no = :biNo) a, t_co_user b where (a.gongo_id = b.user_id or a.est_opener = b.user_id or a.est_bidder = b.user_id or a.open_att1 = b.user_id or a.open_att2 = b.user_id)");
+                    "SELECT b.user_email from (SELECT * from t_bi_info_mat where bi_no = :biNo) a, t_co_user b where (a.gongo_id = b.user_id)");
         } else {
             userList.append(
                     "SELECT b.user_email from (SELECT bi_no, cust_code from t_bi_info_mat_cust where bi_no =:biNo) a, t_co_cust_user b where b.cust_code = a.cust_code ");
@@ -1059,7 +1065,6 @@ public class BidProgressService {
         String title = "[일진그룹 e-bidding]" + titleType + "(" + biName + ")";
         String content = contentBody + contentReason;
 
-        System.out.println(content);
         if (receiverList != null) {
             for (String userEmail : receiverList) {
                 StringBuilder sbList = new StringBuilder(
