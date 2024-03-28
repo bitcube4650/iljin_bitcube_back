@@ -15,12 +15,15 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import iljin.framework.core.dto.ResultBody;
 import iljin.framework.ebid.custom.entity.TCoUser;
 import iljin.framework.ebid.custom.repository.TCoUserRepository;
 import iljin.framework.ebid.etc.statistics.dto.CoInterDto;
+import lombok.extern.slf4j.Slf4j;
 
 
 @Service
+@Slf4j
 public class StatisticsService {
 	
     @PersistenceContext
@@ -67,5 +70,65 @@ public class StatisticsService {
 
         return combinedResults;
 	}
-
+	
+	/**
+	 * 계열사리스트 v2
+	 * @param params
+	 * @return
+	 */
+	@SuppressWarnings({ "rawtypes" })
+	public ResultBody interrelatedCustCodeList(Map<String, Object> params) {
+		ResultBody resultBody = new ResultBody();
+		
+		UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		Optional<TCoUser> userOptional = tCoUserRepository.findById(principal.getUsername());
+		String userId = userOptional.get().getUserId();
+		
+		try {
+			
+			StringBuilder sbList = new StringBuilder(
+				  "select	tcui.INTERRELATED_CUST_CODE "
+				+ ",		tci.INTERRELATED_NM "
+				+ "from t_co_user_interrelated tcui "
+				+ "inner join t_co_interrelated tci "
+				+ "	on tcui.INTERRELATED_CUST_CODE = tci.INTERRELATED_CUST_CODE "
+			);
+			
+			//조건문 쿼리 삽입
+			StringBuilder sbWhere = new StringBuilder();
+			sbWhere.append("where tcui.USER_ID = :userId ");
+			
+			sbList.append(sbWhere);
+			
+			//쿼리 실행 - mat_dept
+			Query queryList1 = entityManager.createNativeQuery(sbList.toString());
+			
+			//조건 대입
+			queryList1.setParameter("userId", userId);
+			
+			List dept = new JpaResultMapper().list(queryList1, CoInterDto.class);
+			
+			resultBody.setData(dept);
+			
+		}catch(Exception e) {
+			log.error("interrelatedCustCodeList list error : {}", e);
+			resultBody.setCode("999");
+			resultBody.setMsg("계열사 리스트를 가져오는것을 실패하였습니다.");
+		}
+		
+		return resultBody;
+		
+	}
+	
+	/**
+	 * 입찰상세내역 리스트
+	 * @param params
+	 * @return
+	 */
+	@SuppressWarnings({ "rawtypes" })
+	public ResultBody bidDetailList(Map<String, Object> params) {
+		ResultBody resultBody = new ResultBody();
+		
+		return resultBody;
+	}
 }
