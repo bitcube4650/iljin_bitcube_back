@@ -29,9 +29,9 @@ public class StatisticsContoller {
 	
 	//입찰실적 리스트 조회
 	@PostMapping("/biInfoList")
-	public List<List<?>> biInfoList(@RequestBody Map<String, Object> params) {
+	public List<List<?>> selectBiInfoList(@RequestBody Map<String, Object> params) {
 
-		return statisticsService.selectCoInterList();
+		return statisticsService.selectBiInfoList(params);
 	}
 	
 	
