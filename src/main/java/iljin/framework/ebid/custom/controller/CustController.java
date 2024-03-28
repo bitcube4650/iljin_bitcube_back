@@ -31,13 +31,15 @@ public class CustController {
     private CustService custService;
 
     @PostMapping("/approvalList")
-    public Page approvalList(@RequestBody Map<String, Object> params) {
+    public Page approvalList(@RequestBody Map<String, Object> params, @AuthenticationPrincipal CustomUserDetails user) {
+        params.put("interrelatedCustCode", user.getCustCode());
         params.put("certYn", "N");
         return custService.custList(params);
     }
 
     @PostMapping("/custList")
-    public Page custList(@RequestBody Map<String, Object> params) {
+    public Page custList(@RequestBody Map<String, Object> params, @AuthenticationPrincipal CustomUserDetails user) {
+        params.put("interrelatedCustCode", user.getCustCode());
         return custService.custList(params);
     }
     @PostMapping("/otherCustList")
@@ -52,7 +54,7 @@ public class CustController {
 
     @PostMapping("/management/{id}")
     public TCoCustMasterDto management(@PathVariable String id) {
-        return custService.custDetail(id);
+        return custService.custDetailForInter(id);
     }
     @PostMapping("/info")
     public TCoCustMasterDto info(@AuthenticationPrincipal CustomUserDetails user) {
@@ -64,8 +66,12 @@ public class CustController {
         return custService.approval(params);
     }
 
-    @PostMapping("/del")
+    @PostMapping("/back")
     public ResultBody back(@RequestBody Map<String, Object> params) {
+        return custService.back(params);
+    }
+    @PostMapping("/del")
+    public ResultBody del(@RequestBody Map<String, Object> params) {
         return custService.del(params);
     }
 

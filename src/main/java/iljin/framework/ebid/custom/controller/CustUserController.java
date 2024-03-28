@@ -30,8 +30,8 @@ public class CustUserController {
     }
     @PostMapping("/userListForCust")
     public Page userListForCust(@RequestBody Map<String, Object> params, @AuthenticationPrincipal CustomUserDetails user) {
-        if(((String) params.get("custCode")).isEmpty()){
-            params.put("custCode", user.getCustCode());
+        if(params.get("custCode") == null){
+            params.put("custCode", Integer.parseInt(user.getCustCode()));
         }     
         return custUserService.userList(params);
     }

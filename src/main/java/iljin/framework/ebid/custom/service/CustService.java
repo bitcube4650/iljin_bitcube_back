@@ -40,20 +40,24 @@ public class CustService {
     private MailService mailService;
 
     public Page custList(Map<String, Object> params) {
-        StringBuilder sbCount = new StringBuilder(" select count(1) from t_co_cust_master x where 1 = 1");
-        StringBuilder sbList = new StringBuilder(" SELECT cust_code \n" +
+        StringBuilder sbCount = new StringBuilder(" SELECT COUNT(1) FROM t_co_cust_master a, t_co_cust_ir b WHERE a.cust_code = b.cust_code ");
+        StringBuilder sbList = new StringBuilder(" SELECT a.cust_code \n" +
                 "     , cust_name \n" +
                 "     , (SELECT item_name FROM t_co_item x WHERE x.item_code = a.cust_type1) AS cust_type1\n" +
                 "     , CONCAT(SUBSTR(regnum, 1, 3), '-', SUBSTR(regnum, 4, 2), '-', SUBSTR(regnum, 6, 5)) AS regnum\n" +
                 "     , pres_name \n" +
                 "     , (SELECT user_name FROM t_co_cust_user x WHERE x.cust_code = a.cust_code AND x.user_type = '1' LIMIT 1) AS user_name\n" +
                 "     , DATE_FORMAT(create_date, '%Y-%m-%d %H:%i') AS create_date \n" +
-                "  FROM t_co_cust_master a\n" +
-                " WHERE 1 = 1");
+                "  FROM t_co_cust_master a,  t_co_cust_ir b WHERE a.cust_code = b.cust_code");
         StringBuilder sbWhere = new StringBuilder();
 
+        if (!StringUtils.isEmpty(params.get("interrelatedCustCode"))) {
+            sbWhere.append(" AND b.interrelated_cust_code = :interrelatedCustCode");
+        }
         if (!StringUtils.isEmpty(params.get("certYn"))) {
             sbWhere.append(" AND cert_yn = :certYn");
+        } else {
+            sbWhere.append(" AND cert_yn IN ('Y','D')"); // 업체관리 조회시 승인,삭제 업체만 조회되게
         }
         if (!StringUtils.isEmpty(params.get("custName"))) {
             sbWhere.append(" AND cust_name like concat('%',:custName,'%')");
@@ -67,6 +71,10 @@ public class CustService {
         sbCount.append(sbWhere);
         Query queryTotal = entityManager.createNativeQuery(sbCount.toString());
 
+        if (!StringUtils.isEmpty(params.get("interrelatedCustCode"))) {
+            queryList.setParameter("interrelatedCustCode", params.get("interrelatedCustCode"));
+            queryTotal.setParameter("interrelatedCustCode", params.get("interrelatedCustCode"));
+        }
         if (!StringUtils.isEmpty(params.get("certYn"))) {
             queryList.setParameter("certYn", params.get("certYn"));
             queryTotal.setParameter("certYn", params.get("certYn"));
@@ -179,14 +187,68 @@ public class CustService {
         TCoCustMasterDto data = new JpaResultMapper().uniqueResult(query, TCoCustMasterDto.class);
         return data;
     }
+    public TCoCustMasterDto custDetailForInter(String id) {
+        StringBuilder sb = new StringBuilder(" SELECT a.cust_code \n" +
+                "     , cust_name \n" +
+                "     , (SELECT interrelated_nm FROM t_co_interrelated x WHERE x.interrelated_cust_code = a.interrelated_cust_code) AS interrelated_nm\n" +
+                "     , cust_type1, cust_type2\n" +
+                "     , (SELECT item_name FROM t_co_item x WHERE x.item_code = a.cust_type1) AS cust_type_nm1\n" +
+                "     , (SELECT item_name FROM t_co_item x WHERE x.item_code = a.cust_type2) AS cust_type_nm2\n" +
+                "     , CONCAT(SUBSTR(regnum, 1, 3), '-', SUBSTR(regnum, 4, 2), '-', SUBSTR(regnum, 6, 5)) AS regnum\n" +
+                "     , SUBSTR(regnum, 1, 3) AS regnum1\n" +
+                "     , SUBSTR(regnum, 4, 2) AS regnum2\n" +
+                "     , SUBSTR(regnum, 6, 5) AS regnum3\n" +
+                "     , pres_name \n" +
+                "     , CONCAT(SUBSTR(pres_jumin_no, 1, 6), '-', SUBSTR(pres_jumin_no, 7, 7)) AS pres_jumin_no\n" +
+                "     , SUBSTR(pres_jumin_no, 1, 6) AS pres_jumin_no1\n" +
+                "     , SUBSTR(pres_jumin_no, 7, 7) AS pres_jumin_no2\n" +
+                "     , capital\n" +
+                "     , found_year \n" +
+                "     , tel\n" +
+                "     , fax\n" +
+                "     , zipcode \n" +
+                "     , addr \n" +
+                "     , addr_detail\n" +
+                "     , regnum_file\n" +
+                "     , regnum_path\n" +
+                "     , b_file\n" +
+                "     , b_file_path\n" +
+                "     , cert_yn \n" +
+                "     , etc \n" +
+                "     , cust_level \n" +
+                "     , cust_valuation \n" +
+                "     , care_content \n" +
+                "     , b.user_name \n" +
+                "     , b.user_email \n" +
+                "     , b.user_id \n" +
+                "     , b.user_hp \n" +
+                "     , b.user_tel \n" +
+                "     , b.user_buseo \n" +
+                "     , b.user_position \n" +
+                "  FROM t_co_cust_master a\n" +
+                "     , t_co_cust_user   b\n" +
+                "     , t_co_cust_ir     c\n" +
+                " WHERE a.cust_code = b.cust_code\n" +
+                "   AND a.cust_code = c.cust_code\n" +
+                "   AND b.user_type = '1'\n" +
+                "   AND c.interrelated_cust_code = :interrelatedCustCode\n" +
+                "   AND a.cust_code   = :custCode\n" +
+                " LIMIT 1");
+        Query query = entityManager.createNativeQuery(sb.toString());
+        query.setParameter("custCode", id);
+        CustomUserDetails user = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        query.setParameter("interrelatedCustCode", user.getCustCode());
+        TCoCustMasterDto data = new JpaResultMapper().uniqueResult(query, TCoCustMasterDto.class);
+        return data;
+    }
     @Transactional
     public ResultBody approval(Map<String, Object> params) {
         ResultBody resultBody = new ResultBody();
         StringBuilder sbQuery = new StringBuilder(" UPDATE t_co_cust_master SET cert_yn = 'Y', update_user = :userId, update_date = now() WHERE cust_code = :custCode LIMIT 1");
         Query query = entityManager.createNativeQuery(sbQuery.toString());
         query.setParameter("custCode", params.get("custCode"));
-        CustomUserDetails principal = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        query.setParameter("userId", principal.getUsername());
+        CustomUserDetails user = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        query.setParameter("userId", user.getUsername());
         query.executeUpdate();
 
         // 협력사 이력 등록
@@ -196,7 +258,7 @@ public class CustService {
         mailService.saveMailInfo("[일진그룹 e-bidding] 회원가입 승인", "안녕하십니까\n" +
                 "일진그룹 전자입찰 e-bidding 입니다.\n" +
                 "\n" +
-                "["+principal.getCustName()+"] 계열사에서 ["+params.get("custName")+"] 업체 승인처리 되었습니다.\n" +
+                "["+user.getCustName()+"] 계열사에서 ["+params.get("custName")+"] 업체 승인처리 되었습니다.\n" +
                 "<b>e-bidding 시스템</b>에 로그인하고 입찰업무를 처리해 주십시오\n" +
                 "입찰 업무는 로그인 후 하단에 입찰업무 안내를 참고하시거나 공지메뉴의 매뉴얼을 참조해 주십시오\n" +
                 "\n" +
@@ -204,14 +266,14 @@ public class CustService {
         return resultBody;
     }
     @Transactional
-    public ResultBody del(Map<String, Object> params) {
+    public ResultBody back(Map<String, Object> params) {
         ResultBody resultBody = new ResultBody();
-        StringBuilder sbQuery = new StringBuilder(" UPDATE  t_co_cust_master SET cert_yn = 'D', etc = :etc, update_user = :userId, update_date = now() WHERE cust_code = :custCode LIMIT 1");
+        StringBuilder sbQuery = new StringBuilder(" UPDATE t_co_cust_master SET cert_yn = 'D', etc = :etc, update_user = :userId, update_date = now() WHERE cust_code = :custCode LIMIT 1");
         Query query = entityManager.createNativeQuery(sbQuery.toString());
         query.setParameter("etc", params.get("etc"));
         query.setParameter("custCode", params.get("custCode"));
-        CustomUserDetails principal = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        query.setParameter("userId", principal.getUsername());
+        CustomUserDetails user = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        query.setParameter("userId", user.getUsername());
         query.executeUpdate();
 
         // 협력사 이력 등록
@@ -221,13 +283,49 @@ public class CustService {
         mailService.saveMailInfo("[일진그룹 e-bidding] 회원가입 반려", "안녕하십니까\n" +
                 "일진그룹 전자입찰 e-bidding 입니다.\n" +
                 "\n" +
-                "["+principal.getCustName()+"] 계열사에서 ["+params.get("custName")+"] 업체 반려처리 되었습니다.\n" +
+                "["+user.getCustName()+"] 계열사에서 ["+params.get("custName")+"] 업체 반려처리 되었습니다.\n" +
                 "아래 반려 사유를 확인해 주십시오\n" +
                 "\n" +
                 "감사합니다.\n" +
                 "\n" +
                 "- 반려사유\n" +
                 params.get("etc"), (String) params.get("userEmail"));
+
+        // 협력사 및 매핑, 사용자 삭제 처리
+        sbQuery = new StringBuilder(" DELETE FROM t_co_cust_master WHERE cust_code = :custCode LIMIT 1");
+        query = entityManager.createNativeQuery(sbQuery.toString());
+        query.setParameter("custCode", params.get("custCode"));
+        query.executeUpdate();
+        sbQuery = new StringBuilder(" DELETE FROM t_co_cust_ir WHERE cust_code = :custCode LIMIT 1");
+        query = entityManager.createNativeQuery(sbQuery.toString());
+        query.setParameter("custCode", params.get("custCode"));
+        query.executeUpdate();
+        sbQuery = new StringBuilder(" DELETE FROM t_co_cust_user WHERE cust_code = :custCode LIMIT 1");
+        query = entityManager.createNativeQuery(sbQuery.toString());
+        query.setParameter("custCode", params.get("custCode"));
+        query.executeUpdate();
+        return resultBody;
+    }
+    @Transactional
+    public ResultBody del(Map<String, Object> params) {
+        ResultBody resultBody = new ResultBody();
+        StringBuilder sbQuery = new StringBuilder(" UPDATE t_co_cust_master SET cert_yn = 'D', etc = :etc, update_user = :userId, update_date = now() WHERE cust_code = :custCode LIMIT 1");
+        Query query = entityManager.createNativeQuery(sbQuery.toString());
+        query.setParameter("etc", params.get("etc"));
+        query.setParameter("custCode", params.get("custCode"));
+        CustomUserDetails user = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        query.setParameter("userId", user.getUsername());
+        query.executeUpdate();
+
+        // 협력사 이력 등록
+        insertHistory(params.get("custCode"));
+
+        // 사용자 삭제 처리
+        sbQuery = new StringBuilder(" UPDATE t_co_cust_user SET update_user = :userId, update_date = now(), use_yn = 'N' WHERE cust_code = :custCode");
+        query = entityManager.createNativeQuery(sbQuery.toString());
+        query.setParameter("userId", user.getUsername());
+        query.setParameter("custCode", params.get("custCode"));
+        query.executeUpdate();
         return resultBody;
     }
     @Transactional
@@ -271,8 +369,8 @@ public class CustService {
         query.setParameter("bFilePath", params.get("bFilePath"));
         query.setParameter("regnumFile", params.get("regnumFile"));
         query.setParameter("regnumPath", params.get("regnumPath"));
-        CustomUserDetails principal = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        query.setParameter("userId", principal.getUsername());
+        CustomUserDetails user = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        query.setParameter("userId", user.getUsername());
         query.executeUpdate();
 
         query = entityManager.createNativeQuery("SELECT LAST_INSERT_ID()");
@@ -280,6 +378,13 @@ public class CustService {
 
         // 협력사 이력 등록
         insertHistory(custCode.intValue());
+
+        // 계열사_협력사_매핑 등록
+        sbQuery = new StringBuilder(" INSERT INTO t_co_cust_ir (cust_code, interrelated_cust_code) VALUES (:custCode, :interrelatedCustCode)");
+        query = entityManager.createNativeQuery(sbQuery.toString());
+        query.setParameter("custCode", params.get("custCode"));
+        query.setParameter("interrelatedCustCode", user.getCustCode());
+        query.executeUpdate();
 
         // 관리자 등록 처리
         sbQuery = new StringBuilder(" INSERT INTO t_co_cust_user (user_id, cust_code, user_pwd, user_name, user_tel, user_hp, user_email, user_type, user_buseo, user_position, create_user, create_date, update_user, update_date, pwd_chg_date, use_yn)" +
@@ -295,7 +400,7 @@ public class CustService {
         query.setParameter("userType", "1"); // 관리자
         query.setParameter("userBuseo", params.get("userBuseo"));
         query.setParameter("userPosition", params.get("userPosition"));
-        query.setParameter("updUserId", principal.getUsername());
+        query.setParameter("updUserId", user.getUsername());
         query.setParameter("useYn", "Y");
         query.executeUpdate();
 
@@ -303,7 +408,7 @@ public class CustService {
         mailService.saveMailInfo("[일진그룹 e-bidding] 회원가입 승인", "안녕하십니까\n" +
                 "일진그룹 전자입찰 e-bidding 입니다.\n" +
                 "\n" +
-                "["+principal.getCustName()+"] 계열사에서 ["+params.get("custName")+"] 업체 승인처리 되었습니다.\n" +
+                "["+user.getCustName()+"] 계열사에서 ["+params.get("custName")+"] 업체 승인처리 되었습니다.\n" +
                 "<b>e-bidding 시스템</b>에 로그인하고 입찰업무를 처리해 주십시오\n" +
                 "입찰 업무는 로그인 후 하단에 입찰업무 안내를 참고하시거나 공지메뉴의 매뉴얼을 참조해 주십시오\n" +
                 "\n" +
@@ -347,13 +452,23 @@ public class CustService {
         query.setParameter("bFilePath", params.get("bFilePath"));
         query.setParameter("regnumFile", params.get("regnumFile"));
         query.setParameter("regnumPath", params.get("regnumPath"));
-        UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        query.setParameter("userId", principal.getUsername());
+        CustomUserDetails user = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        query.setParameter("userId", user.getUsername());
         query.setParameter("custCode", params.get("custCode"));
         query.executeUpdate();
 
         // 협력사 이력 등록
         insertHistory(params.get("custCode"));
+
+        // 계열사_협력사_매핑 수정
+        sbQuery = new StringBuilder(" UPDATE t_co_cust_ir SET cust_level = :custLevel, cust_valuation = :custValuation, care_content = :careContent, cert_date = now()  WHERE cust_code = :custCode AND interrelated_cust_code = :interrelatedCustCode");
+        query = entityManager.createNativeQuery(sbQuery.toString());
+        query.setParameter("custLevel", params.get("custLevel"));
+        query.setParameter("custValuation", params.get("custValuation"));
+        query.setParameter("careContent", params.get("careContent"));
+        query.setParameter("custCode", params.get("custCode"));
+        query.setParameter("interrelatedCustCode", user.getCustCode());
+        query.executeUpdate();
 
         sbQuery = new StringBuilder(" UPDATE t_co_cust_user SET user_name = :userName, user_tel = :userTel, user_hp = :userHp, user_email = :userEmail, user_buseo = :userBuseo, user_position = :userPosition, update_user = :updUserId, update_date = now() WHERE user_id = :userId");
         query = entityManager.createNativeQuery(sbQuery.toString());
@@ -363,7 +478,7 @@ public class CustService {
         query.setParameter("userEmail", params.get("userEmail"));
         query.setParameter("userBuseo", params.get("userBuseo"));
         query.setParameter("userPosition", params.get("userPosition"));
-        query.setParameter("updUserId", principal.getUsername());
+        query.setParameter("updUserId", user.getUsername());
         query.setParameter("userId", params.get("userId"));
         query.executeUpdate();
         return resultBody;
