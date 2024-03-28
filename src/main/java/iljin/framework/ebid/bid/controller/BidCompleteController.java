@@ -61,4 +61,18 @@ public class BidCompleteController {
 		return bidCompleteSvc.joinCustList(params);
 	}
 
+	@PostMapping("/partnerList")
+	public ResultBody complateBidPartnerList(@RequestBody Map<String, Object> params) {
+		return bidCompleteSvc.complateBidPartnerList(params);
+	}
+	
+	@PostMapping("/partnerDetail")
+	public ResultBody complateBidPartnerDetail(@RequestBody Map<String, Object> params) {
+		return bidCompleteSvc.complateBidPartnerDetail(params);
+	}
+	
+	@PostMapping("/updBiCustFlag")
+	public ResultBody updBiCustFlag(@RequestBody Map<String, Object> params) {
+		return bidCompleteSvc.updBiCustFlag(params);
+	}
 }

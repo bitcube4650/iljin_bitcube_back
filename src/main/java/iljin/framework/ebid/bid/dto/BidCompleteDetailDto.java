@@ -38,13 +38,14 @@ public class BidCompleteDetailDto {
 	List<BidCompleteSpecDto> specInput;			//세부사항 - 직접입력
 	List<BidProgressFileDto> fileList;			//첨부파일
 	String deptName;							//입찰담당부서
+	String ingTag;								//입찰상태
 	
 	public BidCompleteDetailDto(
 			String biNo, String biName, String itemName, String biMode, String bidJoinSpec, 
 			String specialCond, String spotDate, String spotArea, String succDeciMeth, 
 			String amtBasis, String payCond, BigDecimal bdAmt, String damdangName, 	String estStartDate, 
 			String estCloseDate, String estOpener, String estBidder, String gongoName, String openAtt1, String openAtt2, 
-			String insMode, String supplyCond, String whyA3, String whyA7, String addAccept
+			String insMode, String supplyCond, String whyA3, String whyA7, String addAccept, String ingTag
 	) {
 		this.biNo = biNo;
 		this.biName = biName;
@@ -71,12 +72,13 @@ public class BidCompleteDetailDto {
 		this.whyA3 = whyA3;
 		this.whyA7 = whyA7;
 		this.addAccept = addAccept;
+		this.ingTag = ingTag;
 	}
 		
 	public BidCompleteDetailDto(
 			String biNo, String biName, String itemName, String biMode, String succDeciMeth, String bidJoinSpec, String spotDate, String spotArea, 
-			String specialCond, String supplyCond, String amtBasis, String payCond, String damdangName, String deptName, String whyA3,
-			String estStartDate, String estCloseDate, String insMode, String addAccept
+			String specialCond, String supplyCond, String amtBasis, String payCond, String damdangName, String deptName, String whyA3, String whyA7,
+			String estStartDate, String estCloseDate, String insMode, String addAccept, String ingTag
 	) {
 		this.biNo = biNo;
 		this.biName = biName;
@@ -93,9 +95,11 @@ public class BidCompleteDetailDto {
 		this.damdangName = damdangName; 
 		this.deptName = deptName; 
 		this.whyA3 = whyA3;
+		this.whyA7 = whyA7;
 		this.estStartDate = estStartDate; 
 		this.estCloseDate = estCloseDate; 
 		this.insMode = insMode; 
 		this.addAccept = addAccept;
+		this.ingTag = ingTag;
 	}
 }
