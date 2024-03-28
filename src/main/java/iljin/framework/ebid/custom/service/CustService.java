@@ -16,6 +16,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -38,6 +39,8 @@ public class CustService {
     private FileService fileService;
     @Autowired
     private MailService mailService;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     public Page custList(Map<String, Object> params) {
         StringBuilder sbCount = new StringBuilder(" SELECT COUNT(1) FROM t_co_cust_master a, t_co_cust_ir b WHERE a.cust_code = b.cust_code ");
@@ -382,7 +385,7 @@ public class CustService {
         // 계열사_협력사_매핑 등록
         sbQuery = new StringBuilder(" INSERT INTO t_co_cust_ir (cust_code, interrelated_cust_code) VALUES (:custCode, :interrelatedCustCode)");
         query = entityManager.createNativeQuery(sbQuery.toString());
-        query.setParameter("custCode", params.get("custCode"));
+        query.setParameter("custCode", custCode.intValue());
         query.setParameter("interrelatedCustCode", user.getCustCode());
         query.executeUpdate();
 
@@ -392,7 +395,7 @@ public class CustService {
         query = entityManager.createNativeQuery(sbQuery.toString());
         query.setParameter("userId", params.get("userId"));
         query.setParameter("custCode", custCode.intValue());
-        query.setParameter("userPwd", params.get("userPwd"));
+        query.setParameter("userPwd", passwordEncoder.encode((String) params.get("userPwd")));
         query.setParameter("userName", params.get("userName"));
         query.setParameter("userTel", params.get("userTel"));
         query.setParameter("userHp", params.get("userHp"));
