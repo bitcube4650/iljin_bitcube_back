@@ -85,4 +85,20 @@ public class BidCompleteDto {
 		this.userName = userName;
 		this.userEmail = userEmail;
 	}
+	
+	//그룹사 - 통계 - 입찰내역상세
+	public BidCompleteDto(
+			String biNo, String biName, BigDecimal bdAmt, BigDecimal succAmt, 
+			String custName, BigInteger joinCustCnt, String estStartDate, String estCloseDate, String userName
+	) {
+		this.biNo = biNo;
+		this.biName = biName;
+		this.bdAmt = bdAmt;
+		this.succAmt = succAmt;
+		this.custName = custName;
+		this.joinCustCnt = joinCustCnt;
+		this.estStartDate = estStartDate;
+		this.estCloseDate = estCloseDate;
+		this.userName = userName;
+	}
 }

@@ -1,5 +1,6 @@
 package iljin.framework.ebid.etc.statistics.service;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -11,16 +12,22 @@ import javax.persistence.Query;
 
 import org.qlrm.mapper.JpaResultMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import iljin.framework.core.dto.ResultBody;
+import iljin.framework.ebid.bid.dto.BidCompleteDto;
 import iljin.framework.ebid.custom.entity.TCoUser;
 import iljin.framework.ebid.custom.repository.TCoUserRepository;
 import iljin.framework.ebid.etc.statistics.dto.BiInfoDto;
 import iljin.framework.ebid.etc.statistics.dto.CoInterDto;
+import iljin.framework.ebid.etc.util.PagaUtils;
 import lombok.extern.slf4j.Slf4j;
 
 
@@ -126,12 +133,116 @@ public class StatisticsService {
 	
 	/**
 	 * 입찰상세내역 리스트
-	 * @param params
+	 * @param params : (String) biNo, (String) startDate, (String) endDate, (String) interrelatedCustCode
 	 * @return
 	 */
-	@SuppressWarnings({ "rawtypes" })
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public ResultBody bidDetailList(Map<String, Object> params) {
 		ResultBody resultBody = new ResultBody();
+		
+		UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		Optional<TCoUser> userOptional = tCoUserRepository.findById(principal.getUsername());
+		String userId = userOptional.get().getUserId();
+		String userAuth = userOptional.get().getUserAuth();
+		
+		try {
+			StringBuilder sbCount = new StringBuilder(
+				  "select	count(1) "
+				+ "from t_bi_info_mat tbim "
+				+ "inner join t_bi_info_mat_cust tbimc "
+				+ "	on tbim.BI_NO = tbimc.BI_NO "
+				+ "	and tbimc.SUCC_YN = 'Y' "
+			);
+			
+			StringBuilder sbList = new StringBuilder(
+				  "select	tbim.BI_NO "
+				+ ",		tbim.BI_NAME "
+				+ ",		tbim.BD_AMT "
+				+ ",		tbim.SUCC_AMT "
+				+ ",		tccm.CUST_NAME "
+				+ ",		c.CNT as JOIN_CUST_CNT "
+				+ ",		DATE_FORMAT(tbim.EST_START_DATE, '%Y-%m-%d %H:%i') as EST_START_DATE "
+				+ ",		DATE_FORMAT(tbim.EST_CLOSE_DATE, '%Y-%m-%d %H:%i') as EST_CLOSE_DATE "
+				+ ",		tcu.USER_NAME "
+				+ "from t_bi_info_mat tbim "
+				+ "inner join t_bi_info_mat_cust tbimc "
+				+ "	on tbim.BI_NO = tbimc.BI_NO "
+				+ "	and tbimc.SUCC_YN = 'Y' "
+				+ "inner join t_co_cust_master tccm "
+				+ "	on tbimc.CUST_CODE = tccm.CUST_CODE "
+				+ "left outer join t_co_user tcu "
+				+ "	on tbim.CREATE_USER = tcu.USER_ID "
+				+ "inner join ( "
+				+ "	select	tbimc.BI_NO "
+				+ "	,		COUNT(1) as CNT "
+				+ "	from t_bi_info_mat_cust tbimc "
+				+ "	where tbimc.ESMT_YN = '2' "
+				+ "	group by tbimc.BI_NO "
+				+ ") c "
+				+ "	on tbim.BI_NO = c.BI_NO "
+			);
+			
+			if(userAuth.equals("4")) {
+				StringBuilder sbMainAdd = new StringBuilder(
+				  "inner join t_co_user_interrelated tcui "
+				+ "	on tbim.INTERRELATED_CUST_CODE = tcui.INTERRELATED_CUST_CODE "
+				+ "	and tcui.USER_ID = :userId "
+				);
+				
+				sbCount.append(sbMainAdd);
+				sbList.append(sbMainAdd);
+			}
+			
+			//조건문 쿼리 삽입
+			StringBuilder sbWhere = new StringBuilder();
+			sbWhere.append("where 1=1 ");
+			
+			//입찰완료일
+			sbWhere.append("and tbim.UPDATE_DATE BETWEEN :startDate and :endDate ");
+
+			//계열사
+			if (!StringUtils.isEmpty(params.get("interrelatedCustCode"))) {
+				sbWhere.append("and tbim.INTERRELATED_CUST_CODE = :interrelatedCustCode ");
+			}
+			
+			sbCount.append(sbWhere);
+			sbList.append(sbWhere);
+			
+			sbList.append("order by tbim.UPDATE_DATE desc ");
+			
+			//쿼리 실행
+			Query queryList = entityManager.createNativeQuery(sbList.toString());
+			Query queryTotal = entityManager.createNativeQuery(sbCount.toString());
+
+			//조건 대입
+			if(userAuth.equals("4")) {
+				queryList.setParameter("userId", userId);
+				queryTotal.setParameter("userId", userId);
+			}
+			
+			queryList.setParameter("startDate", params.get("startDate") + " 00:00:00");
+			queryList.setParameter("endDate", params.get("endDate") + " 23:59:59");
+			queryTotal.setParameter("startDate", params.get("startDate") + " 00:00:00");
+			queryTotal.setParameter("endDate", params.get("endDate") + " 23:59:59");
+			
+			if (!StringUtils.isEmpty(params.get("interrelatedCustCode"))) {
+				queryList.setParameter("interrelatedCustCode", params.get("interrelatedCustCode"));
+				queryTotal.setParameter("interrelatedCustCode", params.get("interrelatedCustCode"));
+			}
+			
+			Pageable pageable = PagaUtils.pageable(params);
+			queryList.setFirstResult(pageable.getPageNumber() * pageable.getPageSize()).setMaxResults(pageable.getPageSize()).getResultList();
+			List list = new JpaResultMapper().list(queryList, BidCompleteDto.class);
+			
+			BigInteger count = (BigInteger) queryTotal.getSingleResult();
+			Page listPage = new PageImpl(list, pageable, count.intValue());
+			resultBody.setData(listPage);
+			
+		}catch(Exception e) {
+			log.error("bidDetailList list error : {}", e);
+			resultBody.setCode("999");
+			resultBody.setMsg("입찰상세내역 리스트를 가져오는것을 실패하였습니다.");	
+		}
 		
 		return resultBody;
 	}
