@@ -16,6 +16,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -143,6 +144,52 @@ public class CustService {
         BigInteger count = (BigInteger) queryTotal.getSingleResult();
         return new PageImpl(list, pageable, count.intValue());
     }
+    public TCoCustMasterDto custDetailForCust(String id) {
+        StringBuilder sb = new StringBuilder(" SELECT a.cust_code \n" +
+                "     , cust_name \n" +
+                "     , (SELECT GROUP_CONCAT(interrelated_nm SEPARATOR '<br/>') FROM t_co_cust_ir x, t_co_interrelated y WHERE x.cust_code = a.cust_code AND x.interrelated_cust_code = y.interrelated_cust_code) AS interrelated_nm\n" +
+                "     , cust_type1, cust_type2\n" +
+                "     , (SELECT item_name FROM t_co_item x WHERE x.item_code = a.cust_type1) AS cust_type_nm1\n" +
+                "     , (SELECT item_name FROM t_co_item x WHERE x.item_code = a.cust_type2) AS cust_type_nm2\n" +
+                "     , CONCAT(SUBSTR(regnum, 1, 3), '-', SUBSTR(regnum, 4, 2), '-', SUBSTR(regnum, 6, 5)) AS regnum\n" +
+                "     , SUBSTR(regnum, 1, 3) AS regnum1\n" +
+                "     , SUBSTR(regnum, 4, 2) AS regnum2\n" +
+                "     , SUBSTR(regnum, 6, 5) AS regnum3\n" +
+                "     , pres_name \n" +
+                "     , CONCAT(SUBSTR(pres_jumin_no, 1, 6), '-', SUBSTR(pres_jumin_no, 7, 7)) AS pres_jumin_no\n" +
+                "     , SUBSTR(pres_jumin_no, 1, 6) AS pres_jumin_no1\n" +
+                "     , SUBSTR(pres_jumin_no, 7, 7) AS pres_jumin_no2\n" +
+                "     , capital\n" +
+                "     , found_year \n" +
+                "     , tel\n" +
+                "     , fax\n" +
+                "     , zipcode \n" +
+                "     , addr \n" +
+                "     , addr_detail\n" +
+                "     , regnum_file\n" +
+                "     , regnum_path\n" +
+                "     , b_file\n" +
+                "     , b_file_path\n" +
+                "     , cert_yn \n" +
+                "     , etc \n" +
+                "     , b.user_name \n" +
+                "     , b.user_email \n" +
+                "     , b.user_id \n" +
+                "     , b.user_hp \n" +
+                "     , b.user_tel \n" +
+                "     , b.user_buseo \n" +
+                "     , b.user_position \n" +
+                "  FROM t_co_cust_master a\n" +
+                "     , t_co_cust_user   b\n" +
+                " WHERE a.cust_code = b.cust_code\n" +
+                "   AND b.user_type = '1'" +
+                "   AND a.cust_code   = :custCode" +
+                " LIMIT 1");
+        Query query = entityManager.createNativeQuery(sb.toString());
+        query.setParameter("custCode", id);
+        TCoCustMasterDto data = new JpaResultMapper().uniqueResult(query, TCoCustMasterDto.class);
+        return data;
+    }
 
     public TCoCustMasterDto custDetail(String id) {
         StringBuilder sb = new StringBuilder(" SELECT a.cust_code \n" +
@@ -193,7 +240,7 @@ public class CustService {
     public TCoCustMasterDto custDetailForInter(String id) {
         StringBuilder sb = new StringBuilder(" SELECT a.cust_code \n" +
                 "     , cust_name \n" +
-                "     , (SELECT interrelated_nm FROM t_co_interrelated x WHERE x.interrelated_cust_code = a.interrelated_cust_code) AS interrelated_nm\n" +
+                "     , (SELECT interrelated_nm FROM t_co_interrelated x WHERE x.interrelated_cust_code = c.interrelated_cust_code) AS interrelated_nm\n" +
                 "     , cust_type1, cust_type2\n" +
                 "     , (SELECT item_name FROM t_co_item x WHERE x.item_code = a.cust_type1) AS cust_type_nm1\n" +
                 "     , (SELECT item_name FROM t_co_item x WHERE x.item_code = a.cust_type2) AS cust_type_nm2\n" +
@@ -486,7 +533,14 @@ public class CustService {
         query.executeUpdate();
         return resultBody;
     }
-
+    public ResultBody pwdcheck(Map<String, Object> params) {
+        ResultBody resultBody = new ResultBody();
+        CustomUserDetails user = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (!((BCryptPasswordEncoder) passwordEncoder).matches((String) params.get("userPwd"), user.getPassword())) {
+            resultBody.setCode("notmatch");
+        }
+        return resultBody;
+    }
     private void insertHistory(Object custCode) {
         StringBuilder sbQuery = new StringBuilder(" INSERT INTO t_co_cust_master_hist\n" +
                 "      (cust_code, cust_type1, cust_type2, cust_name, regnum, pres_name, pres_jumin_no, tel, fax, zipcode, addr, addr_detail, capital, found_year, cert_yn, etc, create_user, create_date, update_user, update_date, interrelated_cust_code, b_file, b_file_path, regnum_file, regnum_path)\n" +
