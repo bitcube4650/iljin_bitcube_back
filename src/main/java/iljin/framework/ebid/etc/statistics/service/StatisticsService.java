@@ -352,7 +352,7 @@ public class StatisticsService {
 			+ "	,		ifnull(sum(B.ING_AMT), 0) as ING_AMT\r\n"
 			+ "	,		sum(B.SUCC_CNT) as SUCC_CNT\r\n"
 			+ "	,		ifnull(sum(B.SUCC_AMT), 0) as SUCC_AMT \r\n"
-			+ "	,		ROUND(ifnull(D.CUST_CNT / sum(B.SUCC_CNT), 0), 1) as CUST_CNT\r\n"
+			+ "	,		D.CUST_CNT as CUST_CNT\r\n"
 			+ "	,		ifnull(max(C.REG_CUST_cnt), 0) as REG_CUST_CNT\r\n"
 			+ "	from t_co_interrelated A \r\n"
 			+ "	INNER JOIN (\r\n"
