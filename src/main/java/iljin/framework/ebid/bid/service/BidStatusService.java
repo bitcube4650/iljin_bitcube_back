@@ -109,7 +109,8 @@ public class BidStatusService {
 			if (userAuth.equals("4")) {
 				
 				String addStr = "inner join t_co_user_interrelated tcui "
-							+ "	on tbim.INTERRELATED_CUST_CODE = tcui.INTERRELATED_CUST_CODE ";
+							+ "	on tbim.INTERRELATED_CUST_CODE = tcui.INTERRELATED_CUST_CODE "
+							+ "	and tcui.USER_ID = :userId ";
 				
 				sbCount.append(addStr);
 				sbList.append(addStr);
@@ -144,27 +145,19 @@ public class BidStatusService {
 				sbWhere.append(" and tbim.est_close_date < sysdate() ");
 			}
 	
-			if (userAuth.equals("1") || userAuth.equals("2") || userAuth.equals("3")) {
-				sbWhere.append(
-						"and tbim.interrelated_cust_code = :interrelatedCustCode "
-					+	"and ( tbim.create_user = :userId "
-					+	"	or tbim.open_att1 = :userId " 
-					+	"	or tbim.open_att2 = :userId " 
-					+	"	or tbim.gongo_id = :userId " 
-					+	"	or tbim.est_bidder = :userId " 
-					+	"	or tbim.est_opener = :userId ) "
-				);
-			} else if (userAuth.equals("4")) {
-				sbWhere.append(
-						"and tcui.USER_ID = :userId "
-					+	"and ( tbim.create_user = :userId "
-					+	"	or tbim.open_att1 = :userId " 
-					+	"	or tbim.open_att2 = :userId " 
-					+	"	or tbim.gongo_id = :userId " 
-					+	"	or tbim.est_bidder = :userId " 
-					+	"	or tbim.est_opener = :userId ) "
-				);
+			if (!userAuth.equals("4")) {
+				sbWhere.append("and tbim.interrelated_cust_code = :interrelatedCustCode ");
 			}
+			
+			sbWhere.append(
+					"and ( tbim.create_user = :userId "
+				+	"	or tbim.open_att1 = :userId " 
+				+	"	or tbim.open_att2 = :userId " 
+				+	"	or tbim.gongo_id = :userId " 
+				+	"	or tbim.est_bidder = :userId " 
+				+	"	or tbim.est_opener = :userId ) "
+			);
+			
 			sbList.append(sbWhere);
 			sbCount.append(sbWhere);
 	
