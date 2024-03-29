@@ -2,6 +2,7 @@ package iljin.framework.ebid.etc.util.common.excel.service;
 
 import iljin.framework.ebid.custom.entity.TCoUser;
 import iljin.framework.ebid.custom.repository.TCoUserRepository;
+import iljin.framework.ebid.etc.statistics.dto.BiInfoDto;
 import iljin.framework.ebid.etc.util.CommonUtils;
 import iljin.framework.ebid.etc.util.common.excel.dto.*;
 import iljin.framework.ebid.etc.util.common.excel.repository.ExcelRepository;
@@ -16,6 +17,8 @@ import org.springframework.stereotype.Service;
 import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.*;
 
 @Service
@@ -196,9 +199,42 @@ public class ExcelService {
         excelUtils.downLoadExcelPaging(BidPerformanceDetailDto.class, excelData, "downLoad", response);
     }
 
-    //통계>입찰현황 개발 해야함. (데이터 조회해서 추가하면 됨..)
+    //통계>입찰현황 Excel DownLoad
     public void downLoadExcelbiddingStatus(Map<String, Object> params, HttpServletResponse response) {
-        List<BidHistoryExcelDto> excelData = new ArrayList<>();
+        List<BiInfoDto> data = excelRepository.findBidPresentList(params);
+        List<BiddingStatusDto> excelData = new ArrayList<>();
+
+        for(int i = 0; i < data.size(); i++) {
+            BiddingStatusDto biddingStatusDto = new BiddingStatusDto();
+
+            String interrelatedNm = CommonUtils.getString(data.get(i).getInterrelatedNm(), " ");
+            String planCnt = CommonUtils.getString(data.get(i).getPlanCnt(), " ");
+            String planAmt = CommonUtils.getString(data.get(i).getPlanAmt(), " ");
+            String ingCnt = CommonUtils.getString(data.get(i).getIngCnt(), " ");
+            String ingAmt = CommonUtils.getString(data.get(i).getIngAmt(), " ");
+            String succCnt = CommonUtils.getString(data.get(i).getSuccCnt(), " ");
+            String succAmt = CommonUtils.getString(data.get(i).getSuccAmt(), " ");
+            String custCnt = CommonUtils.getString(data.get(i).getCustCnt(), " ");
+            String regCustCnt = CommonUtils.getString(data.get(i).getRegCustCnt(), " ");
+            String testNull = "";
+
+            biddingStatusDto.setInterrelatedNm(interrelatedNm);
+            biddingStatusDto.setPlanCnt(CommonUtils.getFormatNumber(planCnt));
+            biddingStatusDto.setPlanAmt(CommonUtils.getFormatNumber(planAmt));
+            biddingStatusDto.setIngCnt(CommonUtils.getFormatNumber(ingCnt));
+            biddingStatusDto.setIngAmt(CommonUtils.getFormatNumber(ingAmt));
+            biddingStatusDto.setSuccCnt(CommonUtils.getFormatNumber(succCnt));
+            biddingStatusDto.setSuccAmt(CommonUtils.getFormatNumber(succAmt));
+            biddingStatusDto.setCustCnt(CommonUtils.getFormatNumber(custCnt));
+            biddingStatusDto.setRegCustCnt(CommonUtils.getFormatNumber(regCustCnt));
+            biddingStatusDto.setTestNull("");
+
+            //쿼리 롤업 과정에서 발생하는 이슈
+            if(i == data.size() - 1) {
+                biddingStatusDto.setInterrelatedNm("계");
+            }
+            excelData.add(biddingStatusDto);
+        }
 
         excelUtils.downLoadExcelPaging(BiddingStatusDto.class, excelData, "downLoad", response);
     }
@@ -206,7 +242,7 @@ public class ExcelService {
 
     //통계>입찰상세내역 ExcelDownLoad
     public void downLoadExcelBiddingDetail(Map<String, Object> params, HttpServletResponse response) {
-        List<BidDetailListDto> data = excelRepository.bidDetailList(params);
+        List<BidDetailListDto> data = excelRepository.findBidDetailList(params);
         List<BiddingDetailExcelDto> excelData = new ArrayList<>();
 
         String tmpBiNo = "";

@@ -459,7 +459,7 @@ public final class ExcelUtils implements ExcelSupport {
         headerCellStyle.setBorderBottom(BorderStyle.MEDIUM);
 
         //배경 설정
-        headerCellStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        headerCellStyle.setFillForegroundColor(IndexedColors.LIGHT_GREEN.getIndex());
         headerCellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND );
         headerCellStyle.setAlignment(HorizontalAlignment.CENTER );
         headerCellStyle.setFont(headerFont);

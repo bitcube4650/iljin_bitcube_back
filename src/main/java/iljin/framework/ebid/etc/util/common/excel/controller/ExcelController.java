@@ -90,7 +90,7 @@ public class ExcelController {
     }
 
     //통계>입찰현황 개발 해야함. (데이터 조회해서 추가하면 됨..)
-    @PostMapping("/bid/completeList/downLoadV4")
+    @PostMapping("/statistics/bidPresentList/downLoad")
     public ResponseEntity biddingStatus(HttpServletResponse response,
                                                          @RequestBody Map<String, Object> params) throws IOException {
         excelService.downLoadExcelbiddingStatus(params,response);
