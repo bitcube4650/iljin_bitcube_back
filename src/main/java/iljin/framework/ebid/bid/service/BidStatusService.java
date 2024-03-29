@@ -1,62 +1,43 @@
 package iljin.framework.ebid.bid.service;
 
 import iljin.framework.core.dto.ResultBody;
-import iljin.framework.core.security.user.UserDto;
-import iljin.framework.core.security.user.UserRepository;
-import iljin.framework.core.security.user.UserRepositoryCustom;
 import iljin.framework.core.util.Util;
 import iljin.framework.ebid.bid.dto.BidProgressCustDto;
 import iljin.framework.ebid.bid.dto.BidProgressDetailDto;
 import iljin.framework.ebid.bid.dto.BidProgressDto;
 import iljin.framework.ebid.bid.dto.BidProgressFileDto;
 import iljin.framework.ebid.bid.dto.BidProgressTableDto;
-import iljin.framework.ebid.bid.dto.CoUserInfoDto;
-import iljin.framework.ebid.bid.dto.CurrDto;
-import iljin.framework.ebid.bid.dto.EmailDto;
-import iljin.framework.ebid.bid.dto.InterUserInfoDto;
-import iljin.framework.ebid.bid.dto.InterrelatedCustDto;
 import iljin.framework.ebid.bid.dto.ItemDto;
 import iljin.framework.ebid.bid.dto.SubmitHistDto;
 import iljin.framework.ebid.custom.entity.TCoUser;
 import iljin.framework.ebid.custom.repository.TCoUserRepository;
 import iljin.framework.ebid.etc.util.PagaUtils;
 import iljin.framework.ebid.etc.util.common.file.FileService;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import org.qlrm.mapper.JpaResultMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.multipart.MultipartFile;
-import iljin.framework.ebid.etc.util.common.file.FileService;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
 import javax.transaction.Transactional;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 
 @Service
 @Slf4j
@@ -84,16 +65,15 @@ public class BidStatusService {
 	 * @param params
 	 * @return
 	 */
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public ResultBody statuslist(@RequestBody Map<String, Object> params) {
 		ResultBody resultBody = new ResultBody(); 
 				
 		UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		Optional<TCoUser> userOptional = tCoUserRepository.findById(principal.getUsername());
-
-		String userAuth = userOptional.get().getUserAuth();
+		String userId = userOptional.get().getUserId();
 		String interrelatedCode = userOptional.get().getInterrelatedCustCode();
-		String userId = principal.getUsername();
+		String userAuth = userOptional.get().getUserAuth();
 		
 		try {
 			StringBuilder sbCount = new StringBuilder(
@@ -167,22 +147,22 @@ public class BidStatusService {
 			if (userAuth.equals("1") || userAuth.equals("2") || userAuth.equals("3")) {
 				sbWhere.append(
 						"and tbim.interrelated_cust_code = :interrelatedCustCode "
-					+	"and ( tbim.create_user = :userid "
-					+	"	or tbim.open_att1 = :userid " 
-					+	"	or tbim.open_att2 = :userid " 
-					+	"	or tbim.gongo_id = :userid " 
-					+	"	or tbim.est_bidder = :userid " 
-					+	"	or tbim.est_opener = :userid ) "
+					+	"and ( tbim.create_user = :userId "
+					+	"	or tbim.open_att1 = :userId " 
+					+	"	or tbim.open_att2 = :userId " 
+					+	"	or tbim.gongo_id = :userId " 
+					+	"	or tbim.est_bidder = :userId " 
+					+	"	or tbim.est_opener = :userId ) "
 				);
 			} else if (userAuth.equals("4")) {
 				sbWhere.append(
 						"and tcui.USER_ID = :userId "
-					+	"and ( tbim.create_user = :userid "
-					+	"	or tbim.open_att1 = :userid " 
-					+	"	or tbim.open_att2 = :userid " 
-					+	"	or tbim.gongo_id = :userid " 
-					+	"	or tbim.est_bidder = :userid " 
-					+	"	or tbim.est_opener = :userid ) "
+					+	"and ( tbim.create_user = :userId "
+					+	"	or tbim.open_att1 = :userId " 
+					+	"	or tbim.open_att2 = :userId " 
+					+	"	or tbim.gongo_id = :userId " 
+					+	"	or tbim.est_bidder = :userId " 
+					+	"	or tbim.est_opener = :userId ) "
 				);
 			}
 			sbList.append(sbWhere);
@@ -204,12 +184,11 @@ public class BidStatusService {
 				queryTotal.setParameter("interrelatedCustCode", interrelatedCode);
 			}
 			
-			queryList.setParameter("userid", userId);
-			queryTotal.setParameter("userid", userId);
+			queryList.setParameter("userId", userId);
+			queryTotal.setParameter("userId", userId);
 			
 			Pageable pageable = PagaUtils.pageable(params);
-			queryList.setFirstResult(pageable.getPageNumber() * pageable.getPageSize())
-					.setMaxResults(pageable.getPageSize()).getResultList();
+			queryList.setFirstResult(pageable.getPageNumber() * pageable.getPageSize()).setMaxResults(pageable.getPageSize()).getResultList();
 			List list = new JpaResultMapper().list(queryList, BidProgressDto.class);
 	
 			BigInteger count = (BigInteger) queryTotal.getSingleResult();
