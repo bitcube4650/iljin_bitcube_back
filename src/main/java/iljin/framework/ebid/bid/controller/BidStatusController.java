@@ -28,7 +28,7 @@ public class BidStatusController {
     private BidStatusService bidStatusService;
 
     @PostMapping("/statuslist")
-    public Page statuslist(@RequestBody Map<String, Object> params) {
+    public ResultBody statuslist(@RequestBody Map<String, Object> params) {
         return bidStatusService.statuslist(params);
     }
     
