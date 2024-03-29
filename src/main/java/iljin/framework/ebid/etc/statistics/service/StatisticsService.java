@@ -318,4 +318,106 @@ public class StatisticsService {
         return combinedResults;
 	}
 
+	/**
+	 * 입찰현황 리스트 조회
+	 * 
+	 * @param params
+	 * @return
+	 */
+	public List<List<?>> bidPresentList(Map<String, Object> params) {
+        List<List<?>> combinedResults = new ArrayList<>();
+		
+		//세션 정보 조회
+		UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Optional<TCoUser> userOptional = tCoUserRepository.findById(principal.getUsername());
+		String userAuth = userOptional.get().getUserAuth();// userAuth(1 = 시스템관리자, 4 = 감사사용자)
+		
+		StringBuilder sbList = new StringBuilder(
+				"select	max(A.INTERRELATED_NM ) as INTERRELATED_NM \r\n"
+			+ ",		sum(B.PLAN_CNT) as PLAN_CNT\r\n"
+			+ ",		ifnull(sum(B.PLAN_AMT), 0) as PLAN_AMT\r\n"
+			+ ",		sum(B.ING_CNT) as ING_CNT\r\n"
+			+ ",		ifnull(sum(B.ING_AMT), 0) as ING_AMT\r\n"
+			+ ",		sum(B.SUCC_CNT) as SUCC_CNT\r\n"
+			+ ",		ifnull(sum(B.SUCC_AMT), 0) as SUCC_AMT \r\n"
+			+ ",		ROUND((	select	COUNT(CD.BI_NO) as CUST_CNT\r\n"
+			+ "				from T_BI_INFO_MAT CC\r\n"
+			+ "				inner join t_bi_info_mat_cust CD\r\n"
+			+ "					on CC.BI_NO = CD.BI_NO\r\n"
+			+ "				where CC.ING_TAG = 'A5'\r\n"
+			+ "				and CC.INTERRELATED_CUST_CODE = A.INTERRELATED_CUST_CODE\r\n"
+			+ "				group by CC.INTERRELATED_CUST_CODE\r\n"
+			+ "			) / COUNT(B.BI_NO), 0) as CUST_CNT\r\n"
+			+ ",		(	select count(1)\r\n"
+			+ "			from T_BI_INFO_MAT DD\r\n"
+			+ "			inner join t_bi_info_mat_cust DE\r\n"
+			+ "				on DD.BI_NO  = DE.BI_NO \r\n"
+			+ "			where INTERRELATED_CUST_CODE = '10'\r\n"
+			+ "		)as REG_CUST_cnt\r\n"
+			+ "from t_co_interrelated A \r\n"
+			+ "INNER JOIN (\r\n"
+			+ "	select	BB.BI_NO\r\n"
+			+ "	,		BB.INTERRELATED_CUST_CODE\r\n"
+			+ "	,		CASE WHEN BB.ING_TAG = 'A0' THEN 1 ELSE 0 END AS PLAN_CNT\r\n"
+			+ "	,		CASE WHEN BB.ING_TAG = 'A0' THEN BB.BD_AMT ELSE 0 END AS PLAN_AMT\r\n"
+			+ "	,		CASE WHEN BB.ING_TAG = 'A1' THEN 1 ELSE 0 END AS ING_CNT\r\n"
+			+ "	,		CASE WHEN BB.ING_TAG = 'A1' THEN BB.BD_AMT ELSE 0 END AS ING_AMT\r\n"
+			+ "	,		CASE WHEN BB.ING_TAG = 'A5' THEN 1 ELSE 0 END AS SUCC_CNT\r\n"
+			+ "	,		CASE WHEN BB.ING_TAG = 'A5' THEN BB.SUCC_AMT ELSE 0 END AS SUCC_AMT\r\n"
+			+ "	,		1 as bi_cnt\r\n"
+			+ "	from T_BI_INFO_MAT BB			-- 입찰서내용\r\n"
+			+ "	where DATE(BB.UPDATE_DATE) BETWEEN :startDay AND :endDay\r\n"
+			+ ") B\r\n"
+			+ "	on A.INTERRELATED_CUST_CODE = B.INTERRELATED_CUST_CODE\r\n"
+			+ "where 1=1\r\n"
+			+ "-- and A.INTERRELATED_CUST_CODE = '10'\r\n"
+			+ "group by A.INTERRELATED_CUST_CODE "
+		);
+		
+//			if(userAuth.equals("4")) {
+//				StringBuilder sbMainAdd = new StringBuilder(
+//				  "inner join t_co_user_interrelated tcui "
+//				+ "	on tbim.INTERRELATED_CUST_CODE = tcui.INTERRELATED_CUST_CODE "
+//				+ "	and tcui.USER_ID = :userId "
+//				);
+//				
+//				sbCount.append(sbMainAdd);
+//				sbList.append(sbMainAdd);
+//			}
+		
+		//조건문 쿼리 삽입
+		StringBuilder sbWhere = new StringBuilder();
+		
+		//입찰완료일
+//			sbWhere.append("and tbim.UPDATE_DATE BETWEEN :startDate and :endDate ");
+
+		//계열사
+//			if (!StringUtils.isEmpty(params.get("interrelatedCustCode"))) {
+//				sbWhere.append("and tbim.INTERRELATED_CUST_CODE = :interrelatedCustCode ");
+//			}
+//			
+//			sbList.append(sbWhere);
+		
+		sbList.append("	order by A.INTERRELATED_CUST_CODE ");
+		
+		//쿼리 실행
+		Query queryList = entityManager.createNativeQuery(sbList.toString());
+
+		//조건 대입
+//			if(userAuth.equals("4")) {
+//				queryList.setParameter("userId", userId);
+//			}
+		
+		queryList.setParameter("startDay", params.get("startDay") + " 00:00:00");
+		queryList.setParameter("endDay", params.get("endDay") + " 23:59:59");
+		
+		if (!StringUtils.isEmpty(params.get("interrelatedCustCode"))) {
+			queryList.setParameter("interrelatedCustCode", params.get("interrelatedCustCode"));
+		}
+		
+		List<BiInfoDto> resultList = new JpaResultMapper().list(queryList, BiInfoDto.class);
+        combinedResults.add(resultList);
+
+        return combinedResults;
+	}
 }
