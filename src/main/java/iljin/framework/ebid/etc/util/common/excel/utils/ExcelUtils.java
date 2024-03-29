@@ -162,21 +162,27 @@ public final class ExcelUtils implements ExcelSupport {
     //createBody 부분에 Paging처리.
     private SXSSFWorkbook getWorkBookPaging(Class<?> clazz, SXSSFWorkbook workbook, int rowIdx, List<String> headerNames, List<?> data, int maxSize) throws IllegalAccessException, IOException {
         Sheet sheet = workbook.createSheet("Sheet1"); // 엑셀 sheet 이름
-        sheet.setDefaultColumnWidth(10); // 디폴트 너비 설정
+        sheet.setDefaultColumnWidth(12); // 디폴트 너비 설정
 
         Row row = null;
         Cell cell = null;
+        boolean commonHeaders = false;
 
         row = sheet.createRow(0);
 
-        //케이스에 따른 엑셀 헤더 생성.
-        if("BidHistoryMatExcelDto".equals(clazz.getSimpleName())) {
-            createHeadersBidHisMat(workbook, row, cell, headerNames);
-        } else if("BidHistoryExcelDto".equals(clazz.getSimpleName())) {
-            createHeadersBidHis(workbook, row, cell, headerNames);
 
+        //Excel Header를 따로 지정해야 할 떄 사용.
+        if("BidHistoryMatExcelDto".equals(clazz.getSimpleName())) {             //입찰이력 롯데머트리얼즈
+           createHeadersBidHisMat(workbook, row, cell, headerNames);
+        } else if("BidHistoryExcelDto".equals(clazz.getSimpleName())) {         //입찰이력
+            createHeadersBidHis(workbook, row, cell, headerNames);
+        } else if("BiddingStatusDto".equals(clazz.getSimpleName())) {           //입찰현황
+            createHeadersBiddingStatus(workbook, row, cell, headerNames);
+        } else if("BiddingDetailExcelDto".equals(clazz.getSimpleName())) {           //입찰상세내역
+            createHeadersBidHis(workbook, row, cell, headerNames);              //입찰이력과 헤더가 같음.
         } else {
             createHeaders(workbook, row, cell, headerNames);
+            commonHeaders = true;
         }
 
         int listSize = data.size();
@@ -190,7 +196,7 @@ public final class ExcelUtils implements ExcelSupport {
             int nextPage = Math.min(listSize, start + MAX_ROW);
             List<?> list = new ArrayList<>(data.subList(start, nextPage));
 
-            createBodyPaging(clazz, workbook, list, sheet, row, cell, start);
+            createBodyPaging(clazz, workbook, list, sheet, row, cell, start , commonHeaders);
 
             list.clear();
             start += MAX_ROW;
@@ -198,6 +204,9 @@ public final class ExcelUtils implements ExcelSupport {
             // 주기적인 flush 진행
             ((SXSSFSheet) sheet).flushRows(MAX_ROW);
         }
+
+
+
 
         return workbook;
     }
@@ -207,7 +216,7 @@ public final class ExcelUtils implements ExcelSupport {
          * header font style
          */
         Font headerFont = workbook.createFont();
-        headerFont.setBold(true);
+        //headerFont.setBold(true);
         headerFont.setFontHeightInPoints((short) 11);
         //font.setColor((short) 255);
 
@@ -226,7 +235,7 @@ public final class ExcelUtils implements ExcelSupport {
         headerCellStyle.setBorderBottom(BorderStyle.MEDIUM);
 
         //배경 설정
-        headerCellStyle.setFillForegroundColor(IndexedColors.SKY_BLUE.getIndex());
+        headerCellStyle.setFillForegroundColor(IndexedColors.LIGHT_GREEN.getIndex());
         headerCellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND );
         headerCellStyle.setAlignment(HorizontalAlignment.CENTER );
         headerCellStyle.setFont(headerFont);
@@ -426,11 +435,132 @@ public final class ExcelUtils implements ExcelSupport {
         }
     }
 
+    //통계>회사별입찰실적에서 사용할 헤더값.
+    private void createHeadersBiddingStatus(SXSSFWorkbook workbook, Row row, Cell cell, List<String> headerNames) {
+
+        /**
+         * header font style
+         */
+        Font headerFont = workbook.createFont();
+        headerFont.setFontHeightInPoints((short) 11);
+
+        /**
+         * header cell style
+         */
+        CellStyle headerCellStyle = workbook.createCellStyle();
+        headerCellStyle.setAlignment(HorizontalAlignment.CENTER);       // 가로 가운데 정렬
+        headerCellStyle.setVerticalAlignment(VerticalAlignment.CENTER); // 세로 가운데 정렬
+        headerCellStyle.setFont(headerFont);
+
+        //테두리 설정
+        headerCellStyle.setBorderLeft(BorderStyle.MEDIUM);
+        headerCellStyle.setBorderRight(BorderStyle.MEDIUM);
+        headerCellStyle.setBorderTop(BorderStyle.MEDIUM);
+        headerCellStyle.setBorderBottom(BorderStyle.MEDIUM);
+
+        //배경 설정
+        headerCellStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        headerCellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND );
+        headerCellStyle.setAlignment(HorizontalAlignment.CENTER );
+        headerCellStyle.setFont(headerFont);
+
+        // 두 번째 행 생성 (1행)
+        Row secondRow = row.getSheet().createRow(1);
+        Cell cell2 = null;
+
+        headerNames.clear();
 
 
+        CellRangeAddress mergedRegion = null;
 
 
+        mergedRegion = new CellRangeAddress(0, 1, 0, 0);
+        row.getSheet().addMergedRegion(mergedRegion);
 
+
+        mergedRegion = new CellRangeAddress(0, 0, 1, 2);
+        row.getSheet().addMergedRegion(mergedRegion);
+
+
+        mergedRegion = new CellRangeAddress(0, 0, 3, 4);
+        row.getSheet().addMergedRegion(mergedRegion);
+
+
+        mergedRegion = new CellRangeAddress(0, 0, 5, 7);
+        row.getSheet().addMergedRegion(mergedRegion);
+
+
+        mergedRegion = new CellRangeAddress(0, 1, 8, 8);
+        row.getSheet().addMergedRegion(mergedRegion);
+
+        mergedRegion = new CellRangeAddress(0, 1, 9, 9);
+        row.getSheet().addMergedRegion(mergedRegion);
+
+        for (int i = 0; i < 10; i++) {
+            cell = row.createCell(i);
+            cell2 = secondRow.createCell(i);
+
+            headerCellStyle.setBorderBottom(BorderStyle.THIN);
+            headerCellStyle.setBottomBorderColor(IndexedColors.BLACK.getIndex());
+            headerCellStyle.setBorderLeft(BorderStyle.THIN);
+            headerCellStyle.setLeftBorderColor(IndexedColors.BLACK.getIndex());
+            headerCellStyle.setBorderRight(BorderStyle.THIN);
+            headerCellStyle.setRightBorderColor(IndexedColors.BLACK.getIndex());
+            headerCellStyle.setBorderTop(BorderStyle.THIN);
+            headerCellStyle.setTopBorderColor(IndexedColors.BLACK.getIndex());
+
+            cell.setCellStyle(headerCellStyle);
+            cell2.setCellStyle(headerCellStyle);
+
+            cell.setCellType(CellType.STRING);
+            cell2.setCellType(CellType.STRING);
+
+
+            if(i == 0) {
+                cell.setCellValue("회사명");
+            }
+
+            if(i == 1) {
+                cell.setCellValue("입찰계획");
+                cell2.setCellValue("건수");
+            }
+
+            if(i == 2) {
+                cell2.setCellValue("예산금액");
+            }
+
+            if(i == 3) {
+                cell.setCellValue("입찰진행");
+                cell2.setCellValue("건수");
+            }
+
+            if(i == 4) {
+                cell.setCellValue("입찰진행");
+                cell2.setCellValue("예산금액");
+            }
+
+            if(i == 5) {
+                cell.setCellValue("입찰완료(유찰제외)");
+                cell2.setCellValue("건수");
+            }
+
+            if(i == 6) {
+                cell2.setCellValue("낙찰금액");
+            }
+
+            if(i == 7) {
+                cell2.setCellValue("업체수/건수");
+            }
+
+            if(i == 8) {
+                cell.setCellValue("등록업체수");
+            }
+
+            if(i == 9) {
+                cell.setCellValue("기타");
+            }
+        }
+    }
 
 
     private void createBody(Class<?> clazz, SXSSFWorkbook workbook,List<?> data, Sheet sheet, Row row, Cell cell, int rowNo) throws IllegalAccessException, IOException {
@@ -493,13 +623,18 @@ public final class ExcelUtils implements ExcelSupport {
             }
         }
     }
-    private void createBodyPaging(Class<?> clazz, SXSSFWorkbook workbook,List<?> data, Sheet sheet, Row row, Cell cell, int rowNo) throws IllegalAccessException, IOException {
+    private void createBodyPaging(Class<?> clazz, SXSSFWorkbook workbook,List<?> data, Sheet sheet,
+                                  Row row, Cell cell, int rowNo, boolean commonheaders) throws IllegalAccessException, IOException {
         int startRow = rowNo + 1;
+
+        //헤더가 공통이면
+        if(commonheaders) {
+            startRow = rowNo;
+        }
 
         /**
          * body font style
          */
-
         Font bodyFont = workbook.createFont();
         bodyFont.setBold(false);
         bodyFont.setFontHeightInPoints((short) 10);

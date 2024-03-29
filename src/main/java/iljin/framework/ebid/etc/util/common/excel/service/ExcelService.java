@@ -2,10 +2,8 @@ package iljin.framework.ebid.etc.util.common.excel.service;
 
 import iljin.framework.ebid.custom.entity.TCoUser;
 import iljin.framework.ebid.custom.repository.TCoUserRepository;
-import iljin.framework.ebid.etc.util.common.excel.dto.BidCompleteExcelDto;
-import iljin.framework.ebid.etc.util.common.excel.dto.BidHistoryExcelDto;
-import iljin.framework.ebid.etc.util.common.excel.dto.BidHistoryMatExcelDto;
-import iljin.framework.ebid.etc.util.common.excel.dto.BidProgressResponseDto;
+import iljin.framework.ebid.etc.util.CommonUtils;
+import iljin.framework.ebid.etc.util.common.excel.dto.*;
 import iljin.framework.ebid.etc.util.common.excel.repository.ExcelRepository;
 import iljin.framework.ebid.etc.util.common.excel.utils.ExcelUtils;
 import iljin.framework.ebid.etc.util.common.excel.entity.FileEntity;
@@ -28,6 +26,7 @@ public class ExcelService {
     private final ExcelRepository excelRepository;
     private final ExcelUtils excelUtils;
     private final TCoUserRepository tCoUserRepository;
+
 
     private static final int MAX_ROW = 1000;
 
@@ -64,7 +63,7 @@ public class ExcelService {
 
         //롯데 에너지 머트리얼즈 코드 값 '02'로 구분
         if("02".equals(userInterrelatedCustCode)) {
-            List<BidCompleteExcelDto> data = excelRepository.findComplateBidListV2(params);
+            List<BidCompleteDto> data = excelRepository.findComplateBidListV2(params);
             List<BidHistoryMatExcelDto> excelData = new ArrayList<>();
             String tmpBiNo = "";
 
@@ -121,7 +120,7 @@ public class ExcelService {
 
         } else {
             //롯데머트리얼즈 제외
-            List<BidCompleteExcelDto> data = excelRepository.findComplateBidListV2(params);
+            List<BidCompleteDto> data = excelRepository.findComplateBidListV2(params);
             List<BidHistoryExcelDto> excelData = new ArrayList<>();
             String tmpBiNo = "";
 
@@ -163,6 +162,97 @@ public class ExcelService {
             excelUtils.downLoadExcelPaging(BidHistoryExcelDto.class, excelData, "downLoad", response);
         }
     }
+
+    //통계>회사별 입찰실적 Excel DownLoad
+    public void downLoadExcelCompanyBidPerformance(Map<String, Object> params, HttpServletResponse response) {
+        List<CompanyBidPerformanceExcelDto> excelData = new ArrayList<>();
+        List<Map<String, Object>> data = (List<Map<String, Object>>) params.get("biInfoList");
+
+        for(int i = 0; i < data.size(); i++) {
+            CompanyBidPerformanceExcelDto companyBidPerformanceExcelDto = new CompanyBidPerformanceExcelDto();
+
+            String interrelatedNm = CommonUtils.getString(data.get(i).get("interrelatedNm"), "");
+            String cnt = CommonUtils.getString(data.get(i).get("cnt"), "");
+            String bdAnt = CommonUtils.getString(data.get(i).get("bdAnt"), "");
+            String succAmt = CommonUtils.getString(data.get(i).get("succAmt"), "");
+            String mamt = CommonUtils.getString(data.get(i).get("mamt"), "");
+
+            companyBidPerformanceExcelDto.setInterrelatedNm(interrelatedNm);
+            companyBidPerformanceExcelDto.setCnt(CommonUtils.getFormatNumber(cnt));
+            companyBidPerformanceExcelDto.setBdAnt(CommonUtils.getFormatNumber(bdAnt));
+            companyBidPerformanceExcelDto.setSuccAmt(CommonUtils.getFormatNumber(succAmt));
+            companyBidPerformanceExcelDto.setMamt(CommonUtils.getFormatNumber(mamt));
+
+            excelData.add(companyBidPerformanceExcelDto);
+        }
+
+        excelUtils.downLoadExcelPaging(CompanyBidPerformanceExcelDto.class, excelData, "downLoad", response);
+    }
+
+    //통계>입찰실적 상세내역 Excel DownLoad 개발해야함.
+    public void downLoadExcelBidPerformanceDetail(Map<String, Object> params, HttpServletResponse response) {
+        List<BidHistoryExcelDto> excelData = new ArrayList<>();
+
+        excelUtils.downLoadExcelPaging(BidPerformanceDetailDto.class, excelData, "downLoad", response);
+    }
+
+    //통계>입찰현황 개발 해야함. (데이터 조회해서 추가하면 됨..)
+    public void downLoadExcelbiddingStatus(Map<String, Object> params, HttpServletResponse response) {
+        List<BidHistoryExcelDto> excelData = new ArrayList<>();
+
+        excelUtils.downLoadExcelPaging(BiddingStatusDto.class, excelData, "downLoad", response);
+    }
+
+
+    //통계>입찰상세내역 ExcelDownLoad
+    public void downLoadExcelBiddingDetail(Map<String, Object> params, HttpServletResponse response) {
+        List<BidDetailListDto> data = excelRepository.bidDetailList(params);
+        List<BiddingDetailExcelDto> excelData = new ArrayList<>();
+
+        String tmpBiNo = "";
+
+        for(int i = 0; i < data.size(); i++) {
+            if(!tmpBiNo.equals(data.get(i).getBiNo())) {
+                BiddingDetailExcelDto biddingDetailExcelDto = new BiddingDetailExcelDto();
+                biddingDetailExcelDto.setBiNo(data.get(i).getBiNo());
+                biddingDetailExcelDto.setBiName(data.get(i).getBiName());
+                biddingDetailExcelDto.setBdAmt(data.get(i).getBdAmt());
+                biddingDetailExcelDto.setSuccAmt(data.get(i).getSuccAmt());
+                biddingDetailExcelDto.setCustName(data.get(i).getCustName());
+                biddingDetailExcelDto.setEstStartDate(data.get(i).getEstStartDate());
+                biddingDetailExcelDto.setEstCloseDate(data.get(i).getEstCloseDate());
+                biddingDetailExcelDto.setUserName(data.get(i).getUserName());
+                biddingDetailExcelDto.setCustName2(data.get(i).getCustName2());
+                biddingDetailExcelDto.setEsmtAmt(data.get(i).getEsmtAmt());
+                biddingDetailExcelDto.setSubmitDate(data.get(i).getSubmitDate());
+                excelData.add(biddingDetailExcelDto);
+
+                tmpBiNo = data.get(i).getBiNo();
+            } else {
+                BiddingDetailExcelDto biddingDetailExcelDto = new BiddingDetailExcelDto();
+                biddingDetailExcelDto.setBiNo("");
+                biddingDetailExcelDto.setBiName("");
+                biddingDetailExcelDto.setBdAmt(null);
+                biddingDetailExcelDto.setSuccAmt(null);
+                biddingDetailExcelDto.setCustName("");
+                biddingDetailExcelDto.setEstStartDate("");
+                biddingDetailExcelDto.setEstCloseDate("");
+                biddingDetailExcelDto.setUserName("");
+                biddingDetailExcelDto.setCustName2(data.get(i).getCustName2());
+                biddingDetailExcelDto.setEsmtAmt(data.get(i).getEsmtAmt());
+                biddingDetailExcelDto.setSubmitDate(data.get(i).getSubmitDate());
+                excelData.add(biddingDetailExcelDto);
+
+                tmpBiNo = data.get(i).getBiNo();
+            }
+        }
+        excelUtils.downLoadExcelPaging(BiddingDetailExcelDto.class, excelData, "downLoad", response);
+    }
+
+
+
+
+
 
     /**
      * 공통 CSV 다운로드 10000건 이상

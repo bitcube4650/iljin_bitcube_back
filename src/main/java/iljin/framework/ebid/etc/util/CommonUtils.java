@@ -11,6 +11,7 @@ import javax.mail.*;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeUtility;
+import java.text.DecimalFormat;
 import java.util.Properties;
 
 
@@ -138,6 +139,27 @@ public class CommonUtils {
             value = defaultValue;
         }
         return value;
+    }
+
+    /**
+     * String 받아 3자리수마다 . 찍고 String으로 리턴함, null이거나 공백일시 그대로 리턴
+     * @param value
+     * @return
+     */
+    public static String getFormatNumber(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return value; // 값이 null이거나 공백인 경우 그대로 반환
+        }
+        try {
+            // 숫자로 변환
+            double number = Double.parseDouble(value);
+            // 숫자 포맷
+            DecimalFormat formatter = new DecimalFormat("#,###");
+            return formatter.format(number);
+        } catch (NumberFormatException e) {
+            // 숫자가 아닌 경우 그대로 반환
+            return value;
+        }
     }
 
 }
