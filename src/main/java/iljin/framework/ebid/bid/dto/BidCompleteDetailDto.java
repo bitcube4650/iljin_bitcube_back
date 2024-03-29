@@ -39,13 +39,21 @@ public class BidCompleteDetailDto {
 	List<BidProgressFileDto> fileList;			//첨부파일
 	String deptName;							//입찰담당부서
 	String ingTag;								//입찰상태
+	String interrelatedCustCode;				//입찰계열사코드
+	String matDept;								//롯데에너지머티리얼즈 - 사업군
+	String matProc;								//롯데에너지머티리얼즈 - 공정
+	String matCls;								//롯데에너지머티리얼즈 - 분류
+	String matFactory;							//롯데에너지머티리얼즈 - 공장동
+	String matFactoryLine;						//롯데에너지머티리얼즈 - 라인
+	String matFactoryCnt;						//롯데에너지머티리얼즈 - 호기
 	
 	public BidCompleteDetailDto(
 			String biNo, String biName, String itemName, String biMode, String bidJoinSpec, 
 			String specialCond, String spotDate, String spotArea, String succDeciMeth, 
 			String amtBasis, String payCond, BigDecimal bdAmt, String damdangName, 	String estStartDate, 
 			String estCloseDate, String estOpener, String estBidder, String gongoName, String openAtt1, String openAtt2, 
-			String insMode, String supplyCond, String whyA3, String whyA7, String addAccept, String ingTag
+			String insMode, String supplyCond, String whyA3, String whyA7, String addAccept, String ingTag, String interrelatedCustCode,
+			String matDept, String matProc, String matCls, String matFactory, String matFactoryLine, String matFactoryCnt
 	) {
 		this.biNo = biNo;
 		this.biName = biName;
@@ -73,6 +81,14 @@ public class BidCompleteDetailDto {
 		this.whyA7 = whyA7;
 		this.addAccept = addAccept;
 		this.ingTag = ingTag;
+		this.interrelatedCustCode = interrelatedCustCode;
+		this.matDept = matDept; 
+		this.matProc = matProc;
+		this.matCls = matCls;
+		this.matFactory = matFactory;
+		this.matFactoryLine = matFactoryLine;
+		this.matFactoryCnt = matFactoryCnt;
+				
 	}
 		
 	public BidCompleteDetailDto(
