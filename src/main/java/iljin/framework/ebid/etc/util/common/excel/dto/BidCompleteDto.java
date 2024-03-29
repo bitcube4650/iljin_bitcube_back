@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 
 @Data
-public class BidCompleteExcelDto {
+public class BidCompleteDto {
 
     String biNo;
     String matDept;
@@ -27,12 +27,12 @@ public class BidCompleteExcelDto {
     BigDecimal esmtAmt;
     String submitDate;
 
-    public BidCompleteExcelDto() {
+    public BidCompleteDto() {
     }
 
 
     //입찰이력
-    public BidCompleteExcelDto(
+    public BidCompleteDto(
             String biNo, String matDept, String matProc, String matCls, String matFactory, String matFactoryLine, String matFactoryCnt,
             String biName, BigDecimal bdAmt, BigDecimal succAmt, String custName, BigInteger joinCustCnt, String estStartDate, String estCloseDate,
             String userName, String custName2, BigDecimal esmtAmt, String submitDate
