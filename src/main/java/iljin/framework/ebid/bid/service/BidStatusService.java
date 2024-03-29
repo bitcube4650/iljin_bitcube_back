@@ -636,4 +636,9 @@ public class BidStatusService {
         queryList.executeUpdate();
     }
 
+	public ResultBody bidOpening(Map<String, String> params) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

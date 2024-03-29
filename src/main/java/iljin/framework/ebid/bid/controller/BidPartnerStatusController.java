@@ -40,4 +40,21 @@ public class BidPartnerStatusController {
     public List<CurrDto> currlist() {
         return bidPartnerStatusService.currlist();
     }
+    
+    //투찰
+    @PostMapping("/bidSubmitting")
+    public ResultBody bidSubmitting(
+    								@RequestPart("data") String jsonData,
+    								@RequestPart(value = "file1", required = false) MultipartFile file1, 
+    								@RequestPart(value = "file2", required = false) MultipartFile file2) {
+    	System.out.println("controller 들어옴");
+    	ObjectMapper mapper = new ObjectMapper();
+        Map<String, Object> params = null;
+		try {
+			params = mapper.readValue(jsonData, Map.class);
+		} catch (Exception e) {
+			e.printStackTrace();
+		} 
+    	return bidPartnerStatusService.bidSubmitting(params, file1, file2);
+    }
 }

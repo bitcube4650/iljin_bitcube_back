@@ -16,6 +16,10 @@ import iljin.framework.ebid.bid.dto.EmailDto;
 import iljin.framework.ebid.bid.dto.InterUserInfoDto;
 import iljin.framework.ebid.bid.dto.InterrelatedCustDto;
 import iljin.framework.ebid.bid.dto.SubmitHistDto;
+import iljin.framework.ebid.bid.entity.TBiInfoMatCust;
+import iljin.framework.ebid.bid.entity.TBiInfoMatCustID;
+import iljin.framework.ebid.bid.entity.TBiLog;
+import iljin.framework.ebid.bid.repository.TBiInfoMatCustRepository;
 import iljin.framework.ebid.custom.entity.TCoCustUser;
 import iljin.framework.ebid.custom.entity.TCoUser;
 import iljin.framework.ebid.custom.repository.TCoCustUserRepository;
@@ -57,6 +61,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 @Service
@@ -73,6 +78,12 @@ public class BidPartnerStatusService {
 
     @Autowired
     private BidProgressService bidProgressService;
+    
+    @Autowired
+    private TCoCustUserRepository tCoCustUserRepository; 
+    
+    @Autowired
+    private TBiInfoMatCustRepository tBiInfoMatCustRepository;
 
     @Value("${file.upload.directory}")
     private String uploadDirectory;
@@ -236,4 +247,165 @@ public class BidPartnerStatusService {
         Query currlistQ = entityManager.createNativeQuery(currlist.toString());
         return new JpaResultMapper().list(currlistQ, CurrDto.class);
     }
+
+    //투찰
+    @Transactional
+	public ResultBody bidSubmitting(@RequestBody Map<String, Object> params, MultipartFile file1, MultipartFile file2) {
+		System.out.println("service 들어옴");
+		System.out.println(file1.getOriginalFilename());
+		System.out.println(file2.getOriginalFilename());
+		UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String userId = principal.getUsername();
+        String biNo = "";
+        String insModeCode = "";//입력방식( 1-파일등록, 2-내역직접 )
+        int amt = 0;//파일입력 견적금액
+        String strAmt = "";
+        LocalDateTime currentDate = LocalDateTime.now();//update 또는 insert 되는 현재시점
+        
+        //직접입력
+        List<Map<String, Object>> itemList = null;//직접입력 품목
+        String strItemList = "";//직접입력 품목당 가격을 "‡" 구분자와 같이 넣은 문자열
+        
+        //파일입력
+        int fileId = 0;//t_bi_upload에 insert한 견적내역파일 id
+        String fileHashValue = "";//파일입력의 경우 복호화때 필요한 key값
+        String etcFileName = "";//파일입력의 경우 기타파일 이름
+        String etcFilePath = "";//파일입력의 경우 기타파일 경로
+        
+        if (!StringUtils.isEmpty(params.get("biNo"))) {
+        	biNo = (String) params.get("biNo");//입찰번호
+        }
+        
+        if (!StringUtils.isEmpty(params.get("insModeCode"))) {
+        	insModeCode = (String) params.get("insModeCode");//입력방식
+        }
+        
+        if (!StringUtils.isEmpty(params.get("amt"))) {
+        	amt =  (int) params.get("amt");//총 견적금액
+        	strAmt = Integer.toString(amt);
+        }
+        
+        if (!StringUtils.isEmpty(params.get("tableContent"))) {
+        	itemList = (List<Map<String, Object>>) params.get("tableContent");//직접입력 품목
+        	
+        	for(int i = 0; i < itemList.size(); i++) {
+        		Map<String,Object> item = itemList.get(i);
+        		
+        		int seq = (int) item.get("seq");
+        		String esmtAmt = (String) item.get("esmtAmt");
+        		
+        		if(i > 0) {//구분자
+        			strItemList += "‡";
+        		}
+        		//품목순번 = 가격
+        		strItemList += (seq + "=" + esmtAmt);
+            }
+        }
+        
+        //암호화
+        //여기에 암호화 처리
+        //strItemList
+        //strAmt
+        
+        //파일업로드
+        //파일입력 방식의 견적내역파일 경로 암호화
+        //견적내역파일 isnert
+        
+
+        //협력사 사용자 정보
+        Optional<TCoCustUser> userOptional = tCoCustUserRepository.findById(userId);
+        
+        if(userOptional.isPresent()) {
+        	
+        	//협력사 코드
+        	int custCode = userOptional.get().getCustCode();
+        	System.out.println("협력사 코드 >> " + custCode);
+        	try {
+        		
+        		TBiInfoMatCustID tBiInfoMatCustId = new TBiInfoMatCustID();
+        		
+        		tBiInfoMatCustId.setBiNo(biNo);
+        		tBiInfoMatCustId.setCustCode(custCode);
+        		
+        		Optional<TBiInfoMatCust> optional = tBiInfoMatCustRepository.findById(tBiInfoMatCustId);
+        		System.out.println("입찰협력사 있는지 여부 >> " + optional.isPresent());
+        		//입찰_협력업체 테이블에 데이터가 들어가 있는지 확인
+        		if(optional.isPresent()) {//이미 입찰_협력업체 테이블에 데이터가 있는 경우 update(지명경쟁 or 이미투찰함)
+        			System.out.println("update 시작");
+        			TBiInfoMatCust tBiInfoMatCust = optional.get();
+        			
+        			tBiInfoMatCust.setEsmtYn("2");//esmt_yn( 업체투찰 flag  0-업체지정, 1-업체공고확인, 2-업체투찰)
+        			tBiInfoMatCust.setUpdateUser(userId);
+        			tBiInfoMatCust.setUpdateDate(currentDate);
+        			tBiInfoMatCust.setEncQutn(strAmt);
+        			
+        			if(insModeCode.equals("1")) {//파일등록 방식
+        				
+        				tBiInfoMatCust.setFileId(fileId);
+        				tBiInfoMatCust.setFileHashValue(fileHashValue);
+        				
+        				if(!etcFilePath.equals("") &&  etcFilePath != null) {//기타첨부 파일이 있는 경우
+        					
+        					tBiInfoMatCust.setEtcBFile(etcFileName);
+        					tBiInfoMatCust.setEtcBFilePath(etcFilePath);
+        					
+        				}
+        			}else {//내역직접 방식
+        				tBiInfoMatCust.setEncEsmtSpec(strItemList);
+        			}
+        			
+        			
+        		}else {//입찰_협력업체 테이블에 데이터가 없는 경우 insert
+        			System.out.println("insert 시작");
+        			TBiInfoMatCust tBiInfoMatCust = new TBiInfoMatCust();
+        			
+        			tBiInfoMatCust.setBiNo(biNo);
+        			tBiInfoMatCust.setCustCode(custCode);
+        			tBiInfoMatCust.setEsmtYn("2");
+        			tBiInfoMatCust.setCreateUser(userId);
+        			tBiInfoMatCust.setCreateDate(currentDate);
+        			tBiInfoMatCust.setBiOrder(1);
+        			tBiInfoMatCust.setEncQutn(strAmt);
+        			
+        			if(insModeCode.equals("1")) {//파일등록 방식
+        				
+        				tBiInfoMatCust.setFileId(fileId);
+        				tBiInfoMatCust.setFileHashValue(fileHashValue);
+        				
+        				if(!etcFilePath.equals("") &&  etcFilePath != null) {//기타첨부 파일이 있는 경우
+        					
+        					tBiInfoMatCust.setEtcBFile(etcFileName);
+        					tBiInfoMatCust.setEtcBFilePath(etcFilePath);
+        					
+        				}
+        				
+        			}else {//내역직접 방식
+        				tBiInfoMatCust.setEncEsmtSpec(strItemList);
+        			}
+        			
+        			entityManager.persist(tBiInfoMatCust);
+        			
+        		}
+        		
+        		//로그 남기기
+        		TBiLog tBiLog = new TBiLog();
+        		
+        		tBiLog.setBiNo(biNo);
+        		tBiLog.setUserId(userId);
+        		tBiLog.setLogText("[업체]견적제출");
+        		tBiLog.setCreateDate(currentDate);
+        		
+        		entityManager.persist(tBiLog);
+        		
+        	}catch(Exception e) {
+        		
+        	}
+        	
+        	
+        }
+        
+        
+        
+		return null;
+	}
 }

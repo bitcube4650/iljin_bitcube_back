@@ -190,6 +190,8 @@ public class MainService {
 													 + " COUNT(CASE WHEN tccm.cert_yn = 'Y' THEN 1 END) as 'approval', "
 													 + " COUNT(CASE WHEN tccm.cert_yn = 'D' THEN 1 END) as 'deletion' "
 											  + " from t_co_cust_master tccm "
+											  + " inner join t_co_cust_ir tcci "
+											  + " on tccm.cust_code = tcci.cust_code "
 											  + " where 1=1 "
 											   );
 		

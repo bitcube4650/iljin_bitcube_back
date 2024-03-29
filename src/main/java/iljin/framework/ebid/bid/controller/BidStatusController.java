@@ -66,4 +66,11 @@ public class BidStatusController {
     public void updateSign(@RequestBody Map<String, Object> params) {
     }
     
+    //
+    @PostMapping("/bidOpening")
+    public ResultBody bidOpening(@RequestBody Map<String, String> params) {
+        return bidStatusService.bidOpening(params);
+    }
+    
+    
 }
