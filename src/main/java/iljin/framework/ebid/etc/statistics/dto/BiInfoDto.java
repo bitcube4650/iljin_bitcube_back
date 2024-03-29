@@ -22,7 +22,7 @@ public class BiInfoDto {
     private BigDecimal succCnt;	// 입찰완료 건수
     //private BigDecimal succAmt;	// 입찰 완료 낙찰금액
     private BigDecimal custCnt;		// 업체수/건수
-    private BigInteger regCustCnt;	//등록업체수
+    private BigDecimal regCustCnt;	//등록업체수
     
 	
     public BiInfoDto() {}
@@ -70,7 +70,7 @@ public class BiInfoDto {
     		BigDecimal succCnt,
     		BigDecimal succAmt,
     		BigDecimal custCnt,
-    		BigInteger regCustCnt
+    		BigDecimal regCustCnt
 
     ) {
         this.interrelatedNm = interrelatedNm;
