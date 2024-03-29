@@ -518,7 +518,18 @@ public class CustService {
         query.setParameter("careContent", params.get("careContent"));
         query.setParameter("custCode", params.get("custCode"));
         query.setParameter("interrelatedCustCode", user.getCustCode());
-        query.executeUpdate();
+        int cnt = query.executeUpdate();
+        if (cnt == 0) {
+            // 수정이 안되면 계열사_협력사_매핑 등록
+            sbQuery = new StringBuilder(" INSERT INTO t_co_cust_ir (cust_code, interrelated_cust_code, cust_level, cust_valuation, care_content, cert_date) VALUES (:custCode, :interrelatedCustCode, :custLevel, :custValuation, :careContent, now())");
+            query = entityManager.createNativeQuery(sbQuery.toString());
+            query.setParameter("custLevel", params.get("custLevel"));
+            query.setParameter("custValuation", params.get("custValuation"));
+            query.setParameter("careContent", params.get("careContent"));
+            query.setParameter("custCode", params.get("custCode"));
+            query.setParameter("interrelatedCustCode", user.getCustCode());
+            query.executeUpdate();
+        }
 
         sbQuery = new StringBuilder(" UPDATE t_co_cust_user SET user_name = :userName, user_tel = :userTel, user_hp = :userHp, user_email = :userEmail, user_buseo = :userBuseo, user_position = :userPosition, update_user = :updUserId, update_date = now() WHERE user_id = :userId");
         query = entityManager.createNativeQuery(sbQuery.toString());
