@@ -1,5 +1,6 @@
 package iljin.framework.ebid.custom.controller;
 
+import iljin.framework.core.dto.ResultBody;
 import iljin.framework.core.security.user.CustomUserDetails;
 import iljin.framework.ebid.custom.dto.TCoCustUserDto;
 import iljin.framework.ebid.custom.dto.TCoUserDto;
@@ -38,5 +39,13 @@ public class CustUserController {
     @PostMapping("/{id}")
     public TCoCustUserDto detail(@PathVariable String id, @AuthenticationPrincipal CustomUserDetails user) {
         return custUserService.detail(user.getCustCode(), id);
+    }
+    @PostMapping("/save")
+    public ResultBody save(@RequestBody Map<String, Object> params) {
+        return custUserService.save(params);
+    }
+    @PostMapping("/del")
+    public ResultBody del(@RequestBody Map<String, Object> params) {
+        return custUserService.del(params);
     }
 }
