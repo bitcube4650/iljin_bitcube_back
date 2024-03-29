@@ -330,6 +330,7 @@ public class StatisticsService {
 		//세션 정보 조회
 		UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Optional<TCoUser> userOptional = tCoUserRepository.findById(principal.getUsername());
+		String userId = principal.getUsername();
 		String userAuth = userOptional.get().getUserAuth();// userAuth(1 = 시스템관리자, 4 = 감사사용자)
 		
 		StringBuilder sbList = new StringBuilder(
@@ -340,20 +341,8 @@ public class StatisticsService {
 			+ ",		ifnull(sum(B.ING_AMT), 0) as ING_AMT\r\n"
 			+ ",		sum(B.SUCC_CNT) as SUCC_CNT\r\n"
 			+ ",		ifnull(sum(B.SUCC_AMT), 0) as SUCC_AMT \r\n"
-			+ ",		ROUND((	select	COUNT(CD.BI_NO) as CUST_CNT\r\n"
-			+ "				from T_BI_INFO_MAT CC\r\n"
-			+ "				inner join t_bi_info_mat_cust CD\r\n"
-			+ "					on CC.BI_NO = CD.BI_NO\r\n"
-			+ "				where CC.ING_TAG = 'A5'\r\n"
-			+ "				and CC.INTERRELATED_CUST_CODE = A.INTERRELATED_CUST_CODE\r\n"
-			+ "				group by CC.INTERRELATED_CUST_CODE\r\n"
-			+ "			) / COUNT(B.BI_NO), 0) as CUST_CNT\r\n"
-			+ ",		(	select count(1)\r\n"
-			+ "			from T_BI_INFO_MAT DD\r\n"
-			+ "			inner join t_bi_info_mat_cust DE\r\n"
-			+ "				on DD.BI_NO  = DE.BI_NO \r\n"
-			+ "			where INTERRELATED_CUST_CODE = '10'\r\n"
-			+ "		)as REG_CUST_cnt\r\n"
+			+ ",		ROUND(ifnull(D.CUST_CNT / sum(B.SUCC_CNT), 0), 0) as CUST_CNT\r\n"
+			+ ",		ifnull(max(REG_CUST_cnt), 0) as REG_CUST_CNT\r\n"
 			+ "from t_co_interrelated A \r\n"
 			+ "INNER JOIN (\r\n"
 			+ "	select	BB.BI_NO\r\n"
@@ -364,55 +353,70 @@ public class StatisticsService {
 			+ "	,		CASE WHEN BB.ING_TAG = 'A1' THEN BB.BD_AMT ELSE 0 END AS ING_AMT\r\n"
 			+ "	,		CASE WHEN BB.ING_TAG = 'A5' THEN 1 ELSE 0 END AS SUCC_CNT\r\n"
 			+ "	,		CASE WHEN BB.ING_TAG = 'A5' THEN BB.SUCC_AMT ELSE 0 END AS SUCC_AMT\r\n"
-			+ "	,		1 as bi_cnt\r\n"
 			+ "	from T_BI_INFO_MAT BB			-- 입찰서내용\r\n"
 			+ "	where DATE(BB.UPDATE_DATE) BETWEEN :startDay AND :endDay\r\n"
 			+ ") B\r\n"
 			+ "	on A.INTERRELATED_CUST_CODE = B.INTERRELATED_CUST_CODE\r\n"
-			+ "where 1=1\r\n"
-			+ "-- and A.INTERRELATED_CUST_CODE = '10'\r\n"
-			+ "group by A.INTERRELATED_CUST_CODE "
+			+ "left outer join (\r\n"
+			+ "	select AA.INTERRELATED_CUST_CODE\r\n"
+			+ "	,		count(1) as REG_CUST_cnt\r\n"
+			+ "	from t_co_interrelated AA\r\n"
+			+ "	inner join t_co_cust_master BB\r\n"
+			+ "		on AA.INTERRELATED_CUST_CODE = BB.INTERRELATED_CUST_CODE\r\n"
+			+ "	where DATE(BB.CREATE_DATE) BETWEEN :startDay AND :endDay\r\n"
+			+ "	group by AA.INTERRELATED_CUST_CODE\r\n"
+			+ ") C\r\n"
+			+ "	on a.INTERRELATED_CUST_CODE = c.INTERRELATED_CUST_CODE\r\n "
+			+ "left outer join (\r\n"
+			+ "	select	INTERRELATED_CUST_CODE\r\n"
+			+ "	,		COUNT(CD.BI_NO) as CUST_CNT\r\n"
+			+ "	from T_BI_INFO_MAT CC\r\n"
+			+ "	inner join t_bi_info_mat_cust CD\r\n"
+			+ "		on CC.BI_NO = CD.BI_NO\r\n"
+			+ "	where CC.ING_TAG = 'A5'\r\n"
+			+ "	and DATE(CC.UPDATE_DATE) BETWEEN :startDay AND :endDay\r\n"
+			+ "	group by CC.INTERRELATED_CUST_CODE\r\n"
+			+ ") D\r\n"
+			+ "	on D.INTERRELATED_CUST_CODE = A.INTERRELATED_CUST_CODE\r\n"
+			//+ "where 1=1\r\n"
 		);
 		
-//			if(userAuth.equals("4")) {
-//				StringBuilder sbMainAdd = new StringBuilder(
-//				  "inner join t_co_user_interrelated tcui "
-//				+ "	on tbim.INTERRELATED_CUST_CODE = tcui.INTERRELATED_CUST_CODE "
-//				+ "	and tcui.USER_ID = :userId "
-//				);
-//				
-//				sbCount.append(sbMainAdd);
-//				sbList.append(sbMainAdd);
-//			}
+			if(userAuth.equals("4")) {
+				StringBuilder sbMainAdd = new StringBuilder(
+				  "inner join t_co_user_interrelated tcui "
+				+ "	on A.INTERRELATED_CUST_CODE = tcui.INTERRELATED_CUST_CODE "
+				+ "	and tcui.USER_ID = :userId "
+				);
+				
+				sbList.append(sbMainAdd);
+			}
 		
 		//조건문 쿼리 삽입
 		StringBuilder sbWhere = new StringBuilder();
-		
-		//입찰완료일
-//			sbWhere.append("and tbim.UPDATE_DATE BETWEEN :startDate and :endDate ");
+		sbWhere.append(" ");
+		// 계열사
+		if (!StringUtils.isEmpty(params.get("coInter"))) {
+			sbWhere.append(" where A.INTERRELATED_CUST_CODE in ( :interrelatedCustCode ) ");
+		}
 
-		//계열사
-//			if (!StringUtils.isEmpty(params.get("interrelatedCustCode"))) {
-//				sbWhere.append("and tbim.INTERRELATED_CUST_CODE = :interrelatedCustCode ");
-//			}
-//			
-//			sbList.append(sbWhere);
+		sbList.append(sbWhere);
 		
-		sbList.append("	order by A.INTERRELATED_CUST_CODE ");
+		sbList.append("	group by A.INTERRELATED_CUST_CODE\r\n"
+				+ "		order by A.INTERRELATED_CUST_CODE\r\n");
 		
 		//쿼리 실행
 		Query queryList = entityManager.createNativeQuery(sbList.toString());
 
 		//조건 대입
-//			if(userAuth.equals("4")) {
-//				queryList.setParameter("userId", userId);
-//			}
+		if(userAuth.equals("4")) {
+			queryList.setParameter("userId", userId);
+		}
 		
 		queryList.setParameter("startDay", params.get("startDay") + " 00:00:00");
 		queryList.setParameter("endDay", params.get("endDay") + " 23:59:59");
 		
-		if (!StringUtils.isEmpty(params.get("interrelatedCustCode"))) {
-			queryList.setParameter("interrelatedCustCode", params.get("interrelatedCustCode"));
+		if (!StringUtils.isEmpty(params.get("coInter"))) {
+			queryList.setParameter("interrelatedCustCode", params.get("coInter"));
 		}
 		
 		List<BiInfoDto> resultList = new JpaResultMapper().list(queryList, BiInfoDto.class);
