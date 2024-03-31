@@ -9,16 +9,15 @@ import javax.persistence.Id;
 import javax.persistence.IdClass;
 import javax.persistence.Table;
 
-import iljin.framework.ebid.etc.notice.entity.TCoBoardCustID;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @Entity
 @NoArgsConstructor
-@IdClass(TBiInfoMatCustID.class)
-@Table(name = "t_bi_info_mat_cust")
-public class TBiInfoMatCust {
+@IdClass(TBiInfoMatCustTempID.class)
+@Table(name = "t_bi_info_mat_cust_temp")
+public class TBiInfoMatCustTemp {
 
 	@Id
     @Column(name = "bi_no")
@@ -27,6 +26,10 @@ public class TBiInfoMatCust {
 	@Id
     @Column(name = "cust_code")
     Integer custCode;
+	
+	@Id
+    @Column(name = "bi_order")
+    Integer biOrder;
 	
 	@Column(name="rebid_att")
 	String rebidAtt;
@@ -39,6 +42,12 @@ public class TBiInfoMatCust {
 	
 	@Column(name="succ_yn")
 	String succYn;
+	
+	@Column(name="enc_qutn")
+	String encQutn;
+	
+	@Column(name="enc_esmt_spec")
+	String encEsmtSpec;
 	
 	@Column(name = "file_id")
     Integer fileId;
@@ -58,15 +67,6 @@ public class TBiInfoMatCust {
 	@Column(name="update_date")
 	LocalDateTime updateDate;
 	
-	@Column(name = "bi_order")
-    Integer biOrder;
-	
-	@Column(name="enc_qutn")
-	String encQutn;
-	
-	@Column(name="enc_esmt_spec")
-	String encEsmtSpec;
-	
 	@Column(name="esmt_curr")
 	String esmtCurr;
 	
@@ -78,6 +78,5 @@ public class TBiInfoMatCust {
 	
 	@Column(name="etc_b_file_path")
 	String etcBFilePath;
-	
 	
 }

@@ -1,6 +1,7 @@
 package iljin.framework.ebid.bid.service;
 
 import iljin.framework.core.dto.ResultBody;
+import iljin.framework.core.security.user.CustomUserDetails;
 import iljin.framework.core.security.user.UserDto;
 import iljin.framework.core.security.user.UserRepository;
 import iljin.framework.core.security.user.UserRepositoryCustom;
@@ -310,7 +311,9 @@ public class BidProgressService {
         return new PageImpl(list, pageable, count.intValue());
     }
 
-    public List<List<?>> progresslistDetail(String param) {
+    public List<List<?>> progresslistDetail(String param, CustomUserDetails user) {
+    	int custCode = Integer.parseInt(user.getCustCode());//협력사 번호 
+    	
         StringBuilder sbList = new StringBuilder(
                 "SELECT a.bi_no AS bi_no, a.bi_name AS bi_name, " +
                         "CASE WHEN a.bi_mode = 'A' THEN '지명경쟁입찰' ELSE '일반경쟁입찰' END AS bi_mode, a.bi_mode AS bi_mode_code, "
@@ -362,7 +365,9 @@ public class BidProgressService {
                         +
                         "a.file_nm AS file_NM, a.file_path AS file_path " +
                         "FROM t_bi_upload a " +
-                        "WHERE a.use_yn = 'Y' ");
+                        "WHERE a.use_yn = 'Y' " +
+                        "and a.file_flag = 'K' "
+        		);
 
         StringBuilder sbCustList = new StringBuilder(
                 "SELECT a.bi_no AS bi_no, CAST(a.cust_code AS CHAR) AS cust_code, b.cust_name AS cust_name, d.code_name AS esmt_curr, a.esmt_amt AS esmt_amt, e.user_name AS user_name, "
@@ -383,6 +388,7 @@ public class BidProgressService {
         sbTableList.append(sbWhere);
         sbFileList.append(sbWhere);
         sbCustList.append(sbWhere);
+        sbCustList.append(" and a.cust_code = :custCode ");
 
         Query queryList = entityManager.createNativeQuery(sbList.toString());
         Query queryTableList = entityManager.createNativeQuery(sbTableList.toString());
@@ -392,6 +398,7 @@ public class BidProgressService {
         queryTableList.setParameter("param", param);
         queryFileList.setParameter("param", param);
         queryCustList.setParameter("param", param);
+        queryCustList.setParameter("custCode", custCode);
 
         List<BidProgressDetailDto> resultList = new JpaResultMapper().list(queryList, BidProgressDetailDto.class);
         List<BidProgressTableDto> tableList = new JpaResultMapper().list(queryTableList, BidProgressTableDto.class);
