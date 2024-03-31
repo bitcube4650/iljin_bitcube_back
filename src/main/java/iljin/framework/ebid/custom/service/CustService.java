@@ -395,7 +395,12 @@ public class CustService {
             resultBody.setMsg("파일 업로드시 오류가 발생했습니다.");
             return resultBody;
         }
-
+        
+        CustomUserDetails user = null;
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof CustomUserDetails) {
+            user = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        }
         StringBuilder sbQuery = new StringBuilder(" INSERT INTO t_co_cust_master (cust_type1, cust_type2, cust_name, regnum, pres_name, pres_jumin_no, tel, fax, zipcode, addr, addr_detail, capital, found_year, cert_yn, etc, create_user, create_date, update_user, update_date, interrelated_cust_code, b_file, b_file_path, regnum_file, regnum_path)" +
                 " VALUES (:custType1, :custType2, :custName, :regnum, :presName, :presJuminNo, :tel, :fax, :zipcode, :addr, :addrDetail, :capital, :foundYear, :certYn, :etc, :userId, now(), :userId, now(), :interrelatedCustCode, :bFile, :bFilePath, :regnumFile, :regnumPath)");
         Query query = entityManager.createNativeQuery(sbQuery.toString());
@@ -412,15 +417,14 @@ public class CustService {
         query.setParameter("addrDetail", params.get("addrDetail"));
         query.setParameter("capital", params.get("capital"));
         query.setParameter("foundYear", params.get("foundYear"));
-        query.setParameter("certYn", "Y");
+        query.setParameter("certYn", user == null ? "N" : "Y"); // 승인요청 : 승인
         query.setParameter("etc", "");
         query.setParameter("interrelatedCustCode", params.get("interrelatedCustCode"));
         query.setParameter("bFile", params.get("bFile"));
         query.setParameter("bFilePath", params.get("bFilePath"));
         query.setParameter("regnumFile", params.get("regnumFile"));
         query.setParameter("regnumPath", params.get("regnumPath"));
-        CustomUserDetails user = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        query.setParameter("userId", user.getUsername());
+        query.setParameter("userId", user == null ? "" : user.getUsername());
         query.executeUpdate();
 
         query = entityManager.createNativeQuery("SELECT LAST_INSERT_ID()");
@@ -433,7 +437,7 @@ public class CustService {
         sbQuery = new StringBuilder(" INSERT INTO t_co_cust_ir (cust_code, interrelated_cust_code) VALUES (:custCode, :interrelatedCustCode)");
         query = entityManager.createNativeQuery(sbQuery.toString());
         query.setParameter("custCode", custCode.intValue());
-        query.setParameter("interrelatedCustCode", user.getCustCode());
+        query.setParameter("interrelatedCustCode", user == null ? params.get("interrelatedCustCode") : user.getCustCode());
         query.executeUpdate();
 
         // 관리자 등록 처리
@@ -450,20 +454,33 @@ public class CustService {
         query.setParameter("userType", "1"); // 관리자
         query.setParameter("userBuseo", params.get("userBuseo"));
         query.setParameter("userPosition", params.get("userPosition"));
-        query.setParameter("updUserId", user.getUsername());
+        query.setParameter("updUserId", user == null ? "" : user.getUsername());
         query.setParameter("useYn", "Y");
         query.executeUpdate();
 
-        // 회원가입 승인 메일 저장 처리
-        mailService.saveMailInfo("[일진그룹 e-bidding] 회원가입 승인", "안녕하십니까\n" +
-                "일진그룹 전자입찰 e-bidding 입니다.\n" +
-                "\n" +
-                "["+user.getCustName()+"] 계열사에서 ["+params.get("custName")+"] 업체 승인처리 되었습니다.\n" +
-                "<b>e-bidding 시스템</b>에 로그인하고 입찰업무를 처리해 주십시오\n" +
-                "입찰 업무는 로그인 후 하단에 입찰업무 안내를 참고하시거나 공지메뉴의 매뉴얼을 참조해 주십시오\n" +
-                "\n" +
-                "감사합니다.\n", (String) params.get("userEmail"));
-
+        if (user == null) {
+            // TODO : 계열사 관리자에게 메일 전송해야 함.
+            // 회원가입 승인요청 메일 저장 처리
+//            mailService.saveMailInfo("[일진그룹 e-bidding] 신규업체 승인 요청", "안녕하십니까\n" +
+//                    "일진그룹 전자입찰 e-bidding 입니다.\n" +
+//                    "\n" +
+//                    "[" + params.get("custName") + "] 신규업체 승인 요청이 왔습니다.\n" +
+//                    "e-bidding 시스템에 로그인하고 업체정보의 업체승인 페이지에서 \n" +
+//                    "업체 정보를 확인하십시오\n" +
+//                    "처리는 3일 이내 처리해야 합니다..\n" +
+//                    "\n" +
+//                    "감사합니다.\n", (String) params.get("userEmail"));
+        } else {
+            // 회원가입 승인 메일 저장 처리
+            mailService.saveMailInfo("[일진그룹 e-bidding] 회원가입 승인", "안녕하십니까\n" +
+                    "일진그룹 전자입찰 e-bidding 입니다.\n" +
+                    "\n" +
+                    "[" + user.getCustName() + "] 계열사에서 [" + params.get("custName") + "] 업체 승인처리 되었습니다.\n" +
+                    "<b>e-bidding 시스템</b>에 로그인하고 입찰업무를 처리해 주십시오\n" +
+                    "입찰 업무는 로그인 후 하단에 입찰업무 안내를 참고하시거나 공지메뉴의 매뉴얼을 참조해 주십시오\n" +
+                    "\n" +
+                    "감사합니다.\n", (String) params.get("userEmail"));
+        }
         return resultBody;
     }
     @Transactional
@@ -542,6 +559,17 @@ public class CustService {
         query.setParameter("updUserId", user.getUsername());
         query.setParameter("userId", params.get("userId"));
         query.executeUpdate();
+        return resultBody;
+    }
+    public ResultBody idcheck(Map<String, Object> params) {
+        ResultBody resultBody = new ResultBody();
+        StringBuilder sb = new StringBuilder(" SELECT (SELECT COUNT(1) FROM t_co_user WHERE user_id = :userId) + (SELECT COUNT(1) FROM t_co_cust_user WHERE user_id = :userId)");
+        Query query = entityManager.createNativeQuery(sb.toString());
+        query.setParameter("userId", params.get("userId"));
+        BigInteger cnt = (BigInteger) query.getSingleResult();
+        if (cnt.longValue() > 0) {
+            resultBody.setCode("DUP"); // 아이디중복됨
+        }
         return resultBody;
     }
     public ResultBody pwdcheck(Map<String, Object> params) {

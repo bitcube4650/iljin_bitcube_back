@@ -28,26 +28,32 @@ public class CustomUserDetailsService implements UserDetailsService {
     }
     public CustomUserDetails findUser(String username) {
         StringBuilder sb = new StringBuilder(" SELECT 'inter' AS cust_type\n" +
-                "     , interrelated_cust_code AS cust_code \n" +
-                "     , (SELECT interrelated_nm FROM t_co_interrelated x WHERE x.interrelated_cust_code = a.interrelated_cust_code) AS cust_name\n" +
+                "     , a.interrelated_cust_code AS cust_code \n" +
+                "     , interrelated_nm AS cust_name\n" +
                 "     , user_name \n" +
-                "     , user_id AS username\n" +
-                "     , user_pwd AS password\n" +
+                "     , user_id \n" +
+                "     , user_pwd \n" +
                 "     , user_auth\n" +
                 "  FROM t_co_user a\n" +
-                " WHERE user_id = :username\n" +
-                "   AND use_yn  = 'Y'\n" +
+                "     , t_co_interrelated b\n" +
+                " WHERE a.interrelated_cust_code = b.interrelated_cust_code\n" +
+                "   AND user_id = :username\n" +
+                "   AND a.use_yn  = 'Y'\n" +
+                "   AND b.use_yn  = 'Y'\n" +
                 " UNION ALL\n" +
                 "SELECT 'cust' AS cust_type\n" +
-                "     , cust_code \n" +
-                "     , (SELECT cust_name FROM t_co_cust_master x WHERE x.cust_code = a.cust_code) AS cust_name\n" +
+                "     , a.cust_code \n" +
+                "     , cust_name \n" +
                 "     , user_name \n" +
-                "     , user_id AS username\n" +
-                "     , user_pwd AS password\n" +
+                "     , user_id \n" +
+                "     , user_pwd \n" +
                 "     , user_type \n" +
-                "  FROM t_co_cust_user a\n" +
-                " WHERE user_id = :username\n" +
-                "   AND use_yn  = 'Y' ");
+                "  FROM t_co_cust_user   a\n" +
+                "     , t_co_cust_master b\n" +
+                " WHERE a.cust_code = b.cust_code\n" +
+                "   AND user_id = :username\n" +
+                "   AND a.use_yn  = 'Y'\n" +
+                "   AND b.cert_yn = 'Y' ");
         Query query = entityManager.createNativeQuery(sb.toString());
         query.setParameter("username", username);
         return new JpaResultMapper().uniqueResult(query, CustomUserDetails.class);

@@ -1,5 +1,6 @@
 package iljin.framework.core.security.user;
 
+import iljin.framework.core.dto.ResultBody;
 import iljin.framework.core.security.AuthToken;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.http.HttpHeaders;
@@ -16,8 +17,8 @@ public interface UserService {
     ResponseEntity<AuthToken> login(UserDto userDto, HttpSession session, HttpServletRequest request);
     ResponseEntity<AuthToken> ssoLogin(UserDto userDto, HttpSession session, HttpServletRequest request);
     void logout(HttpSession session);
-    Map idSearch(Map<String, String> params);
-    Map pwSearch(Map<String, String> params);
+    ResultBody idSearch(Map<String, String> params);
+    ResultBody pwSearch(Map<String, String> params);
     Map custSave(Map<String, String> params);
     UserDto findUser(String loginId);
     boolean checkPassword(String userId, String password);

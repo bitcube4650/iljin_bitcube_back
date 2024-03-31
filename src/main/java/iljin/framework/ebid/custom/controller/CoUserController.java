@@ -48,8 +48,4 @@ public class CoUserController {
     public ResultBody saveChgPwd(@RequestBody Map<String, Object> params) {
         return userService.saveChgPwd(params);
     }
-    @PostMapping("/idcheck")
-    public ResultBody idcheck(@RequestBody Map<String, Object> params) {
-        return userService.idcheck(params);
-    }
 }

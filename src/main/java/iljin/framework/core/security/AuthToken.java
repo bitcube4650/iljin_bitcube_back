@@ -18,4 +18,5 @@ public class AuthToken {
     private String userName;
     private String userAuth;
     private String token;
+    private boolean sso;
 }

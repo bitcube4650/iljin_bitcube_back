@@ -1,12 +1,14 @@
 package iljin.framework.core.security;
 
 import com.rathontech.sso.sp.config.Env;
+import iljin.framework.core.dto.ResultBody;
 import iljin.framework.core.security.sso.Sso;
 import iljin.framework.core.security.user.UserDto;
 import iljin.framework.core.security.user.UserService;
 import iljin.framework.ebid.custom.repository.TCoInterrelatedRepository;
 import iljin.framework.ebid.custom.repository.TCoItemRepository;
 import iljin.framework.ebid.custom.repository.TCoItemGrpRepository;
+import iljin.framework.ebid.custom.service.CustService;
 import iljin.framework.ebid.custom.service.ItemService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -35,18 +38,18 @@ public class LoginController {
     private final Sso sso;
     private final TCoInterrelatedRepository tCoInterrelatedRepository;
     private final TCoItemGrpRepository tCoItemGrpRepository;
-    private final TCoItemRepository tCoItemRepository;
+    private final CustService custService;
     private final ItemService itemService;
 
     private static final Logger logger = LoggerFactory.getLogger(LoginController.class);
 
     @Autowired
-    public LoginController(UserService userService, Sso sso, TCoInterrelatedRepository tCoInterrelatedRepository, TCoItemGrpRepository tCoItemGrpRepository, TCoItemRepository tCoItemRepository, ItemService itemService) {
+    public LoginController(UserService userService, Sso sso, TCoInterrelatedRepository tCoInterrelatedRepository, TCoItemGrpRepository tCoItemGrpRepository, CustService custService, ItemService itemService) {
         this.userService = userService;
         this.sso = sso;
         this.tCoInterrelatedRepository = tCoInterrelatedRepository;
         this.tCoItemGrpRepository = tCoItemGrpRepository;
-        this.tCoItemRepository = tCoItemRepository;
+        this.custService = custService;
         this.itemService = itemService;
     }
 
@@ -58,7 +61,7 @@ public class LoginController {
     @PostMapping("/login/sso")
     public ResponseEntity<AuthToken> ssoLogin(@RequestBody UserDto userDto, HttpSession session, HttpServletRequest req) {
         String loginId = req.getSession().getAttribute(Env.DEFAULT_SESSION_USERID).toString();
-//        userDto.setLoginId(loginId);
+        userDto.setLoginId(loginId);
         return userService.ssoLogin(userDto, session, req);
     }
 
@@ -69,12 +72,12 @@ public class LoginController {
     }
 
     @PostMapping("/login/idSearch")
-    public Map idSearch(@RequestBody Map<String, String> params) {
+    public ResultBody idSearch(@RequestBody Map<String, String> params) {
         return userService.idSearch(params);
     }
 
     @PostMapping("/login/pwSearch")
-    public Map pwSearch(@RequestBody Map<String, String> params) {
+    public ResultBody pwSearch(@RequestBody Map<String, String> params) {
         return userService.pwSearch(params);
     }
 
@@ -84,8 +87,8 @@ public class LoginController {
     }
 
     @PostMapping("/login/custSave")
-    public Map custSave(@RequestBody Map<String, String> params) {
-        return userService.custSave(params);
+    public ResultBody custSave(@RequestPart(value = "regnumFile", required = false) MultipartFile regnumFile, @RequestPart(value = "bFile", required = false) MultipartFile bFile, @RequestPart("data") Map<String, Object> params) {
+        return custService.insert(params, regnumFile, bFile);
     }
 
     @PostMapping("/login/itemGrpList")
@@ -97,5 +100,8 @@ public class LoginController {
     public Page itemList(@RequestBody Map<String, Object> params) {
         return itemService.itemList(params);
     }
-
+    @PostMapping("/login/idcheck")
+    public ResultBody idcheck(@RequestBody Map<String, Object> params) {
+        return custService.idcheck(params);
+    }
 }
