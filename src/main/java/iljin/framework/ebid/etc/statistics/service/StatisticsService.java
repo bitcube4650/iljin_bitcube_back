@@ -25,6 +25,7 @@ import iljin.framework.core.dto.ResultBody;
 import iljin.framework.ebid.bid.dto.BidCompleteDto;
 import iljin.framework.ebid.custom.entity.TCoUser;
 import iljin.framework.ebid.custom.repository.TCoUserRepository;
+import iljin.framework.ebid.etc.statistics.dto.BiInfoDetailDto;
 import iljin.framework.ebid.etc.statistics.dto.BiInfoDto;
 import iljin.framework.ebid.etc.statistics.dto.CoInterDto;
 import iljin.framework.ebid.etc.util.PagaUtils;
@@ -298,7 +299,7 @@ public class StatisticsService {
 			 sbList.append("AND tcci.INTERRELATED_CUST_CODE IN(");
 			 sbList.append(coInter);
 			 sbList.append(")\r\n");
-		}
+			}
 			 sbList.append("GROUP BY \r\n"
 			 		+ "                tci.INTERRELATED_CUST_CODE, tbim.bi_no\r\n"
 			 		+ "        ) AS A\r\n"
@@ -317,5 +318,142 @@ public class StatisticsService {
 
         return combinedResults;
 	}
+	
+	/**
+	 * 입찰실적 상세 내역
+	 * @param params
+	 * @return
+	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public ResultBody biInfoDetailList(Map<String, Object> params) {
+		ResultBody resultBody = new ResultBody();
+		
+		UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		Optional<TCoUser> userOptional = tCoUserRepository.findById(principal.getUsername());
+		String userAuth = userOptional.get().getUserAuth();
+		
+		try {
+			StringBuilder sbCount = new StringBuilder(
+				  "SELECT COUNT(*) AS TOTAL_COUNT\r\n"
+				  + "FROM (\r\n"
+				  + "    SELECT  1 \r\n"
+				  + "    FROM\r\n"
+				  + "        t_bi_detail_mat_cust tbdmc\r\n"
+				  + "        INNER JOIN t_bi_spec_mat tbsm ON tbdmc.BI_NO = tbsm.BI_NO\r\n"
+				  + "        INNER JOIN t_bi_info_mat tbim ON tbsm.BI_NO = tbim.BI_NO\r\n"
+				  + "        INNER JOIN t_co_cust_master tccm ON tbdmc.CUST_CODE = tccm.CUST_CODE\r\n"
+				  + "        INNER JOIN t_co_cust_ir tcci ON tccm.CUST_CODE = tcci.CUST_CODE\r\n"
+				  + "        INNER JOIN t_co_interrelated tci ON tcci.INTERRELATED_CUST_CODE = tci.INTERRELATED_CUST_CODE\r\n"
+				  + "        INNER JOIN t_co_item tcitem ON tbim.ITEM_CODE = tcitem.ITEM_CODE\r\n"
+				  + "        INNER JOIN t_bi_info_mat_cust tbimc ON tbim.BI_NO = tbimc.BI_NO AND tbdmc.CUST_CODE = tbimc.CUST_CODE\r\n"
+				  + "    WHERE\r\n"
+				  + "        tbim.ING_TAG = 'A5'\r\n"
+				  + "        AND DATE(tbim.UPDATE_DATE) BETWEEN :startDay AND :endDay\r\n"
+				);
+			
+			StringBuilder sbList = new StringBuilder(
+				  "   SELECT\r\n"
+				  + "        tbim.BI_NO AS BI_NO,\r\n"
+				  + "        tbim.BI_NAME AS BI_NAME,\r\n"
+				  + "        tcitem.ITEM_NAME AS ITEM_NAME,\r\n"
+				  + "        tbim.BD_AMT AS BD_AMT,\r\n"
+				  + "        tbim.SUCC_AMT AS SUCC_AMT,\r\n"
+				  + "        IFNULL(tbim.REAL_AMT, 0) AS REAL_AMT,\r\n"
+				  + "        (\r\n"
+				  + "            SELECT COUNT(*)\r\n"
+				  + "            FROM t_bi_info_mat_cust tbimc3\r\n"
+				  + "            WHERE tbimc3.BI_NO = tbim.BI_NO\r\n"
+				  + "            GROUP BY BI_NO\r\n"
+				  + "        ) AS CUST_CNT,\r\n"
+				  + "        (\r\n"
+				  + "            SELECT tccm2.CUST_NAME\r\n"
+				  + "            FROM t_co_cust_master tccm2\r\n"
+				  + "            INNER JOIN t_bi_info_mat_cust tbimc2 ON tccm2.CUST_CODE = tbimc2.CUST_CODE\r\n"
+				  + "            WHERE tbimc2.BI_NO = tbimc.BI_NO\r\n"
+				  + "            AND tbimc2.SUCC_YN = 'Y'\r\n"
+				  + "        ) AS CUST_NAME,\r\n"
+				  + "        DATE_FORMAT(tbim.EST_START_DATE, '%Y-%m-%d') AS EST_START_DATE,\r\n"
+				  + "        DATE_FORMAT(tbim.EST_CLOSE_DATE, '%Y-%m-%d') AS EST_CLOSE_DATE,\r\n"
+				  + "        MAX(tbimc.ESMT_AMT) AS ESMT_AMT_MAX,\r\n"
+				  + "        CASE\r\n"
+				  + "            WHEN MAX(tbimc.ESMT_AMT) = MIN(tbimc.ESMT_AMT) THEN 0\r\n"
+				  + "            ELSE MIN(tbimc.ESMT_AMT)\r\n"
+				  + "        END AS ESMT_AMT_MIN,\r\n"
+				  + "         (\r\n"
+				  + "	        MAX(tbimc.ESMT_AMT) "
+				  + "			-	\r\n"
+				  + "            CASE\r\n"
+				  + "		        WHEN MAX(tbimc.ESMT_AMT) = MIN(tbimc.ESMT_AMT) THEN 0\r\n"
+				  + "		        ELSE MIN(tbimc.ESMT_AMT)\r\n"
+				  + "       		END \r\n"
+				  + "       	) AS ESMT_AMT_DEV,\r\n "
+				  + "        (\r\n"
+				  + "            SELECT tbimc1.BI_ORDER\r\n"
+				  + "            FROM t_bi_info_mat_cust tbimc1\r\n"
+				  + "            WHERE tbimc1.BI_NO = tbimc.BI_NO\r\n"
+				  + "            AND tbimc1.SUCC_YN = 'Y'\r\n"
+				  + "        ) AS RE_BID_CNT\r\n"
+				  + "    FROM\r\n"
+				  + "        t_bi_detail_mat_cust tbdmc\r\n"
+				  + "        INNER JOIN t_bi_spec_mat tbsm ON tbdmc.BI_NO = tbsm.BI_NO\r\n"
+				  + "        INNER JOIN t_bi_info_mat tbim ON tbsm.BI_NO = tbim.BI_NO\r\n"
+				  + "        INNER JOIN t_co_cust_master tccm ON tbdmc.CUST_CODE = tccm.CUST_CODE\r\n"
+				  + "        INNER JOIN t_co_cust_ir tcci ON tccm.CUST_CODE = tcci.CUST_CODE\r\n"
+				  + "        INNER JOIN t_co_interrelated tci ON tcci.INTERRELATED_CUST_CODE = tci.INTERRELATED_CUST_CODE\r\n"
+				  + "        INNER JOIN t_co_item tcitem ON tbim.ITEM_CODE = tcitem.ITEM_CODE\r\n"
+				  + "        INNER JOIN t_bi_info_mat_cust tbimc ON tbim.BI_NO = tbimc.BI_NO AND tbdmc.CUST_CODE = tbimc.CUST_CODE\r\n"
+				  + "    WHERE\r\n"
+				  + "        tbim.ING_TAG = 'A5'\r\n"
+				  + "        AND DATE(tbim.UPDATE_DATE) BETWEEN :startDay AND :endDay\r\n"
+			);
+			
+			Object coInter = params.get("coInter");
+			if("4".equals(userAuth) || coInter != ""){
+				 sbCount.append("AND tcci.INTERRELATED_CUST_CODE IN(" + coInter + ")\r\n");
+				 sbList.append("AND tcci.INTERRELATED_CUST_CODE IN(" + coInter + ")\r\n");
+			}
+			
+			String itemCode = params.get("itemCode").toString();
+			if(!"".equals(itemCode)){
+				 sbCount.append("AND tbim.ITEM_CODE = " + itemCode +"\r\n");
+				 sbList.append("AND tbim.ITEM_CODE = " + itemCode +"\r\n");
+			}
+			sbCount.append(
+					"GROUP BY\r\n"
+					+ " tbim.BI_NO\r\n"
+					+ "	) AS cnt"
+			);
+			
+			sbList.append(
+					"GROUP BY\r\n"
+					+ " tbim.BI_NO"
+			);
+
+			//쿼리 실행
+			Query queryList = entityManager.createNativeQuery(sbList.toString());
+			Query queryTotal = entityManager.createNativeQuery(sbCount.toString());
+			
+			queryList.setParameter("startDay", params.get("startDay"));
+			queryList.setParameter("endDay", params.get("endDay"));
+			queryTotal.setParameter("startDay", params.get("startDay"));
+			queryTotal.setParameter("endDay", params.get("endDay"));
+			
+			Pageable pageable = PagaUtils.pageable(params);
+			queryList.setFirstResult(pageable.getPageNumber() * pageable.getPageSize()).setMaxResults(pageable.getPageSize()).getResultList();
+			List list = new JpaResultMapper().list(queryList, BiInfoDetailDto.class);
+			
+			BigInteger count = (BigInteger) queryTotal.getSingleResult();
+			Page listPage = new PageImpl(list, pageable, count.intValue());
+			resultBody.setData(listPage);
+			
+		}catch(Exception e) {
+			log.error("bidDetailList list error : {}", e);
+			resultBody.setCode("999");
+			resultBody.setMsg("입찰실적 상세내역 리스트를 가져오는 것을 실패하였습니다.");	
+		}
+		
+		return resultBody;
+	}
+	
 
 }
