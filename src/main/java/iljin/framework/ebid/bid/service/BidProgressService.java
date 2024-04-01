@@ -1004,7 +1004,11 @@ public class BidProgressService {
         ResultBody resultBody = new ResultBody();
         return resultBody;
     }
-
+    
+    /**
+     * 메일전송
+     * @param params
+     */
     @Transactional
     public void updateEmail(Map<String, String> params) {
         String biNo = params.get("biNo");
@@ -1094,6 +1098,10 @@ public class BidProgressService {
 
     }
 
+    /**
+     * 입찰 로그
+     * @param params
+     */
     @Transactional
     public void updateLog(Map<String, String> params) {
         String msg = params.get("msg");

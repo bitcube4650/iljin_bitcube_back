@@ -1,7 +1,7 @@
 package iljin.framework.ebid.etc.util.common.excel.repository;
 
 import iljin.framework.core.dto.ResultBody;
-import iljin.framework.ebid.bid.dto.BidCompleteCustDto;
+import iljin.framework.ebid.bid.dto.BidCustDto;
 import iljin.framework.ebid.custom.entity.TCoUser;
 import iljin.framework.ebid.custom.repository.TCoCustUserRepository;
 import iljin.framework.ebid.custom.repository.TCoUserRepository;
@@ -203,7 +203,7 @@ public class ExcelRepository {
 
     }
 
-    public List<BidCompleteCustDto> joinCustList(Map<String, Object> params) {
+    public List<BidCustDto> joinCustList(Map<String, Object> params) {
       //  ResultBody resultBody = new ResultBody();
 
         try {
@@ -235,7 +235,7 @@ public class ExcelRepository {
             //조건 대입
             queryList.setParameter("biNo", params.get("biNo"));
 
-            List<BidCompleteCustDto> list = new JpaResultMapper().list(queryList, BidCompleteCustDto.class);
+            List<BidCustDto> list = new JpaResultMapper().list(queryList, BidCustDto.class);
          //   resultBody.setData(list);
             return list;
         }catch(Exception e) {

@@ -6,7 +6,7 @@ import java.util.List;
 import lombok.Data;
 
 @Data
-public class BidCompleteCustDto {
+public class BidCustDto {
 	String biNo;			//입찰번호
 	String custCode;		//협력사코드
 	String custName;		//협력사명
@@ -26,7 +26,12 @@ public class BidCompleteCustDto {
 	
 	String biName;			//입찰명
 	
-	public BidCompleteCustDto(String biNo, String custCode, String custName, String presName, String esmtCurr, 
+	String fileId;			//투찰파일 id (암호화)
+	String encQutn;			//견적금액 (암호화)
+	String encEsmtSpec;		//협력사 입찰 직접입력정보 (암호화)
+	String insMode;			//입찰 내역방식
+	
+	public BidCustDto(String biNo, String custCode, String custName, String presName, String esmtCurr, 
 			BigDecimal esmtAmt, String submitDate, String damdangName, String updateDate, 
 			String esmtYn, String fileNm, String filePath, String succYn, String etcFile, String etcPath){
 		this.biNo = biNo;			
@@ -46,12 +51,35 @@ public class BidCompleteCustDto {
 		this.etcPath = etcPath;	
 	}
 	
-	public BidCompleteCustDto(String biNo, String biName, String custName, BigDecimal esmtAmt, String submitDate, String succYn) {
+	public BidCustDto(String biNo, String biName, String custName, BigDecimal esmtAmt, String submitDate, String succYn) {
 		this.biNo = biNo;
 		this.biName = biName;
 		this.custName = custName;
 		this.esmtAmt = esmtAmt;
 		this.submitDate = submitDate;
 		this.succYn = succYn;
+	}
+	
+	//입찰진행 - 업체견적사항
+	public BidCustDto(String biNo, String custCode, String custName, String presName, String esmtCurr, String submitDate, String damdangName, String esmtYn, String etcPath) {
+		this.biNo = biNo;
+		this.custCode = custCode;
+		this.custName = custName;
+		this.presName = presName;
+		this.esmtCurr= esmtCurr;
+		this.submitDate = submitDate;
+		this.damdangName = damdangName;
+		this.esmtYn = esmtYn;
+		this.etcPath = etcPath;
+	}
+	
+	//입찰진행 - 개찰
+	public BidCustDto(String biNo, String custCode, String fileId, String encQutn, String encEsmtSpec, String insMode) {
+		this.biNo = biNo;
+		this.custCode = custCode;
+		this.fileId = fileId;
+		this.encQutn = encQutn;
+		this.encEsmtSpec = encEsmtSpec;
+		this.insMode = insMode;
 	}
 }

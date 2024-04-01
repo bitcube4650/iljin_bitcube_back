@@ -27,15 +27,36 @@ public class BidStatusController {
     @Autowired
     private BidStatusService bidStatusService;
 
-    @PostMapping("/statuslist")
-    public ResultBody statuslist(@RequestBody Map<String, Object> params) {
-        return bidStatusService.statuslist(params);
-    }
-    
-    @PostMapping("/bidFailure")
-    public ResultBody bidFailure(@RequestBody Map<String, String> params) {
-        return bidStatusService.bidFailure(params);
-    }
+	/**
+	 * 입찰진행 리스트
+	 * @param params
+	 * @return
+	 */
+	@PostMapping("/statuslist")
+	public ResultBody statuslist(@RequestBody Map<String, Object> params) {
+		return bidStatusService.statuslist(params);
+	}
+
+	/**
+	 * 입찰(개찰) 상세
+	 * @param param
+	 * @return
+	 */
+	@PostMapping("/statusDetail")
+	public ResultBody progresslistDetail(@RequestBody Map<String, Object> param) {
+		return bidStatusService.statusDetail(param);
+	}
+
+	
+	/**
+	 * 유찰처리
+	 * @param params
+	 * @return
+	 */
+	@PostMapping("/bidFailure")
+	public ResultBody bidFailure(@RequestBody Map<String, String> params) {
+		return bidStatusService.bidFailure(params);
+	}
 
     @PostMapping("/submitHist")
     public Page submitHist(@RequestBody Map<String, Object> params) {
@@ -66,7 +87,11 @@ public class BidStatusController {
     public void updateSign(@RequestBody Map<String, Object> params) {
     }
     
-    //
+    /**
+     * 개찰하기
+     * @param params
+     * @return
+     */
     @PostMapping("/bidOpening")
     public ResultBody bidOpening(@RequestBody Map<String, String> params) {
         return bidStatusService.bidOpening(params);

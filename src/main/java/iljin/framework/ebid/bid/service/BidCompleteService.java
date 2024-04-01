@@ -2,7 +2,7 @@ package iljin.framework.ebid.bid.service;
 
 import iljin.framework.core.dto.ResultBody;
 import iljin.framework.core.util.Util;
-import iljin.framework.ebid.bid.dto.BidCompleteCustDto;
+import iljin.framework.ebid.bid.dto.BidCustDto;
 import iljin.framework.ebid.bid.dto.BidCompleteDetailDto;
 import iljin.framework.ebid.bid.dto.BidCompleteDto;
 import iljin.framework.ebid.bid.dto.BidCompleteSpecDto;
@@ -302,11 +302,11 @@ public class BidCompleteService {
 			//조건 대입
 			queryCust.setParameter("biNo", params.get("biNo"));
 			
-			List<BidCompleteCustDto> custData = new JpaResultMapper().list(queryCust, BidCompleteCustDto.class);
+			List<BidCustDto> custData = new JpaResultMapper().list(queryCust, BidCustDto.class);
 			
 			//내역방식이 직접등록일 경우
 			if(detailDto.getInsMode().equals("2")) {
-				for(BidCompleteCustDto custDto : custData) {
+				for(BidCustDto custDto : custData) {
 					StringBuilder sbCustSpec = new StringBuilder(
 						  "select	cast(tbdmc.CUST_CODE as char) as CUST_CODE "
 						+ ",		tbsm.NAME "
@@ -753,7 +753,7 @@ public class BidCompleteService {
 			//조건 대입
 			queryList.setParameter("biNo", params.get("biNo"));
 			
-			List list = new JpaResultMapper().list(queryList, BidCompleteCustDto.class);
+			List list = new JpaResultMapper().list(queryList, BidCustDto.class);
 			resultBody.setData(list);
 			
 		}catch(Exception e) {
@@ -974,11 +974,11 @@ public class BidCompleteService {
 			queryCust.setParameter("biNo", params.get("biNo"));
 			queryCust.setParameter("custCode", custCode);
 			
-			List<BidCompleteCustDto> custData = new JpaResultMapper().list(queryCust, BidCompleteCustDto.class);
+			List<BidCustDto> custData = new JpaResultMapper().list(queryCust, BidCustDto.class);
 			
 			//내역방식이 직접등록일 경우
 			if(detailDto.getInsMode().equals("2")) {
-				for(BidCompleteCustDto custDto : custData) {
+				for(BidCustDto custDto : custData) {
 					StringBuilder sbCustSpec = new StringBuilder(
 						  "select	cast(tbdmc.CUST_CODE as char) as CUST_CODE "
 						+ ",		tbsm.NAME "
