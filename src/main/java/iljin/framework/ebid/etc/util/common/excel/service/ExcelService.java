@@ -169,16 +169,16 @@ public class ExcelService {
     //통계>회사별 입찰실적 Excel DownLoad
     public void downLoadExcelCompanyBidPerformance(Map<String, Object> params, HttpServletResponse response) {
         List<CompanyBidPerformanceExcelDto> excelData = new ArrayList<>();
-        List<Map<String, Object>> data = (List<Map<String, Object>>) params.get("biInfoList");
+        List<BiInfoDto> data = excelRepository.selectBiInfoList(params);
 
         for(int i = 0; i < data.size(); i++) {
             CompanyBidPerformanceExcelDto companyBidPerformanceExcelDto = new CompanyBidPerformanceExcelDto();
 
-            String interrelatedNm = CommonUtils.getString(data.get(i).get("interrelatedNm"), "");
-            String cnt = CommonUtils.getString(data.get(i).get("cnt"), "");
-            String bdAnt = CommonUtils.getString(data.get(i).get("bdAnt"), "");
-            String succAmt = CommonUtils.getString(data.get(i).get("succAmt"), "");
-            String mamt = CommonUtils.getString(data.get(i).get("mamt"), "");
+            String interrelatedNm = CommonUtils.getString(data.get(i).getInterrelatedNm(), "");
+            String cnt = CommonUtils.getString(data.get(i).getCnt(), "");
+            String bdAnt = CommonUtils.getString(data.get(i).getBdAnt(), "");
+            String succAmt = CommonUtils.getString(data.get(i).getSuccAmt(), "");
+            String mamt = CommonUtils.getString(data.get(i).getMamt(), "");
 
             companyBidPerformanceExcelDto.setInterrelatedNm(interrelatedNm);
             companyBidPerformanceExcelDto.setCnt(CommonUtils.getFormatNumber(cnt));
