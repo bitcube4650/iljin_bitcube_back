@@ -28,7 +28,7 @@ public class BidStatusController {
     private BidStatusService bidStatusService;
 
     @PostMapping("/statuslist")
-    public Page statuslist(@RequestBody Map<String, Object> params) {
+    public ResultBody statuslist(@RequestBody Map<String, Object> params) {
         return bidStatusService.statuslist(params);
     }
     
@@ -65,5 +65,12 @@ public class BidStatusController {
     @PostMapping("/updateSign")
     public void updateSign(@RequestBody Map<String, Object> params) {
     }
+    
+    //
+    @PostMapping("/bidOpening")
+    public ResultBody bidOpening(@RequestBody Map<String, String> params) {
+        return bidStatusService.bidOpening(params);
+    }
+    
     
 }

@@ -56,6 +56,13 @@ public class StatisticsContoller {
 		return statisticsService.bidDetailList(params);
 	}
 	
+	
+	@PostMapping("/bidPresentList")
+	public List<List<?>> bidPresentList(@RequestBody Map<String, Object> params) {
+
+		return statisticsService.bidPresentList(params);
+	}
+	
 	/**
 	 * 입찰실적 상세내역 리스트
 	 * @param params
@@ -66,5 +73,5 @@ public class StatisticsContoller {
 
 		return statisticsService.biInfoDetailList(params);
 	}
-	
+
 }

@@ -76,6 +76,10 @@ public class CustController {
         session.invalidate();
         return custService.del(params);
     }
+    @PostMapping("/idcheck")
+    public ResultBody idcheck(@RequestBody Map<String, Object> params) {
+        return custService.idcheck(params);
+    }
     @PostMapping("/pwdcheck")
     public ResultBody pwdcheck(@RequestBody Map<String, Object> params) {
         return custService.pwdcheck(params);

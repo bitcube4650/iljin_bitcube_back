@@ -1,12 +1,14 @@
 package iljin.framework.ebid.bid.controller;
 
 import iljin.framework.core.dto.ResultBody;
+import iljin.framework.core.security.user.CustomUserDetails;
 import iljin.framework.ebid.bid.dto.BidProgressDetailDto;
 import iljin.framework.ebid.bid.service.BidProgressService;
 import iljin.framework.ebid.custom.entity.TCoItem;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.Page;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -32,8 +34,8 @@ public class BidProgressController {
     }
 
     @PostMapping("/progresslistDetail")
-    public List<List<?>> progresslistDetail(@RequestBody String param) {
-        return bidProgressService.progresslistDetail(param);
+    public List<List<?>> progresslistDetail(@RequestBody String param, @AuthenticationPrincipal CustomUserDetails user) {
+        return bidProgressService.progresslistDetail(param, user);
     }
 
     @PostMapping("/bidNotice")

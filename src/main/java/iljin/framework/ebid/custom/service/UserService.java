@@ -218,18 +218,6 @@ public class UserService {
 		
 		return resultBody;
 	}
-	
-    public ResultBody idcheck(Map<String, Object> params) {
-        ResultBody resultBody = new ResultBody();
-        StringBuilder sb = new StringBuilder(" SELECT (SELECT COUNT(1) FROM t_co_user WHERE user_id = :userId) + (SELECT COUNT(1) FROM t_co_cust_user WHERE user_id = :userId)");
-        Query query = entityManager.createNativeQuery(sb.toString());
-        query.setParameter("userId", params.get("userId"));
-        BigInteger cnt = (BigInteger) query.getSingleResult();
-        if (cnt.longValue() > 0) {
-            resultBody.setCode("DUP"); // 아이디중복됨
-        }
-        return resultBody;
-    }
     
     // 비밀번호 변경
     @Transactional

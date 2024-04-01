@@ -1,5 +1,6 @@
 package iljin.framework.core.security.user;
 
+import iljin.framework.core.dto.ResultBody;
 import iljin.framework.core.security.AuthToken;
 import iljin.framework.core.security.role.Role;
 import iljin.framework.core.security.role.RoleRepository;
@@ -7,12 +8,14 @@ import iljin.framework.core.security.role.UserRole;
 import iljin.framework.core.security.role.UserRoleRepository;
 import iljin.framework.core.util.Util;
 import iljin.framework.ebid.custom.dto.TCoCustMasterDto;
+import iljin.framework.ebid.etc.util.common.mail.service.MailService;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.qlrm.mapper.JpaResultMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
@@ -37,6 +40,7 @@ import javax.persistence.Query;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.transaction.Transactional;
+import java.math.BigInteger;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.LocalDateTime;
@@ -55,8 +59,9 @@ public class UserServiceImpl implements UserService {
 
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
     private final UserRoleRepository userRoleRepository;
+    private final MailService mailService;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public ResponseEntity<AuthToken> login(UserDto userDto, HttpSession session, HttpServletRequest request) {
@@ -87,7 +92,7 @@ public class UserServiceImpl implements UserService {
                             //logger.debug("*Authentication: " + String.valueOf(authentication.isAuthenticated()));
                         }
 
-                        return getAuthToken(session, loginId, obj, token, authentication);
+                        return getAuthToken(session, loginId, obj, token, authentication, false);
                     });
 
             return result.map(authToken -> new ResponseEntity<>(authToken, HttpStatus.OK))
@@ -98,7 +103,8 @@ public class UserServiceImpl implements UserService {
                             , null
                             , null
                             ,null
-                            , null), HttpStatus.UNAUTHORIZED));
+                            , null
+                            , false), HttpStatus.UNAUTHORIZED));
         } catch (AuthenticationException e) {
 
             return new ResponseEntity<>(new AuthToken(
@@ -108,39 +114,46 @@ public class UserServiceImpl implements UserService {
                     , null
                     , null
                     , null
-                    , null), HttpStatus.UNAUTHORIZED);
+                    , null
+                    , false), HttpStatus.UNAUTHORIZED);
         }
     }
 
     @NotNull
-    private AuthToken getAuthToken(final HttpSession session, final String loginId, final UserDto obj, final UsernamePasswordAuthenticationToken token, final Authentication authentication) {
+    private AuthToken getAuthToken(final HttpSession session, final String loginId, final UserDto obj, final UsernamePasswordAuthenticationToken token, final Authentication authentication, boolean sso) {
         // 4. Authentication 인스턴스를 SecurityContextHolder의 SecurityContext에 설정
         SecurityContextHolder.getContext().setAuthentication(token);
         session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, SecurityContextHolder.getContext());
 
         StringBuilder sb = new StringBuilder(" SELECT 'inter' AS cust_type\n" +
-                "     , interrelated_cust_code AS cust_code \n" +
-                "     , (SELECT interrelated_nm FROM t_co_interrelated x WHERE x.interrelated_cust_code = a.interrelated_cust_code) AS cust_name\n" +
+                "     , a.interrelated_cust_code AS cust_code \n" +
+                "     , interrelated_nm AS cust_name\n" +
                 "     , user_name \n" +
                 "     , user_id \n" +
                 "     , user_pwd \n" +
                 "     , user_auth\n" +
                 "     , 'token' AS token \n" +
                 "  FROM t_co_user a\n" +
-                " WHERE user_id = :loginId\n" +
-                "   AND use_yn  = 'Y'\n" +
+                "     , t_co_interrelated b\n" +
+                " WHERE a.interrelated_cust_code = b.interrelated_cust_code\n" +
+                "   AND user_id = :loginId\n" +
+                "   AND a.use_yn  = 'Y'\n" +
+                "   AND b.use_yn  = 'Y'\n" +
                 " UNION ALL\n" +
                 "SELECT 'cust' AS cust_type\n" +
-                "     , cust_code \n" +
-                "     , (SELECT cust_name FROM t_co_cust_master x WHERE x.cust_code = a.cust_code) AS cust_name\n" +
+                "     , a.cust_code \n" +
+                "     , cust_name AS cust_name\n" +
                 "     , user_name \n" +
                 "     , user_id \n" +
                 "     , user_pwd \n" +
                 "     , user_type \n" +
                 "     , 'token' AS token \n" +
-                "  FROM t_co_cust_user a\n" +
-                " WHERE user_id = :loginId\n" +
-                "   AND use_yn  = 'Y' ");
+                "  FROM t_co_cust_user   a\n" +
+                "     , t_co_cust_master b\n" +
+                " WHERE a.cust_code = b.cust_code\n" +
+                "   AND user_id = :loginId\n" +
+                "   AND a.use_yn  = 'Y'\n" +
+                "   AND b.cert_yn = 'Y' ");
         Query query = entityManager.createNativeQuery(sb.toString());
         query.setParameter("loginId", obj.getLoginId());
         UserDto data = new JpaResultMapper().uniqueResult(query, UserDto.class);
@@ -151,28 +164,27 @@ public class UserServiceImpl implements UserService {
                 data.getLoginId(),
                 data.getUserName(),
                 data.getUserAuth(),
-                "token");
+                "token",
+                sso);
     }
 
     @Override
     public ResponseEntity<AuthToken> ssoLogin(UserDto userDto, HttpSession session, HttpServletRequest request) {
+
         try {
             String loginId = userDto.loginId;
+            String loginPw = userDto.loginPw;
+            String loginToken = userDto.token;
 
-            Optional<User> user = userRepository.findByLoginId(loginId);
-
-            List<UserRole> roles = userRoleRepository.findRolesByUser_LoginId(loginId);
-            List<String> r = roles.stream().map(x -> x.getRole()).collect(Collectors.toList());
-
-            List<GrantedAuthority> grantedAuthorities = AuthorityUtils.createAuthorityList(r.get(0));
+            Optional<UserDto> user = Optional.of(userDto);
 
             Optional<AuthToken> result =
                     user.map(obj -> {
+                        Set<GrantedAuthority> grantedAuthorities = new HashSet<>();
                         UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(loginId, null, grantedAuthorities);
-
-                        return getAuthToken(session, loginId, null, token, token);
+                        Authentication authentication = null;
+                        return getAuthToken(session, loginId, obj, token, authentication, true);
                     });
-
 
             return result.map(authToken -> new ResponseEntity<>(authToken, HttpStatus.OK))
                     .orElseGet(() -> new ResponseEntity<>(new AuthToken(
@@ -181,9 +193,11 @@ public class UserServiceImpl implements UserService {
                             , null
                             , null
                             , null
+                            ,null
                             , null
-                            , null), HttpStatus.UNAUTHORIZED));
+                            , false), HttpStatus.UNAUTHORIZED));
         } catch (AuthenticationException e) {
+
             return new ResponseEntity<>(new AuthToken(
                     null
                     , null
@@ -191,7 +205,8 @@ public class UserServiceImpl implements UserService {
                     , null
                     , null
                     , null
-                    , null), HttpStatus.UNAUTHORIZED);
+                    , null
+                    , false), HttpStatus.UNAUTHORIZED);
         }
     }
 
@@ -199,27 +214,74 @@ public class UserServiceImpl implements UserService {
     public void logout(HttpSession session) {
         session.invalidate();
     }
-    @Override
-    public Map idSearch(Map<String, String> params) {
-        Map result = new HashMap();
-        if ("비트큐브".equals(params.get("userName"))) {
-            result.put("code", "ok");
-            result.put("userId", "agent1");
+
+    public ResultBody idSearch(Map<String, String> params) {
+        ResultBody resultBody = new ResultBody();
+        StringBuilder sbQuery = new StringBuilder(" SELECT user_id \n" +
+                "  FROM t_co_cust_user   a\n" +
+                "     , t_co_cust_master b\n" +
+                " WHERE a.cust_code = b.cust_code\n" +
+                "   AND b.regnum  = :regnum\n" +
+                "   AND a.user_name = :userName\n" +
+                "   AND a.user_email = :userEmail\n" +
+                "   AND a.use_yn  = 'Y'\n" +
+                "   AND b.cert_yn = 'Y'");
+        Query query = entityManager.createNativeQuery(sbQuery.toString());
+        query.setParameter("regnum", params.get("regnum1").toString()+params.get("regnum2").toString()+params.get("regnum3").toString());
+        query.setParameter("userName", params.get("userName"));
+        query.setParameter("userEmail", params.get("userEmail"));
+        Optional<String> userId = query.getResultList().stream().findFirst();
+
+        if (userId.isPresent()) {
+            // 로그인 아이디 메일 저장 처리
+            mailService.saveMailInfo("[일진그룹 e-bidding] 로그인 아이디", "안녕하십니까\n" +
+                    "일진그룹 전자입찰 e-bidding 입니다.\n" +
+                    "\n" +
+                    "고객님께서 찾으시는 e-bidding 시스템 로그인 아이디는\n" +
+                    "<b style='color:red'>" + userId.get() + "</b>\n" +
+                    "입니다.\n" +
+                    "\n" +
+                    "감사합니다.\n", (String) params.get("userEmail"));
         } else {
-            result.put("code", "err");
+            resultBody.setCode("notFound");
         }
-        return result;
+        return resultBody;
     }
-    @Override
-    public Map pwSearch(Map<String, String> params) {
-        Map result = new HashMap();
-        if ("비트큐브".equals(params.get("userName"))) {
-            result.put("code", "ok");
-            result.put("userId", "agent1");
+
+    @Transactional
+    public ResultBody pwSearch(Map<String, String> params) {
+        ResultBody resultBody = new ResultBody();
+        String userPwd = params.get("userId") + "!@#";
+        StringBuilder sbQuery = new StringBuilder(" UPDATE t_co_cust_user a\n" +
+                "   SET user_pwd = :userPwd\n" +
+                "     , pwd_chg_date = null\n" +
+                " WHERE user_id = :userId\n" +
+                "   AND user_name = :userName\n" +
+                "   AND user_email = :userEmail\n" +
+                "   AND a.use_yn = 'Y'\n" +
+                "   AND EXISTS (SELECT cust_code FROM t_co_cust_master x WHERE x.cust_code = a.cust_code AND x.regnum = :regnum AND x.cert_yn = 'Y')");
+        Query query = entityManager.createNativeQuery(sbQuery.toString());
+        query.setParameter("regnum", params.get("regnum1").toString()+params.get("regnum2").toString()+params.get("regnum3").toString());
+        query.setParameter("userId", params.get("userId"));
+        query.setParameter("userPwd", passwordEncoder.encode(userPwd));
+        query.setParameter("userName", params.get("userName"));
+        query.setParameter("userEmail", params.get("userEmail"));
+        int cnt = query.executeUpdate();
+
+        if (cnt > 0) {
+            // 로그인 암호 메일 저장 처리
+            mailService.saveMailInfo("[일진그룹 e-bidding] 로그인 암호", "안녕하십니까\n" +
+                    "일진그룹 전자입찰 e-bidding 입니다.\n" +
+                    "\n" +
+                    "e-bidding 시스템에 로그인 하기 위해 초기화된 비밀번호는\n" +
+                    "<b style='color:red'>" + userPwd + "</b>\n" +
+                    "입니다.\n" +
+                    "\n" +
+                    "감사합니다.\n", (String) params.get("userEmail"));
         } else {
-            result.put("code", "err");
+            resultBody.setCode("notFound");
         }
-        return result;
+        return resultBody;
     }
     @Override
     @Transactional

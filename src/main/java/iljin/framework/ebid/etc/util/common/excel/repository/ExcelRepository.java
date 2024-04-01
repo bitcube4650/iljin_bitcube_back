@@ -2,11 +2,12 @@ package iljin.framework.ebid.etc.util.common.excel.repository;
 
 import iljin.framework.core.dto.ResultBody;
 import iljin.framework.ebid.bid.dto.BidCompleteCustDto;
-import iljin.framework.ebid.bid.dto.BidCompleteDto;
 import iljin.framework.ebid.custom.entity.TCoUser;
 import iljin.framework.ebid.custom.repository.TCoCustUserRepository;
 import iljin.framework.ebid.custom.repository.TCoUserRepository;
-import iljin.framework.ebid.etc.util.common.excel.dto.BidCompleteExcelDto;
+import iljin.framework.ebid.etc.statistics.dto.BiInfoDto;
+import iljin.framework.ebid.etc.util.common.excel.dto.BidCompleteDto;
+import iljin.framework.ebid.etc.util.common.excel.dto.BidDetailListDto;
 import iljin.framework.ebid.etc.util.common.excel.entity.FileEntity;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +40,7 @@ public class ExcelRepository {
                 .getResultList();
     }
 
-    public List<BidCompleteDto> findComplateBidList(Map<String, Object> params) {
+    public List<iljin.framework.ebid.bid.dto.BidCompleteDto> findComplateBidList(Map<String, Object> params) {
         ResultBody resultBody = new ResultBody();
 
         UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -183,7 +184,7 @@ public class ExcelRepository {
 
           //  Pageable pageable = PagaUtils.pageable(params);
          //   queryList.setFirstResult(pageable.getPageNumber() * pageable.getPageSize()).setMaxResults(pageable.getPageSize()).getResultList();
-            List<BidCompleteDto> list = new JpaResultMapper().list(queryList, BidCompleteDto.class);
+            List<iljin.framework.ebid.bid.dto.BidCompleteDto> list = new JpaResultMapper().list(queryList, iljin.framework.ebid.bid.dto.BidCompleteDto.class);
 
             return list;
 
@@ -245,7 +246,7 @@ public class ExcelRepository {
 
 
 
-    public List<BidCompleteExcelDto> findComplateBidListV2(Map<String, Object> params) {
+    public List<BidCompleteDto> findComplateBidListV2(Map<String, Object> params) {
         ResultBody resultBody = new ResultBody();
 
         UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -400,7 +401,7 @@ public class ExcelRepository {
 
             //  Pageable pageable = PagaUtils.pageable(params);
             //   queryList.setFirstResult(pageable.getPageNumber() * pageable.getPageSize()).setMaxResults(pageable.getPageSize()).getResultList();
-            List<BidCompleteExcelDto> list = new JpaResultMapper().list(queryList, BidCompleteExcelDto.class);
+            List<BidCompleteDto> list = new JpaResultMapper().list(queryList, BidCompleteDto.class);
 
             return list;
 
@@ -416,6 +417,262 @@ public class ExcelRepository {
         }
 
     }
+
+
+    public List<BiInfoDto> findBidPresentList(Map<String, Object> params) {
+       // List<List<?>> combinedResults = new ArrayList<>();
+
+        //세션 정보 조회
+        UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Optional<TCoUser> userOptional = tCoUserRepository.findById(principal.getUsername());
+        String userId = principal.getUsername();
+        String userAuth = userOptional.get().getUserAuth();// userAuth(1 = 시스템관리자, 4 = 감사사용자)
+
+        StringBuilder sbList = new StringBuilder(
+                "select  max(BID_LIST.INTERRELATED_NM) as INTERRELATED_NM\r\n"
+                        + ",		sum(BID_LIST.PLAN_CNT) as PLAN_CNT\r\n"
+                        + ",		sum(BID_LIST.PLAN_AMT) as PLAN_AMT\r\n"
+                        + ",		sum(BID_LIST.ING_CNT) as ING_CNT\r\n"
+                        + ",		sum(BID_LIST.ING_AMT) as ING_AMT\r\n"
+                        + ",		sum(BID_LIST.SUCC_CNT) as SUCC_CNT\r\n"
+                        + ",		sum(BID_LIST.SUCC_AMT) as SUCC_AMT\r\n"
+                        + ",		ifnull(round(sum(BID_LIST.cust_cnt)/sum(BID_LIST.SUCC_CNT), 1), 0) as cust_cnt\r\n"
+                        + ",		sum(BID_LIST.REG_CUST_CNT) as REG_CUST_CNT\r\n"
+                        + "from ("
+                        + "	select	max(A.INTERRELATED_NM ) as INTERRELATED_NM \r\n"
+                        + "	,		A.INTERRELATED_CUST_CODE\r\n"
+                        + "	,		sum(B.PLAN_CNT) as PLAN_CNT\r\n"
+                        + "	,		ifnull(sum(B.PLAN_AMT), 0) as PLAN_AMT\r\n"
+                        + "	,		sum(B.ING_CNT) as ING_CNT\r\n"
+                        + "	,		ifnull(sum(B.ING_AMT), 0) as ING_AMT\r\n"
+                        + "	,		sum(B.SUCC_CNT) as SUCC_CNT\r\n"
+                        + "	,		ifnull(sum(B.SUCC_AMT), 0) as SUCC_AMT \r\n"
+                        + "	,		ROUND(ifnull(D.CUST_CNT / sum(B.SUCC_CNT), 0), 1) as CUST_CNT\r\n"
+                        + "	,		ifnull(max(C.REG_CUST_cnt), 0) as REG_CUST_CNT\r\n"
+                        + "	from t_co_interrelated A \r\n"
+                        + "	INNER JOIN (\r\n"
+                        + "		select	BB.BI_NO\r\n"
+                        + "		,		BB.INTERRELATED_CUST_CODE\r\n"
+                        + "		,		CASE WHEN BB.ING_TAG = 'A0' THEN 1 ELSE 0 END AS PLAN_CNT\r\n"
+                        + "		,		CASE WHEN BB.ING_TAG = 'A0' THEN BB.BD_AMT ELSE 0 END AS PLAN_AMT\r\n"
+                        + "		,		CASE WHEN BB.ING_TAG = 'A1' THEN 1 ELSE 0 END AS ING_CNT\r\n"
+                        + "		,		CASE WHEN BB.ING_TAG = 'A1' THEN BB.BD_AMT ELSE 0 END AS ING_AMT\r\n"
+                        + "		,		CASE WHEN BB.ING_TAG = 'A5' THEN 1 ELSE 0 END AS SUCC_CNT\r\n"
+                        + "		,		CASE WHEN BB.ING_TAG = 'A5' THEN BB.SUCC_AMT ELSE 0 END AS SUCC_AMT\r\n"
+                        + "		from T_BI_INFO_MAT BB			-- 입찰서내용\r\n"
+                        + "		where DATE(BB.UPDATE_DATE) BETWEEN :startDay AND :endDay\r\n"
+                        + "	) B\r\n"
+                        + "		on A.INTERRELATED_CUST_CODE = B.INTERRELATED_CUST_CODE\r\n"
+                        + "	left outer join (\r\n"
+                        + "		select AA.INTERRELATED_CUST_CODE\r\n"
+                        + "		,		count(1) as REG_CUST_cnt\r\n"
+                        + "		from t_co_interrelated AA\r\n"
+                        + "		inner join t_co_cust_master BB\r\n"
+                        + "			on AA.INTERRELATED_CUST_CODE = BB.INTERRELATED_CUST_CODE\r\n"
+                        + "		where DATE(BB.CREATE_DATE) BETWEEN :startDay AND :endDay\r\n"
+                        + "		group by AA.INTERRELATED_CUST_CODE\r\n"
+                        + "	) C\r\n"
+                        + "		on a.INTERRELATED_CUST_CODE = c.INTERRELATED_CUST_CODE\r\n "
+                        + "	left outer join (\r\n"
+                        + "		select	INTERRELATED_CUST_CODE\r\n"
+                        + "		,		COUNT(CD.BI_NO) as CUST_CNT\r\n"
+                        + "		from T_BI_INFO_MAT CC\r\n"
+                        + "		inner join t_bi_info_mat_cust CD\r\n"
+                        + "			on CC.BI_NO = CD.BI_NO\r\n"
+                        + "		where CC.ING_TAG = 'A5'\r\n"
+                        + "		and DATE(CC.UPDATE_DATE) BETWEEN :startDay AND :endDay\r\n"
+                        + "		group by CC.INTERRELATED_CUST_CODE\r\n"
+                        + "	) D\r\n"
+                        + "		on D.INTERRELATED_CUST_CODE = A.INTERRELATED_CUST_CODE\r\n"
+                //+ "where 1=1\r\n"
+        );
+
+        if(userAuth.equals("4")) {
+            StringBuilder sbMainAdd = new StringBuilder(
+                    "inner join t_co_user_interrelated tcui "
+                            + "	on A.INTERRELATED_CUST_CODE = tcui.INTERRELATED_CUST_CODE "
+                            + "	and tcui.USER_ID = :userId "
+            );
+
+            sbList.append(sbMainAdd);
+        }
+
+        //조건문 쿼리 삽입
+        StringBuilder sbWhere = new StringBuilder();
+        sbWhere.append(" ");
+        // 계열사
+        if (!StringUtils.isEmpty(params.get("coInter"))) {
+            sbWhere.append(" where A.INTERRELATED_CUST_CODE in ( :interrelatedCustCode ) ");
+        }
+
+        sbList.append(sbWhere);
+
+        sbList.append("	group by A.INTERRELATED_CUST_CODE\r\n"
+                + " ) BID_LIST\r\n"
+                + " group by BID_LIST.INTERRELATED_CUST_CODE with rollup\r\n"
+                + "	--	order by A.INTERRELATED_CUST_CODE\r\n");
+
+        //쿼리 실행
+        Query queryList = entityManager.createNativeQuery(sbList.toString());
+
+        //조건 대입
+        if(userAuth.equals("4")) {
+            queryList.setParameter("userId", userId);
+        }
+
+        queryList.setParameter("startDay", params.get("startDay") + " 00:00:00");
+        queryList.setParameter("endDay", params.get("endDay") + " 23:59:59");
+
+        if (!StringUtils.isEmpty(params.get("coInter"))) {
+            queryList.setParameter("interrelatedCustCode", params.get("coInter"));
+        }
+
+        List<BiInfoDto> resultList = new JpaResultMapper().list(queryList, BiInfoDto.class);
+     //   combinedResults.add(resultList);
+
+        return resultList;
+    }
+
+
+    public List<BidDetailListDto> findBidDetailList(Map<String, Object> params) {
+        UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Optional<TCoUser> userOptional = tCoUserRepository.findById(principal.getUsername());
+        String userId = userOptional.get().getUserId();
+        String userAuth = userOptional.get().getUserAuth();
+
+        try {
+            StringBuilder sbCount = new StringBuilder(
+                    "select	count(1) "
+                            + "from t_bi_info_mat tbim "
+                            + "inner join t_bi_info_mat_cust tbimc "
+                            + "	on tbim.BI_NO = tbimc.BI_NO "
+                            + "	and tbimc.SUCC_YN = 'Y' "
+            );
+
+            StringBuilder sbList = new StringBuilder(
+                    "select	tbim.BI_NO "
+                            + ",		tbim.BI_NAME "
+                            + ",		tbim.BD_AMT "
+                            + ",		tbim.SUCC_AMT "
+                            + ",		tccm.CUST_NAME "
+                            + ",		c.CNT as JOIN_CUST_CNT "
+                            + ",		DATE_FORMAT(tbim.EST_START_DATE, '%Y-%m-%d %H:%i') as EST_START_DATE "
+                            + ",		DATE_FORMAT(tbim.EST_CLOSE_DATE, '%Y-%m-%d %H:%i') as EST_CLOSE_DATE "
+                            + ",		tcu.USER_NAME "
+                            + ",		c.CUST_NAME AS CUST_NAME2 "
+                            + ",		c.ESMT_AMT "
+                            + ",		c.SUBMIT_DATE "
+                            + "from t_bi_info_mat tbim "
+                            + "inner join t_bi_info_mat_cust tbimc "
+                            + "	on tbim.BI_NO = tbimc.BI_NO "
+                            + "	and tbimc.SUCC_YN = 'Y' "
+                            + "inner join t_co_cust_master tccm "
+                            + "	on tbimc.CUST_CODE = tccm.CUST_CODE "
+                            + "left outer join t_co_user tcu "
+                            + "	on tbim.CREATE_USER = tcu.USER_ID "
+                            + "inner join ( "
+                            + "	select	tbimc.BI_NO "
+                            + "	,		tccm.CUST_NAME "
+                            + "	,		tbimc.ESMT_AMT "
+                            + "	,		DATE_FORMAT(tbimc.SUBMIT_DATE, '%Y-%m-%d %H:%i') as SUBMIT_DATE "
+                            + "	,		tbimc.SUCC_YN "
+                            + "	,		COUNT(1) as CNT "
+                            + "	from t_bi_info_mat_cust tbimc "
+                            + " inner join t_co_cust_master tccm "
+                            + " on tbimc.CUST_CODE = tccm.CUST_CODE "
+                            + "	where tbimc.ESMT_YN = '2' "
+                            + "	group by tbimc.BI_NO, tccm.CUST_NAME, tbimc.ESMT_AMT, SUBMIT_DATE, tbimc.SUCC_YN "
+                            + " ORDER BY tbimc.SUCC_YN "
+                            + ") c "
+                            + "	on tbim.BI_NO = c.BI_NO "
+            );
+
+            if(userAuth.equals("4")) {
+                StringBuilder sbMainAdd = new StringBuilder(
+                        "inner join t_co_user_interrelated tcui "
+                                + "	on tbim.INTERRELATED_CUST_CODE = tcui.INTERRELATED_CUST_CODE "
+                                + "	and tcui.USER_ID = :userId "
+                );
+
+                sbCount.append(sbMainAdd);
+                sbList.append(sbMainAdd);
+            }
+
+            //조건문 쿼리 삽입
+            StringBuilder sbWhere = new StringBuilder();
+            sbWhere.append("where tbim.ING_TAG = 'A5' ");
+
+            //입찰완료일
+            sbWhere.append("and tbim.UPDATE_DATE BETWEEN :startDate and :endDate ");
+
+            //계열사
+            if (!StringUtils.isEmpty(params.get("interrelatedCustCode"))) {
+                sbWhere.append("and tbim.INTERRELATED_CUST_CODE = :interrelatedCustCode ");
+            }
+
+            sbCount.append(sbWhere);
+            sbList.append(sbWhere);
+
+            sbList.append("order by tbim.UPDATE_DATE desc ");
+
+            //쿼리 실행
+            Query queryList = entityManager.createNativeQuery(sbList.toString());
+            Query queryTotal = entityManager.createNativeQuery(sbCount.toString());
+
+            //조건 대입
+            if(userAuth.equals("4")) {
+                queryList.setParameter("userId", userId);
+                queryTotal.setParameter("userId", userId);
+            }
+
+            queryList.setParameter("startDate", params.get("startDate") + " 00:00:00");
+            queryList.setParameter("endDate", params.get("endDate") + " 23:59:59");
+            queryTotal.setParameter("startDate", params.get("startDate") + " 00:00:00");
+            queryTotal.setParameter("endDate", params.get("endDate") + " 23:59:59");
+
+            if (!StringUtils.isEmpty(params.get("interrelatedCustCode"))) {
+                queryList.setParameter("interrelatedCustCode", params.get("interrelatedCustCode"));
+                queryTotal.setParameter("interrelatedCustCode", params.get("interrelatedCustCode"));
+            }
+
+           // Pageable pageable = PagaUtils.pageable(params);
+           // queryList.setFirstResult(pageable.getPageNumber() * pageable.getPageSize()).setMaxResults(pageable.getPageSize()).getResultList();
+            List<BidDetailListDto> list = new JpaResultMapper().list(queryList, BidDetailListDto.class);
+
+            return list;
+           // BigInteger count = (BigInteger) queryTotal.getSingleResult();
+           // Page listPage = new PageImpl(list, pageable, count.intValue());
+            //resultBody.setData(listPage);
+
+        }catch(Exception e) {
+            log.error("bidDetailList list error : {}", e);
+            return Collections.emptyList();
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 }
