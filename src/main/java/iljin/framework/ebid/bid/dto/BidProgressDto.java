@@ -22,6 +22,8 @@ public class BidProgressDto {
     String cuserEmail;
     String gongoId;
     String gongoEmail;
+    String openerId;
+    String openerEmail;
     String interrelatedCustCode;
 
     /**
@@ -43,5 +45,20 @@ public class BidProgressDto {
             this.gongoId = gongoId;
             this.gongoEmail = gongoEmail;
             this.interrelatedCustCode = interrelatedCustCode;
+    }
+    
+    public BidProgressDto(
+        String biNo, String biName, String estCloseDate, String biMode,
+        String insMode, String ingTag, String cuser, String cuserEmail, String openerId, String openerEmail){
+            this.biNo = biNo;
+            this.biName = biName;
+            this.estCloseDate = estCloseDate;
+            this.biMode = biMode;
+            this.insMode = insMode;
+            this.ingTag = ingTag;
+            this.cuser = cuser;
+            this.cuserEmail = cuserEmail;
+            this.openerId = openerId;
+            this.openerEmail = openerEmail;
     }
 }

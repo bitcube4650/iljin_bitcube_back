@@ -26,13 +26,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.transaction.Transactional;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -83,7 +83,6 @@ public class BidStatusService {
 			StringBuilder sbList = new StringBuilder(
 				  "select	tbim.bi_no"
 				+ ",		tbim.bi_name "
-				+ ",		DATE_FORMAT(tbim.est_start_date, '%Y-%m-%d %H:%i') AS est_start_date "
 				+ ",		DATE_FORMAT(tbim.est_close_date, '%Y-%m-%d %H:%i') AS est_close_date "
 				+ ",		tbim.bi_mode "
 				+ ",		tbim.ins_mode "
@@ -97,14 +96,13 @@ public class BidStatusService {
 				+ "			END AS ing_tag "
 				+ ",		tcu1.user_name AS cuser "
 				+ ",		tcu1.user_email AS cuser_email "
-				+ ",		tcu2.user_name AS gongo_id "
-				+ ",		tcu2.user_email AS gongo_email "
-				+ ",		tbim.interrelated_cust_code "
+				+ ",		tcu2.user_name AS opener_id "
+				+ ",		tcu2.user_email AS opener_email "
 				+ "FROM t_bi_info_mat tbim "
-				+ "LEFT JOIN t_co_user tcu1 "
+				+ "LEFT OUTER JOIN t_co_user tcu1 "
 				+ "	ON tbim.create_user = tcu1.user_id "
-				+ "LEFT JOIN t_co_user tcu2 "
-				+ "	ON tbim.gongo_id = tcu2.user_id "
+				+ "LEFT OUTER JOIN t_co_user tcu2 "
+				+ "	ON tbim.est_opener = tcu2.user_id "
 			);
 			
 			if (userAuth.equals("4")) {
@@ -477,7 +475,7 @@ public class BidStatusService {
 			
 		}catch(Exception e) {
 			log.error("statusDetail error : {}", e);
-			resultBody.setStatus(999);
+			resultBody.setCode("999");
 			resultBody.setMsg("입찰진행 상세 데이터를 가져오는것을 실패하였습니다.");
 		}
 		
@@ -505,12 +503,15 @@ public class BidStatusService {
 					"UPDATE	t_bi_info_mat " 
 				+	"set	ing_tag = 'A7' "
 				+	",		why_a7 = :reason "
+				+	",		update_date = sysdate() "
+				+	",		update_user = :userId "
 				+	"WHERE bi_no = :biNo "
 			);
 	
 			Query queryList = entityManager.createNativeQuery(sbList.toString());
 			queryList.setParameter("biNo", biNo);
 			queryList.setParameter("reason", (String) params.get("reason"));
+			queryList.setParameter("userId", userId);
 			int rowsUpdated = queryList.executeUpdate();
 	
 			if (rowsUpdated > 0) {
@@ -524,11 +525,15 @@ public class BidStatusService {
 					log.error("bidFailure updateLog error : {}", e);
 				}
 			}
-	
-			bidProgressService.updateEmail(params);
+			
+			try {
+				bidProgressService.updateEmail(params);
+			}catch(Exception e) {
+				log.error("bidFailure sendMail error : {}", e);
+			}
 		}catch(Exception e) {
 			log.error("bidFailure error : {}", e);
-			resultBody.setStatus(999);
+			resultBody.setCode("999");
 			resultBody.setMsg("유찰 처리중 오류가 발생했습니다.");
 		}
 		
