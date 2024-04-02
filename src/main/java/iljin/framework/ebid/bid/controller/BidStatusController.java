@@ -46,7 +46,6 @@ public class BidStatusController {
 	public ResultBody progresslistDetail(@RequestBody Map<String, Object> param) {
 		return bidStatusService.statusDetail(param);
 	}
-
 	
 	/**
 	 * 유찰처리
@@ -58,14 +57,20 @@ public class BidStatusController {
 		return bidStatusService.bidFailure(params);
 	}
 
-    @PostMapping("/submitHist")
-    public Page submitHist(@RequestBody Map<String, Object> params) {
-        return bidStatusService.submitHist(params);
-    }
-
+	/**
+	 * 재입찰처리
+	 * @param params
+	 * @return
+	 */
     @PostMapping("/rebid")
     public ResultBody rebid(@RequestBody Map<String, Object> params) {
         return bidStatusService.rebid(params);
+    }
+
+    
+    @PostMapping("/submitHist")
+    public Page submitHist(@RequestBody Map<String, Object> params) {
+        return bidStatusService.submitHist(params);
     }
 
     @PostMapping("/rebidCust")

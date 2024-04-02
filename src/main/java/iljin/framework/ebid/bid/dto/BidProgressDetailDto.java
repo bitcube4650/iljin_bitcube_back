@@ -65,7 +65,6 @@ public class BidProgressDetailDto {
 	
 	String damdangName;
 	String gongoName;
-	String interreleatedCustCode;
 	
 	List<BidCustDto> custList;			//입찰참가업체
 	List<BidProgressFileDto> specFile;			//세부사항 - 파일등록
@@ -79,7 +78,7 @@ public class BidProgressDetailDto {
 			String biNo, String biName, String itemName, String biMode, String bidJoinSpec, String specialCond, String spotDate, String spotArea,
 			String succDeciMeth, String amtBasis, String payCond, BigDecimal bdAmt, String createUser, String damdangName, String estStartDate, String estCloseDate, Integer estCloseCheck,
 			String estOpener, String estBidder, String gongoName, String openAtt1, String openAtt2, String insMode, String supplyCond, String whyA3,
-			String ingTag, String interreleatedCustCode, String matDept, String matProc, String matCls, String matFactory, String matFactoryLine, String matFactoryCnt
+			String ingTag, String interrelatedCustCode, String matDept, String matProc, String matCls, String matFactory, String matFactoryLine, String matFactoryCnt
 	){
 			this.biNo = biNo;
 			this.biName = biName;
@@ -106,7 +105,7 @@ public class BidProgressDetailDto {
 			this.supplyCond = supplyCond;
 			this.whyA3 = whyA3;
 			this.ingTag = ingTag;
-			this.interreleatedCustCode = interreleatedCustCode;
+			this.interrelatedCustCode = interrelatedCustCode;
 			this.matDept = matDept;
 			this.matProc = matProc;
 			this.matCls = matCls;

@@ -29,8 +29,13 @@ public class BidPartnerStatusController {
     @Autowired
     private BidPartnerStatusService bidPartnerStatusService;
 
+    /**
+     * 협력사 입찰진행
+     * @param params
+     * @return
+     */
     @PostMapping("/statuslist")
-    public Page statuslist(@RequestBody Map<String, Object> params) {
+    public ResultBody statuslist(@RequestBody Map<String, Object> params) {
         return bidPartnerStatusService.statuslist(params);
     }
 
