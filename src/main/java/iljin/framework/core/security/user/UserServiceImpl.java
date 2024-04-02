@@ -251,7 +251,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public ResultBody pwSearch(Map<String, String> params) {
         ResultBody resultBody = new ResultBody();
-        String userPwd = params.get("userId") + "!@#";
+        String userPwd = UUID.randomUUID().toString().substring(0, 6);
         StringBuilder sbQuery = new StringBuilder(" UPDATE t_co_cust_user a\n" +
                 "   SET user_pwd = :userPwd\n" +
                 "     , pwd_chg_date = null\n" +
