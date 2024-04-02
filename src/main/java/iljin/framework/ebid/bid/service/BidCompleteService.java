@@ -25,12 +25,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.transaction.Transactional;
 
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -429,7 +429,7 @@ public class BidCompleteService {
 			
 		}catch(Exception e) {
 			log.error("complateBidDetail error : {}", e);
-			resultBody.setStatus(999);
+			resultBody.setCode("999");
 			resultBody.setMsg("입찰완료 상세 데이터를 가져오는것을 실패하였습니다.");
 		}
 		
@@ -479,7 +479,7 @@ public class BidCompleteService {
 
 		}catch(Exception e) {
 			log.error("updRealAmt error : {}", e);
-			resultBody.setStatus(999);
+			resultBody.setCode("999");
 			resultBody.setMsg("실제계약금액 업데이트를 실패했습니다.");
 		}
 		return resultBody;
@@ -1101,7 +1101,7 @@ public class BidCompleteService {
 			
 		}catch(Exception e) {
 			log.error("complateBidPartnerDetail error : {}", e);
-			resultBody.setStatus(999);
+			resultBody.setCode("999");
 			resultBody.setMsg("입찰완료 상세 데이터를 가져오는것을 실패하였습니다.");
 		}
 		
@@ -1140,7 +1140,7 @@ public class BidCompleteService {
 			
 		}catch(Exception e) {
 			log.error("updBiCustFlag error : {}", e);
-			resultBody.setStatus(999);
+			resultBody.setCode("999");
 			resultBody.setMsg("낙찰승인 저장을 실패하였습니다.");
 			
 			return resultBody;
