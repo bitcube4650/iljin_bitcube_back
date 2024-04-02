@@ -8,7 +8,7 @@ import lombok.Data;
 public class BidProgressListDetailDto {
     String biNo;
     String biName;
-    String bimode;
+    String biMode;
     String biModeCode;
     String insMode;
     String insModeCode;
@@ -65,7 +65,7 @@ public class BidProgressListDetailDto {
     public BidProgressListDetailDto(
     	    String biNo,
     	    String biName,
-    	    String bimode,
+    	    String biMode,
     	    String biModeCode,
     	    String insMode,
     	    String insModeCode,
@@ -116,7 +116,7 @@ public class BidProgressListDetailDto {
         ){
 	    this.biNo = biNo;
 	    this.biName = biName;
-	    this.bimode = bimode;
+	    this.biMode = biMode;
 	    this.biModeCode = biModeCode;
 	    this.insMode = insMode;
 	    this.insModeCode = insModeCode;
