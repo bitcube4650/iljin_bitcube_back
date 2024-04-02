@@ -11,6 +11,7 @@ import iljin.framework.ebid.bid.dto.BidProgressCustDto;
 import iljin.framework.ebid.bid.dto.BidProgressDetailDto;
 import iljin.framework.ebid.bid.dto.BidProgressDto;
 import iljin.framework.ebid.bid.dto.BidProgressFileDto;
+import iljin.framework.ebid.bid.dto.BidProgressListDetailDto;
 import iljin.framework.ebid.bid.dto.BidProgressTableDto;
 import iljin.framework.ebid.bid.dto.CoUserInfoDto;
 import iljin.framework.ebid.bid.dto.EmailDto;
@@ -329,15 +330,15 @@ public class BidProgressService {
                         +
                         "DATE_FORMAT(a.est_close_date, '%Y-%m-%d %H:%i') AS est_close_date, b.user_name AS est_opener, a.est_opener AS est_opener_code, i.user_name AS cuser, a.create_user AS cuser_code, "
                         +
-                        "DATE_FORMAT(a.est_open_date, '%Y-%m-%d %H:%i') AS est_open_date, c.user_name AS open_att1, a.open_att1 AS open_att1_code, a.est_bidder AS est_bidder_code, j.user_name AS est_bidder, "
+                        "IFNULL(DATE_FORMAT(a.est_open_date, '%Y-%m-%d %H:%i'),'') AS est_open_date, c.user_name AS open_att1, a.open_att1 AS open_att1_code, a.est_bidder AS est_bidder_code, j.user_name AS est_bidder, "
                         +
                         "a.open_att1_sign AS open_att1_sign, d.user_name AS open_att2, a.open_att2 AS open_att2_code, a.open_att2_sign AS open_att2_sign, "
                         +
-                        "a.ing_tag AS ing_tag, a.item_code AS item_code, f.item_name AS item_name, e.user_name AS gongo_id, a.gongo_id AS gongo_id_code, i.dept_name AS cuser_dept, a.pay_cond AS pay_cond, a.why_A3 AS why_A3, "
+                        "a.ing_tag AS ing_tag, a.item_code AS item_code, f.item_name AS item_name, e.user_name AS gongo_id, a.gongo_id AS gongo_id_code, i.dept_name AS cuser_dept, a.pay_cond AS pay_cond, IFNULL(a.why_A3,'') AS why_A3, "
                         +
-                        "a.why_A7 AS why_A7, a.bi_open AS bi_open, a.interrelated_cust_code AS interrelated_cust_code, h.interrelated_nm AS interrelated_nm, a.real_amt AS real_amt, a.amt_basis AS amt_basis, a.bd_amt AS bd_amt,"
+                        "IFNULL(a.why_A7,'') AS why_A7, a.bi_open AS bi_open, a.interrelated_cust_code AS interrelated_cust_code, h.interrelated_nm AS interrelated_nm, IFNULL(a.real_amt,0) AS real_amt, a.amt_basis AS amt_basis, a.bd_amt AS bd_amt,"
                         +
-                        "a.add_accept AS add_accept, a.mat_dept AS mat_dept, a.mat_proc AS mat_proc, a.mat_cls AS mat_cls, "
+                        "IFNULL(a.add_accept,'') AS add_accept, a.mat_dept AS mat_dept, a.mat_proc AS mat_proc, a.mat_cls AS mat_cls, "
                         +
                         "a.mat_factory AS mat_factory, a.mat_factory_line AS mat_factory_line, a.mat_factory_cnt AS mat_factory_cnt "
                         +
@@ -383,8 +384,10 @@ public class BidProgressService {
                         "WHERE 1=1 ");
 
         StringBuilder sbWhere = new StringBuilder();
-        sbWhere.append(" and a.bi_no = :param");
+        sbWhere.append(" and a.bi_no = :param ");
         sbList.append(sbWhere);
+        sbList.append("GROUP BY a.BI_NO");
+        
         sbTableList.append(sbWhere);
         sbFileList.append(sbWhere);
         sbCustList.append(sbWhere);
@@ -400,7 +403,7 @@ public class BidProgressService {
         queryCustList.setParameter("param", param);
         queryCustList.setParameter("custCode", custCode);
 
-        List<BidProgressDetailDto> resultList = new JpaResultMapper().list(queryList, BidProgressDetailDto.class);
+        List<BidProgressListDetailDto> resultList = new JpaResultMapper().list(queryList, BidProgressListDetailDto.class);
         List<BidProgressTableDto> tableList = new JpaResultMapper().list(queryTableList, BidProgressTableDto.class);
         List<BidProgressFileDto> fileList = new JpaResultMapper().list(queryFileList, BidProgressFileDto.class);
         List<BidProgressCustDto> custList = new JpaResultMapper().list(queryCustList, BidProgressCustDto.class);
