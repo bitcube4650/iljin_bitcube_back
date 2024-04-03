@@ -5,7 +5,7 @@ import java.math.BigDecimal;
 import lombok.Data;
 
 @Data
-public class BidCompleteSpecDto {
+public class BidItemSpecDto {
 	String name;			//품목명
 	String ssize;			//규격
 	String unitcode;		//단위
@@ -13,8 +13,9 @@ public class BidCompleteSpecDto {
 	BigDecimal orderQty;	//수량
 	String custCode;		//협력사 코드
 	BigDecimal esmtUc;		//협력사 견적금액
+	Integer seq;
 	
-	public BidCompleteSpecDto(String name, String ssize, String unitcode, BigDecimal orderUc, BigDecimal orderQty) {
+	public BidItemSpecDto(String name, String ssize, String unitcode, BigDecimal orderUc, BigDecimal orderQty) {
 		this.name = name;
 		this.ssize = ssize;
 		this.unitcode = unitcode;
@@ -22,12 +23,20 @@ public class BidCompleteSpecDto {
 		this.orderQty = orderQty;
 	}
 	
-	public BidCompleteSpecDto(String custCode, String name, String ssize, String unitcode, BigDecimal orderQty, BigDecimal esmtUc) {
+	public BidItemSpecDto(String custCode, String name, String ssize, String unitcode, BigDecimal orderQty, BigDecimal esmtUc) {
 		this.custCode = custCode;
 		this.name = name;
 		this.ssize = ssize;
 		this.unitcode = unitcode;
 		this.orderQty = orderQty;
 		this.esmtUc = esmtUc;
+	}
+	
+	public BidItemSpecDto(String name, String ssize, String unitcode, BigDecimal orderQty, Integer seq) {
+		this.name = name;
+		this.ssize = ssize;
+		this.unitcode = unitcode;
+		this.orderQty = orderQty;
+		this.seq = seq;
 	}
 }

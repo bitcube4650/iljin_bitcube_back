@@ -22,7 +22,7 @@ public class BidCustDto {
 	String succYn;			//낙찰여부
 	String etcFile;			//기타첨부파일 명
 	String etcPath;			//기타첨부파일 경로
-	List<BidCompleteSpecDto> bidSpec;		//협력사 직접입력
+	List<BidItemSpecDto> bidSpec;		//협력사 직접입력
 	
 	String biName;			//입찰명
 	

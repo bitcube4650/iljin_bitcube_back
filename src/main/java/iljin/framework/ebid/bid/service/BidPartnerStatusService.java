@@ -7,7 +7,7 @@ import iljin.framework.core.security.user.UserRepository;
 import iljin.framework.core.security.user.UserRepositoryCustom;
 import iljin.framework.core.util.Util;
 import iljin.framework.ebid.bid.dto.BidCompleteDetailDto;
-import iljin.framework.ebid.bid.dto.BidCompleteSpecDto;
+import iljin.framework.ebid.bid.dto.BidItemSpecDto;
 import iljin.framework.ebid.bid.dto.BidProgressDetailDto;
 import iljin.framework.ebid.bid.dto.BidProgressDto;
 import iljin.framework.ebid.bid.dto.BidProgressFileDto;
@@ -476,8 +476,8 @@ public class BidPartnerStatusService {
 						 "select	tbsm.NAME "
 						+ ",		tbsm.SSIZE "
 						+ ",		tbsm.UNITCODE "
-						+ ",		tbsm.ORDER_UC "
 						+ ",		tbsm.ORDER_QTY "
+						+ ",		tbsm.SEQ "
 						+ "from t_bi_spec_mat tbsm "
 				);
 			
@@ -495,7 +495,7 @@ public class BidPartnerStatusService {
 				//조건 대입
 				querySpecInput.setParameter("biNo", biNo);
 				
-				List<BidCompleteSpecDto> specInput = new JpaResultMapper().list(querySpecInput, BidCompleteSpecDto.class);
+				List<BidItemSpecDto> specInput = new JpaResultMapper().list(querySpecInput, BidItemSpecDto.class);
 				
 				detailDto.setSpecInput(specInput);
 			}
@@ -540,11 +540,21 @@ public class BidPartnerStatusService {
 	 * 견적금액 단위 코드값
 	 * @return
 	 */
-	public List<CurrDto> currlist() {
-		StringBuilder currlist = new StringBuilder(
-				"SELECT code_val, code_name from t_co_code where col_code = 'T_CO_RATE'");
-		Query currlistQ = entityManager.createNativeQuery(currlist.toString());
-		return new JpaResultMapper().list(currlistQ, CurrDto.class);
+	public ResultBody currList() {
+		ResultBody resultBody = new ResultBody();
+		
+		try {
+			StringBuilder currlist = new StringBuilder(
+					"SELECT code_val, code_name from t_co_code where col_code = 'T_CO_RATE' order by SORT_NO asc ");
+			Query currlistQ = entityManager.createNativeQuery(currlist.toString());
+			List<CurrDto> list = new JpaResultMapper().list(currlistQ, CurrDto.class);
+			
+			resultBody.setData(list);
+		}catch(Exception e) {
+			resultBody.setCode("fail");
+		}
+		
+		return resultBody;
 	}
 
 	/**

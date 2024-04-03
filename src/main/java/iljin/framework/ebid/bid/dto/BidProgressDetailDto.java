@@ -68,7 +68,7 @@ public class BidProgressDetailDto {
 	
 	List<BidCustDto> custList;			//입찰참가업체
 	List<BidProgressFileDto> specFile;			//세부사항 - 파일등록
-	List<BidCompleteSpecDto> specInput;			//세부사항 - 직접입력
+	List<BidItemSpecDto> specInput;			//세부사항 - 직접입력
 	List<BidProgressFileDto> fileList;			//첨부파일
 	
 	Boolean bidAuth;							//낙찰권한
