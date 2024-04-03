@@ -2,10 +2,7 @@ package iljin.framework.ebid.etc.util.common.excel.utils;
 
 import com.opencsv.CSVWriter;
 import iljin.framework.ebid.etc.util.CommonUtils;
-import iljin.framework.ebid.etc.util.common.excel.concreteExcelGenerator.ConcreteBiInfoDetailList;
-import iljin.framework.ebid.etc.util.common.excel.concreteExcelGenerator.ConcreteBidPresentList;
-import iljin.framework.ebid.etc.util.common.excel.concreteExcelGenerator.ConcreteCompanyBidPerformance;
-import iljin.framework.ebid.etc.util.common.excel.concreteExcelGenerator.ExcelBiddingDetail;
+import iljin.framework.ebid.etc.util.common.excel.concreteExcelGenerator.*;
 import iljin.framework.ebid.etc.util.common.excel.dto.BidDetailListDto;
 import iljin.framework.ebid.etc.util.common.excel.dto.BidProgressResponseDto;
 import iljin.framework.ebid.etc.util.common.excel.dto.BiddingDetailExcelDto;
@@ -55,6 +52,8 @@ public final class ExcelUtils implements ExcelSupport {
     private ExcelBiddingDetail excelBiddingDetail;
     @Autowired
     private ConcreteBidPresentList concreteBidPresentList;
+    @Autowired
+    private ConcreteBidCompleteList concreteBidCompleteList;
 
 
     /**
@@ -148,6 +147,31 @@ public final class ExcelUtils implements ExcelSupport {
             throw new RuntimeException(e);
         }
     }
+
+    //통계>>입찰이력
+    public void downLoadBidCompleteList(Class<?> clazz, Map<String, Object> param, String fileName, HttpServletResponse response) {
+        try (SXSSFWorkbook workbook = new SXSSFWorkbook()) {
+            concreteBidCompleteList.getWorkBookPaging(clazz, workbook, findHeaderNames(clazz), param);
+
+            response.setCharacterEncoding("UTF-8");  // UTF-8 설정 추가
+            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.setHeader("Content-Disposition", "attachment; filename=" + fileName + ".xlsx");
+
+            ServletOutputStream outputStream = response.getOutputStream();
+            workbook.write(outputStream);
+            workbook.close();
+
+            outputStream.flush();
+            outputStream.close();
+
+        } catch (IOException e) {
+            log.error("Excel Download Error Message = {}", e.getMessage());
+            throw new RuntimeException(e);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 
     public void downLoadExcelCompanyBidPerformance(Class<?> clazz, Map<String, Object> param, String fileName, HttpServletResponse response) {
         try (SXSSFWorkbook workbook = new SXSSFWorkbook()) {
