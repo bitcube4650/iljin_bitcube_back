@@ -19,13 +19,13 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.transaction.Transactional;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.*;
@@ -459,17 +459,28 @@ public class CustService {
         query.executeUpdate();
 
         if (user == null) {
-            // TODO : 계열사 관리자에게 메일 전송해야 함.
+
+            String title = "[일진그룹 e-bidding] 신규업체 승인 요청";
+            String content = "안녕하십니까\n" +
+                    "일진그룹 전자입찰 e-bidding 입니다.\n" +
+                    "\n" +
+                    "[" + params.get("custName") + "] 신규업체 승인 요청이 왔습니다.\n" +
+                    "e-bidding 시스템에 로그인하고 업체정보의 업체승인 페이지에서 \n" +
+                    "업체 정보를 확인하십시오\n" +
+                    "처리는 3일 이내 처리해야 합니다..\n" +
+                    "\n" +
+                    "감사합니다.";
+
+            sbQuery = new StringBuilder(" SELECT user_email FROM t_co_user WHERE user_auth = '2' AND use_yn = 'Y' AND interrelated_cust_code = :interrelatedCustCode)");
+            query = entityManager.createNativeQuery(sbQuery.toString());
+            query.setParameter("interrelatedCustCode", params.get("interrelatedCustCode"));
+            query.getResultList();
+            List<String> list = new JpaResultMapper().list(query, String.class);
+
             // 회원가입 승인요청 메일 저장 처리
-//            mailService.saveMailInfo("[일진그룹 e-bidding] 신규업체 승인 요청", "안녕하십니까\n" +
-//                    "일진그룹 전자입찰 e-bidding 입니다.\n" +
-//                    "\n" +
-//                    "[" + params.get("custName") + "] 신규업체 승인 요청이 왔습니다.\n" +
-//                    "e-bidding 시스템에 로그인하고 업체정보의 업체승인 페이지에서 \n" +
-//                    "업체 정보를 확인하십시오\n" +
-//                    "처리는 3일 이내 처리해야 합니다..\n" +
-//                    "\n" +
-//                    "감사합니다.\n", (String) params.get("userEmail"));
+            for (String userEmail : list) {
+                mailService.saveMailInfo(title, content, userEmail);
+            }
         } else {
             // 회원가입 승인 메일 저장 처리
             mailService.saveMailInfo("[일진그룹 e-bidding] 회원가입 승인", "안녕하십니까\n" +

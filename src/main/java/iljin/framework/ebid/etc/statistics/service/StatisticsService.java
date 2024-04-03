@@ -472,7 +472,7 @@ public class StatisticsService {
 		String userAuth = userOptional.get().getUserAuth();// userAuth(1 = 시스템관리자, 4 = 감사사용자)
 		
 		StringBuilder sbList = new StringBuilder(
-			"select  max(BID_LIST.INTERRELATED_NM) as INTERRELATED_NM\r\n"
+			"select		IF(INTERRELATED_CUST_CODE IS NULL, '계', BID_LIST.INTERRELATED_NM) AS INTERRELATED_NM\r\n"
 			+ ",		sum(BID_LIST.PLAN_CNT) as PLAN_CNT\r\n"
 			+ ",		sum(BID_LIST.PLAN_AMT) as PLAN_AMT\r\n"
 			+ ",		sum(BID_LIST.ING_CNT) as ING_CNT\r\n"
@@ -504,6 +504,7 @@ public class StatisticsService {
 			+ "		,		CASE WHEN BB.ING_TAG = 'A5' THEN BB.SUCC_AMT ELSE 0 END AS SUCC_AMT\r\n"
 			+ "		from T_BI_INFO_MAT BB			-- 입찰서내용\r\n"
 			+ "		where DATE(BB.UPDATE_DATE) BETWEEN :startDay AND :endDay\r\n"
+			+ "		and BB.ING_TAG in ('A0', 'A1', 'A5')\r\n"
 			+ "	) B\r\n"
 			+ "		on A.INTERRELATED_CUST_CODE = B.INTERRELATED_CUST_CODE\r\n"
 			+ "	left outer join (\r\n"
@@ -512,7 +513,6 @@ public class StatisticsService {
 			+ "		from t_co_interrelated AA\r\n"
 			+ "		inner join t_co_cust_master BB\r\n"
 			+ "			on AA.INTERRELATED_CUST_CODE = BB.INTERRELATED_CUST_CODE\r\n"
-			+ "		where DATE(BB.CREATE_DATE) BETWEEN :startDay AND :endDay\r\n"
 			+ "		group by AA.INTERRELATED_CUST_CODE\r\n"
 			+ "	) C\r\n"
 			+ "		on a.INTERRELATED_CUST_CODE = c.INTERRELATED_CUST_CODE\r\n "

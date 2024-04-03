@@ -22,7 +22,13 @@ public class BidProgressDto {
     String cuserEmail;
     String gongoId;
     String gongoEmail;
+    String openerId;
+    String openerEmail;
     String interrelatedCustCode;
+    
+    String damdangName;
+    String damdangEmail;
+    String esmtYn;
 
     /**
 	 * 목록 (/api/v1/bid/progressList)
@@ -44,4 +50,36 @@ public class BidProgressDto {
             this.gongoEmail = gongoEmail;
             this.interrelatedCustCode = interrelatedCustCode;
     }
+    
+    //그룹사 입찰진행 리스트
+    public BidProgressDto(
+        String biNo, String biName, String estCloseDate, String biMode,
+        String insMode, String ingTag, String cuser, String cuserEmail, String openerId, String openerEmail){
+            this.biNo = biNo;
+            this.biName = biName;
+            this.estCloseDate = estCloseDate;
+            this.biMode = biMode;
+            this.insMode = insMode;
+            this.ingTag = ingTag;
+            this.cuser = cuser;
+            this.cuserEmail = cuserEmail;
+            this.openerId = openerId;
+            this.openerEmail = openerEmail;
+    }
+    
+	//협력사 입찰진행 리스트
+    public BidProgressDto(
+            String biNo, String biName, String estStartDate, String estCloseDate, String biMode,
+            String ingTag, String insMode, String damdangName, String damdangEmail, String esmtYn, String flag){
+            this.biNo = biNo;
+            this.biName = biName;
+            this.estStartDate = estStartDate;
+            this.estCloseDate = estCloseDate;
+            this.biMode = biMode;
+            this.insMode = insMode;
+            this.ingTag = ingTag;
+            this.damdangName = damdangName;
+            this.damdangEmail = damdangEmail;
+            this.esmtYn = esmtYn;
+        }
 }

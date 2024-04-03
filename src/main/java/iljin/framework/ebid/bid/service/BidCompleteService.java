@@ -2,7 +2,7 @@ package iljin.framework.ebid.bid.service;
 
 import iljin.framework.core.dto.ResultBody;
 import iljin.framework.core.util.Util;
-import iljin.framework.ebid.bid.dto.BidCompleteCustDto;
+import iljin.framework.ebid.bid.dto.BidCustDto;
 import iljin.framework.ebid.bid.dto.BidCompleteDetailDto;
 import iljin.framework.ebid.bid.dto.BidCompleteDto;
 import iljin.framework.ebid.bid.dto.BidCompleteSpecDto;
@@ -25,12 +25,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.transaction.Transactional;
 
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -302,11 +302,11 @@ public class BidCompleteService {
 			//조건 대입
 			queryCust.setParameter("biNo", params.get("biNo"));
 			
-			List<BidCompleteCustDto> custData = new JpaResultMapper().list(queryCust, BidCompleteCustDto.class);
+			List<BidCustDto> custData = new JpaResultMapper().list(queryCust, BidCustDto.class);
 			
 			//내역방식이 직접등록일 경우
 			if(detailDto.getInsMode().equals("2")) {
-				for(BidCompleteCustDto custDto : custData) {
+				for(BidCustDto custDto : custData) {
 					StringBuilder sbCustSpec = new StringBuilder(
 						  "select	cast(tbdmc.CUST_CODE as char) as CUST_CODE "
 						+ ",		tbsm.NAME "
@@ -429,7 +429,7 @@ public class BidCompleteService {
 			
 		}catch(Exception e) {
 			log.error("complateBidDetail error : {}", e);
-			resultBody.setStatus(999);
+			resultBody.setCode("999");
 			resultBody.setMsg("입찰완료 상세 데이터를 가져오는것을 실패하였습니다.");
 		}
 		
@@ -479,7 +479,7 @@ public class BidCompleteService {
 
 		}catch(Exception e) {
 			log.error("updRealAmt error : {}", e);
-			resultBody.setStatus(999);
+			resultBody.setCode("999");
 			resultBody.setMsg("실제계약금액 업데이트를 실패했습니다.");
 		}
 		return resultBody;
@@ -753,7 +753,7 @@ public class BidCompleteService {
 			//조건 대입
 			queryList.setParameter("biNo", params.get("biNo"));
 			
-			List list = new JpaResultMapper().list(queryList, BidCompleteCustDto.class);
+			List list = new JpaResultMapper().list(queryList, BidCustDto.class);
 			resultBody.setData(list);
 			
 		}catch(Exception e) {
@@ -974,11 +974,11 @@ public class BidCompleteService {
 			queryCust.setParameter("biNo", params.get("biNo"));
 			queryCust.setParameter("custCode", custCode);
 			
-			List<BidCompleteCustDto> custData = new JpaResultMapper().list(queryCust, BidCompleteCustDto.class);
+			List<BidCustDto> custData = new JpaResultMapper().list(queryCust, BidCustDto.class);
 			
 			//내역방식이 직접등록일 경우
 			if(detailDto.getInsMode().equals("2")) {
-				for(BidCompleteCustDto custDto : custData) {
+				for(BidCustDto custDto : custData) {
 					StringBuilder sbCustSpec = new StringBuilder(
 						  "select	cast(tbdmc.CUST_CODE as char) as CUST_CODE "
 						+ ",		tbsm.NAME "
@@ -1076,16 +1076,13 @@ public class BidCompleteService {
 				+ ",		tbu.FILE_PATH "
 				+ "from t_bi_upload tbu "
 				+ "where tbu.USE_YN = 'Y' "
-				+ "and tbu.FILE_FLAG in ('0','1') "
+				+ "and tbu.FILE_FLAG = '1' "
 			);
 		
 			//조건문 쿼리 삽입
 			StringBuilder sbFileWhere = new StringBuilder();
 			sbFileWhere.append("and tbu.BI_NO = :biNo ");
 			sbFileData.append(sbFileWhere);
-			
-			//정렬
-			sbFileData.append("order by field(tbu.FILE_FLAG, '1', '0') ");
 			
 			//쿼리 실행
 			Query queryFile = entityManager.createNativeQuery(sbFileData.toString());
@@ -1101,7 +1098,7 @@ public class BidCompleteService {
 			
 		}catch(Exception e) {
 			log.error("complateBidPartnerDetail error : {}", e);
-			resultBody.setStatus(999);
+			resultBody.setCode("999");
 			resultBody.setMsg("입찰완료 상세 데이터를 가져오는것을 실패하였습니다.");
 		}
 		
@@ -1140,7 +1137,7 @@ public class BidCompleteService {
 			
 		}catch(Exception e) {
 			log.error("updBiCustFlag error : {}", e);
-			resultBody.setStatus(999);
+			resultBody.setCode("999");
 			resultBody.setMsg("낙찰승인 저장을 실패하였습니다.");
 			
 			return resultBody;

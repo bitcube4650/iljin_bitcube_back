@@ -19,6 +19,7 @@ public class CoUserInfoDto {
     String userAuth;
     String interrelatedCustCode;
     String openauth;
+    String bidauth;
 
     public CoUserInfoDto(String userId, String userName, String deptName, String userAuth, 
                          String interrelatedCustCode, String openauth){
@@ -30,6 +31,10 @@ public class CoUserInfoDto {
         this.openauth = openauth;
     }
 
+	public CoUserInfoDto(String openauth, String bidauth){
+		this.bidauth = bidauth;
+		this.openauth = openauth;
+	}
 }
 
 

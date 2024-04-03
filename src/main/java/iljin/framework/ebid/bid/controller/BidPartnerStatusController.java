@@ -29,37 +29,66 @@ public class BidPartnerStatusController {
     @Autowired
     private BidPartnerStatusService bidPartnerStatusService;
 
-    @PostMapping("/statuslist")
-    public Page statuslist(@RequestBody Map<String, Object> params) {
-        return bidPartnerStatusService.statuslist(params);
-    }
-
-    //입찰공고확인 처리
-    @PostMapping("/checkBid")
-    public ResultBody checkBid(@RequestBody Map<String, Object> params, @AuthenticationPrincipal CustomUserDetails user) {
-    	return bidPartnerStatusService.checkBid(params, user);
-    }
-
-    @PostMapping("/currlist")
-    public List<CurrDto> currlist() {
-        return bidPartnerStatusService.currlist();
-    }
-    
-    //투찰
-    @PostMapping("/bidSubmitting")
-    public ResultBody bidSubmitting(
-    								@RequestPart("data") String jsonData,
-    								@RequestPart(value = "file1", required = false) MultipartFile file1, 
-    								@RequestPart(value = "file2", required = false) MultipartFile file2,
-    								@AuthenticationPrincipal CustomUserDetails user
-    								) {
-    	ObjectMapper mapper = new ObjectMapper();
-        Map<String, Object> params = null;
+	/**
+	 * 협력사 입찰진행
+	 * @param params
+	 * @return
+	 */
+	@PostMapping("/statuslist")
+	public ResultBody statuslist(@RequestBody Map<String, Object> params) {
+		return bidPartnerStatusService.statuslist(params);
+	}
+	
+	/**
+	 * 협력사 입찰공고확인 처리
+	 * @param params
+	 * @return
+	 */
+	@PostMapping("/checkBid")
+	public ResultBody checkBid(@RequestBody Map<String, Object> params) {
+		return bidPartnerStatusService.checkBid(params);
+	}
+	
+	/**
+	 * 입찰진행 상세
+	 * @return
+	 */
+	@PostMapping("bidStatusDetail")
+	public ResultBody bidStatusDetail(@RequestBody Map<String, Object> params) {
+		return bidPartnerStatusService.bidStatusDetail(params);
+	}
+	
+	/**
+	 * 견적금액 단위 코드
+	 * @return
+	 */
+	@PostMapping("/currlist")
+	public List<CurrDto> currlist() {
+		return bidPartnerStatusService.currlist();
+	}
+	
+	/**
+	 * 투찰
+	 * @param jsonData
+	 * @param file1
+	 * @param file2
+	 * @param user
+	 * @return
+	 */
+	@PostMapping("/bidSubmitting")
+	public ResultBody bidSubmitting(
+			@RequestPart("data") String jsonData,
+			@RequestPart(value = "file1", required = false) MultipartFile file1, 
+			@RequestPart(value = "file2", required = false) MultipartFile file2,
+			@AuthenticationPrincipal CustomUserDetails user
+		) {
+		ObjectMapper mapper = new ObjectMapper();
+		Map<String, Object> params = null;
 		try {
 			params = mapper.readValue(jsonData, Map.class);
 		} catch (Exception e) {
 			e.printStackTrace();
 		} 
-    	return bidPartnerStatusService.bidSubmitting(params, file1, file2, user);
-    }
+		return bidPartnerStatusService.bidSubmitting(params, file1, file2, user);
+	}
 }

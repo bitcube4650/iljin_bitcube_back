@@ -17,7 +17,7 @@ public class BidCompleteDetailDto {
 	String spotDate;							//현장설명일시
 	String spotArea;							//현장설명장소
 	String succDeciMeth;						//낙찰자결정방법
-	List<BidCompleteCustDto> custList;			//입찰참가업체
+	List<BidCustDto> custList;			//입찰참가업체
 	String amtBasis;							//금액기준
 	String payCond;								//결제조건
 	BigDecimal bdAmt;							//예산금액

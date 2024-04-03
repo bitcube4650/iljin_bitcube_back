@@ -16,6 +16,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -23,7 +24,6 @@ import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
-import javax.transaction.Transactional;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -62,23 +62,31 @@ public class ItemService {
 
     private List<Predicate> getPredicateWithKeyword(Map<String, Object> params, Root<TCoItem> root, CriteriaBuilder builder) {
         List<Predicate> predicate = new ArrayList<>();
+        List<Predicate> orPredicates = new ArrayList<>(); 
+
         for (String key : params.keySet()) {
             Object value = params.get(key);
             if (value == null || "".equals(value)) continue;
             switch (key) {
                 case "itemGrp":
                     TCoItemGrp itemGrp = tCoItemGrpRepository.findById((String) value).get();
-                    predicate.add(builder.equal(root.get(key),itemGrp));
+                    predicate.add(builder.equal(root.get(key), itemGrp));
                     break;
                 case "useYn":
-                    predicate.add(builder.equal(root.get(key),value));
+                    predicate.add(builder.equal(root.get(key), value));
                     break;
                 case "itemCode":
                 case "itemName":
-                    predicate.add(builder.like(root.get(key),"%"+value+"%"));
+                    orPredicates.add(builder.like(root.get(key), "%" + value + "%")); 
                     break;
             }
         }
+
+        if (!orPredicates.isEmpty()) {
+            Predicate orPredicate = builder.or(orPredicates.toArray(new Predicate[0])); 
+            predicate.add(orPredicate); 
+        }
+
         return predicate;
     }
     public Optional<TCoItem> findById(String id) {
