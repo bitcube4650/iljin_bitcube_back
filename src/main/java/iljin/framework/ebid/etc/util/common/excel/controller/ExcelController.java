@@ -69,19 +69,17 @@ public class ExcelController {
         return ResponseEntity.status(HttpStatus.OK).body(null);
     }
 
-    ///////////////////////////////////////////////////테스트는 입찰이력으로..
-
-    //통계>회사별 입찰실적 Excel DownLoad 테스트중.
+    //통계>회사별 입찰실적 Excel DownLoad
     @PostMapping("/statistics/biInfoList/downLoad")
     public ResponseEntity downLoadExcelCompanyBidPerformance(HttpServletResponse response,
-                                                         @RequestBody Map<String, Object> params) throws IOException {
+                                                             @RequestBody Map<String, Object> params) throws IOException {
         excelService.downLoadExcelCompanyBidPerformance(params,response);
 
         return ResponseEntity.status(HttpStatus.OK).body(null);
     }
 
-    //통계>입찰실적 상세내역 Excel DownLoad 개발해야함.
-    @PostMapping("/bid/completeList/downLoadV3")
+    //통계>입찰실적 상세내역 Excel DownLoad
+    @PostMapping("/statistics/biInfoDetailList/downLoad")
     public ResponseEntity downLoadExcelBidPerformanceDetail(HttpServletResponse response,
                                                          @RequestBody Map<String, Object> params) throws IOException {
         excelService.downLoadExcelBidPerformanceDetail(params,response);
@@ -89,23 +87,26 @@ public class ExcelController {
         return ResponseEntity.status(HttpStatus.OK).body(null);
     }
 
-    //통계>입찰현황 개발 해야함. (데이터 조회해서 추가하면 됨..)
+
+    //통계>입찰현황 Excel DownLoad
     @PostMapping("/statistics/bidPresentList/downLoad")
     public ResponseEntity biddingStatus(HttpServletResponse response,
                                                          @RequestBody Map<String, Object> params) throws IOException {
-        excelService.downLoadExcelbiddingStatus(params,response);
+        excelService.downLoadExcelbiddingStatusV2(params,response);
 
         return ResponseEntity.status(HttpStatus.OK).body(null);
     }
 
-    //통계>입찰상세내역 Excel DownLoad
+    //통계>입찰상세내역 Excel DownLoad 완성본
     @PostMapping("/statistics/bidDetailList/downLoad")
     public ResponseEntity downLoadExcelBiddingDetail(HttpServletResponse response,
                                                      @RequestBody Map<String, Object> params) throws IOException {
-        excelService.downLoadExcelBiddingDetail(params, response);
+       // excelService.downLoadExcelBiddingDetail(params, response);
+       excelService.downLoadExcelBiddingDetailV3(params, response);
 
         return ResponseEntity.status(HttpStatus.OK).body(null);
     }
+
 
 
 

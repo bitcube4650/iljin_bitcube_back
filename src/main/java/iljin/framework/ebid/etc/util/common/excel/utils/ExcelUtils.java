@@ -2,8 +2,15 @@ package iljin.framework.ebid.etc.util.common.excel.utils;
 
 import com.opencsv.CSVWriter;
 import iljin.framework.ebid.etc.util.CommonUtils;
+import iljin.framework.ebid.etc.util.common.excel.concreteExcelGenerator.ConcreteBiInfoDetailList;
+import iljin.framework.ebid.etc.util.common.excel.concreteExcelGenerator.ConcreteBidPresentList;
+import iljin.framework.ebid.etc.util.common.excel.concreteExcelGenerator.ConcreteCompanyBidPerformance;
+import iljin.framework.ebid.etc.util.common.excel.concreteExcelGenerator.ExcelBiddingDetail;
+import iljin.framework.ebid.etc.util.common.excel.dto.BidDetailListDto;
 import iljin.framework.ebid.etc.util.common.excel.dto.BidProgressResponseDto;
+import iljin.framework.ebid.etc.util.common.excel.dto.BiddingDetailExcelDto;
 import iljin.framework.ebid.etc.util.common.excel.repository.ExcelRepository;
+import iljin.framework.ebid.etc.util.common.excel.service.ExcelService;
 import lombok.extern.slf4j.Slf4j;
 
 import org.apache.poi.ss.usermodel.*;
@@ -12,6 +19,8 @@ import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.ServletOutputStream;
@@ -35,7 +44,17 @@ import java.util.stream.Collectors;
 public final class ExcelUtils implements ExcelSupport {
 
     private static final int MAX_ROW = 1000;
+
+    @Autowired
     private ExcelRepository excelRepository;
+    @Autowired
+    private ConcreteCompanyBidPerformance concreteCompanyBidPerformance;
+    @Autowired
+    private ConcreteBiInfoDetailList concreteBiInfoDetailList;
+    @Autowired
+    private ExcelBiddingDetail excelBiddingDetail;
+    @Autowired
+    private ConcreteBidPresentList concreteBidPresentList;
 
 
     /**
@@ -130,6 +149,119 @@ public final class ExcelUtils implements ExcelSupport {
         }
     }
 
+    public void downLoadExcelCompanyBidPerformance(Class<?> clazz, Map<String, Object> param, String fileName, HttpServletResponse response) {
+        try (SXSSFWorkbook workbook = new SXSSFWorkbook()) {
+            concreteCompanyBidPerformance.getWorkBookPaging(clazz, workbook, findHeaderNames(clazz), param);
+
+            response.setCharacterEncoding("UTF-8");  // UTF-8 설정 추가
+            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.setHeader("Content-Disposition", "attachment; filename=" + fileName + ".xlsx");
+
+            ServletOutputStream outputStream = response.getOutputStream();
+            workbook.write(outputStream);
+            workbook.close();
+
+            outputStream.flush();
+            outputStream.close();
+
+        } catch (IOException e) {
+            log.error("Excel Download Error Message = {}", e.getMessage());
+            throw new RuntimeException(e);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Excel 다운로드 Pagination 적용.
+     */
+
+    public void downLoadExcelBiddingDetail(Class<?> clazz, Map<String, Object> param, String fileName, @NotNull HttpServletResponse response) {
+        try (SXSSFWorkbook workbook = new SXSSFWorkbook()) {
+            excelBiddingDetail.getWorkBookPaging(clazz, workbook, findHeaderNames(clazz), param);
+
+            response.setCharacterEncoding("UTF-8");  // UTF-8 설정 추가
+            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.setHeader("Content-Disposition", "attachment; filename=" + fileName + ".xlsx");
+
+            ServletOutputStream outputStream = response.getOutputStream();
+            workbook.write(outputStream);
+            workbook.close();
+
+            outputStream.flush();
+            outputStream.close();
+
+        } catch (IOException e) {
+            log.error("Excel Download Error Message = {}", e.getMessage());
+            throw new RuntimeException(e);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void downLoadExcelBiddingStatus(Class<?> clazz, Map<String, Object> param, String fileName, @NotNull HttpServletResponse response) {
+        try (SXSSFWorkbook workbook = new SXSSFWorkbook()) {
+            concreteBidPresentList.getWorkBookPaging(clazz, workbook, findHeaderNames(clazz), param);
+
+            response.setCharacterEncoding("UTF-8");  // UTF-8 설정 추가
+            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.setHeader("Content-Disposition", "attachment; filename=" + fileName + ".xlsx");
+
+            ServletOutputStream outputStream = response.getOutputStream();
+            workbook.write(outputStream);
+            workbook.close();
+
+            outputStream.flush();
+            outputStream.close();
+
+        } catch (IOException e) {
+            log.error("Excel Download Error Message = {}", e.getMessage());
+            throw new RuntimeException(e);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Excel 다운로드 Pagination 적용.
+     */
+
+    public void downLoadExcelBiInfoDetailList(Class<?> clazz, Map<String, Object> params, String fileName, HttpServletResponse response) {
+        try (SXSSFWorkbook workbook = new SXSSFWorkbook()) {
+            concreteBiInfoDetailList.getWorkBookPaging(clazz, workbook, findHeaderNames(clazz), params);
+
+            response.setCharacterEncoding("UTF-8");  // UTF-8 설정 추가
+            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.setHeader("Content-Disposition", "attachment; filename=" + fileName + ".xlsx");
+
+            ServletOutputStream outputStream = response.getOutputStream();
+            workbook.write(outputStream);
+            workbook.close();
+
+            outputStream.flush();
+            outputStream.close();
+
+        } catch (IOException e) {
+            log.error("Excel Download Error Message = {}", e.getMessage());
+            throw new RuntimeException(e);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     private SXSSFWorkbook getWorkBook(Class<?> clazz, SXSSFWorkbook workbook, int rowIdx, List<String> headerNames, List<?> data, int maxSize) throws IllegalAccessException, IOException {
         Sheet sheet = workbook.createSheet("Sheet4"); // 엑셀 sheet 이름
         sheet.setDefaultColumnWidth(10); // 디폴트 너비 설정
@@ -210,6 +342,142 @@ public final class ExcelUtils implements ExcelSupport {
 
         return workbook;
     }
+
+    //createBody 부분에 Paging처리.
+    private SXSSFWorkbook getWorkBookPagingV2(Class<?> clazz, SXSSFWorkbook workbook, List<String> headerNames, Map<String, Object> param) throws IllegalAccessException, IOException {
+        Sheet sheet = workbook.createSheet("Sheet1"); // 엑셀 sheet 이름
+        sheet.setDefaultColumnWidth(12); // 디폴트 너비 설정
+
+        Row row = null;
+        Cell cell = null;
+        boolean commonHeaders = false;
+
+        row = sheet.createRow(0);
+
+
+        //Excel Header를 따로 지정해야 할 떄 사용.
+        if("BidHistoryMatExcelDto".equals(clazz.getSimpleName())) {             //입찰이력 롯데머트리얼즈
+            createHeadersBidHisMat(workbook, row, cell, headerNames);
+        } else if("BidHistoryExcelDto".equals(clazz.getSimpleName())) {         //입찰이력
+            createHeadersBidHis(workbook, row, cell, headerNames);
+        } else if("BiddingStatusDto".equals(clazz.getSimpleName())) {           //입찰현황
+            createHeadersBiddingStatus(workbook, row, cell, headerNames);
+        } else if("BiddingDetailExcelDto".equals(clazz.getSimpleName())) {           //입찰상세내역
+            createHeadersBidHis(workbook, row, cell, headerNames);              //입찰이력과 헤더가 같음.
+        } else {
+            createHeaders(workbook, row, cell, headerNames);
+            commonHeaders = true;
+        }
+
+
+        List<BidDetailListDto> data = new ArrayList<>();
+
+        int offset = 0;
+        int limit = 5000;
+        int cnt = 0;
+
+
+        int bidDetailCnt = excelRepository.findBidDetailCnt(param);
+        int bidDetailCnt2 = excelRepository.findBidDetailListCnt2(param);
+
+        while(offset < bidDetailCnt2) {
+            data = excelRepository.findBidDetailList2(param, offset, limit);
+            List<BiddingDetailExcelDto> excelData = new ArrayList<>();
+
+            String tmpBiNo = "";
+
+            for(int i = 0; i < data.size(); i++) {
+                if(!tmpBiNo.equals(data.get(i).getBiNo())) {
+                    BiddingDetailExcelDto biddingDetailExcelDto = new BiddingDetailExcelDto();
+                    biddingDetailExcelDto.setBiNo(data.get(i).getBiNo());
+                    biddingDetailExcelDto.setBiName(data.get(i).getBiName());
+                    biddingDetailExcelDto.setBdAmt(data.get(i).getBdAmt());
+                    biddingDetailExcelDto.setSuccAmt(data.get(i).getSuccAmt());
+                    biddingDetailExcelDto.setCustName(data.get(i).getCustName());
+                    biddingDetailExcelDto.setEstStartDate(data.get(i).getEstStartDate());
+                    biddingDetailExcelDto.setEstCloseDate(data.get(i).getEstCloseDate());
+                    biddingDetailExcelDto.setUserName(data.get(i).getUserName());
+                    biddingDetailExcelDto.setCustName2(data.get(i).getCustName2());
+                    biddingDetailExcelDto.setEsmtAmt(data.get(i).getEsmtAmt());
+                    biddingDetailExcelDto.setSubmitDate(data.get(i).getSubmitDate());
+                    excelData.add(biddingDetailExcelDto);
+
+                    tmpBiNo = data.get(i).getBiNo();
+                } else {
+                    BiddingDetailExcelDto biddingDetailExcelDto = new BiddingDetailExcelDto();
+                    biddingDetailExcelDto.setBiNo("");
+                    biddingDetailExcelDto.setBiName("");
+                    biddingDetailExcelDto.setBdAmt(null);
+                    biddingDetailExcelDto.setSuccAmt(null);
+                    biddingDetailExcelDto.setCustName("");
+                    biddingDetailExcelDto.setEstStartDate("");
+                    biddingDetailExcelDto.setEstCloseDate("");
+                    biddingDetailExcelDto.setUserName("");
+                    biddingDetailExcelDto.setCustName2(data.get(i).getCustName2());
+                    biddingDetailExcelDto.setEsmtAmt(data.get(i).getEsmtAmt());
+                    biddingDetailExcelDto.setSubmitDate(data.get(i).getSubmitDate());
+                    excelData.add(biddingDetailExcelDto);
+
+                    tmpBiNo = data.get(i).getBiNo();
+                }
+            }
+            int listSize = excelData.size();
+            int start = offset;
+
+
+            createBodyPaging(clazz, workbook, excelData, sheet, row, cell, start , commonHeaders);
+
+/*            *//*
+             * 인스턴스 변수 MAX_ROW 상수로 선언되어있음.
+             *//*
+            for (int i = 0; i < listSize; i += MAX_ROW) {
+                int nextPage = Math.min(listSize, start + MAX_ROW);
+                List<?> list = new ArrayList<>(excelData.subList(start, nextPage));
+
+                createBodyPaging(clazz, workbook, list, sheet, row, cell, start , commonHeaders);
+
+                list.clear();
+                start += MAX_ROW;
+
+                // 주기적인 flush 진행
+                ((SXSSFSheet) sheet).flushRows(MAX_ROW);
+            }*/
+
+
+
+
+
+            offset += limit;
+            cnt++;
+
+            excelData.clear();
+            ((SXSSFSheet) sheet).flushRows(MAX_ROW);
+
+            System.out.println("-----------------------bidDetailCnt의 개수" + bidDetailCnt);
+            System.out.println("-----------------------bidDetailCnt2의 개수" + bidDetailCnt2);
+
+            System.out.println("------------------------쿼리 실행 개수" + cnt);
+        }
+
+
+
+
+
+
+
+
+        return workbook;
+    }
+
+
+
+
+
+
+
+
+
+
 
     private void createHeaders(SXSSFWorkbook workbook, Row row, Cell cell, List<String> headerNames) {
         /**
