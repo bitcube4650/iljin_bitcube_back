@@ -3,7 +3,7 @@ package iljin.framework.ebid.bid.service;
 import iljin.framework.core.dto.ResultBody;
 import iljin.framework.core.util.Util;
 import iljin.framework.ebid.bid.dto.BidCustDto;
-import iljin.framework.ebid.bid.dto.BidCompleteSpecDto;
+import iljin.framework.ebid.bid.dto.BidItemSpecDto;
 import iljin.framework.ebid.bid.dto.BidProgressDetailDto;
 import iljin.framework.ebid.bid.dto.BidProgressDto;
 import iljin.framework.ebid.bid.dto.BidProgressFileDto;
@@ -382,7 +382,7 @@ public class BidStatusService {
 					queryCustSpec.setParameter("biNo", biNo);
 					queryCustSpec.setParameter("custCode", custDto.getCustCode());
 					
-					List<BidCompleteSpecDto> specDto = new JpaResultMapper().list(queryCustSpec, BidCompleteSpecDto.class);
+					List<BidItemSpecDto> specDto = new JpaResultMapper().list(queryCustSpec, BidItemSpecDto.class);
 					
 					custDto.setBidSpec(specDto);
 				}
@@ -440,7 +440,7 @@ public class BidStatusService {
 				//조건 대입
 				querySpecInput.setParameter("biNo", biNo);
 				
-				List<BidCompleteSpecDto> specInput = new JpaResultMapper().list(querySpecInput, BidCompleteSpecDto.class);
+				List<BidItemSpecDto> specInput = new JpaResultMapper().list(querySpecInput, BidItemSpecDto.class);
 				
 				detailDto.setSpecInput(specInput);
 			}

@@ -5,7 +5,7 @@ import iljin.framework.core.util.Util;
 import iljin.framework.ebid.bid.dto.BidCustDto;
 import iljin.framework.ebid.bid.dto.BidCompleteDetailDto;
 import iljin.framework.ebid.bid.dto.BidCompleteDto;
-import iljin.framework.ebid.bid.dto.BidCompleteSpecDto;
+import iljin.framework.ebid.bid.dto.BidItemSpecDto;
 import iljin.framework.ebid.bid.dto.BidProgressFileDto;
 import iljin.framework.ebid.bid.dto.CurrDto;
 import iljin.framework.ebid.custom.entity.TCoCustUser;
@@ -334,7 +334,7 @@ public class BidCompleteService {
 					queryCustSpec.setParameter("biNo", params.get("biNo"));
 					queryCustSpec.setParameter("custCode", custDto.getCustCode());
 					
-					List<BidCompleteSpecDto> specDto = new JpaResultMapper().list(queryCustSpec, BidCompleteSpecDto.class);
+					List<BidItemSpecDto> specDto = new JpaResultMapper().list(queryCustSpec, BidItemSpecDto.class);
 					
 					custDto.setBidSpec(specDto);
 				}
@@ -392,7 +392,7 @@ public class BidCompleteService {
 				//조건 대입
 				querySpecInput.setParameter("biNo", params.get("biNo"));
 				
-				List<BidCompleteSpecDto> specInput = new JpaResultMapper().list(querySpecInput, BidCompleteSpecDto.class);
+				List<BidItemSpecDto> specInput = new JpaResultMapper().list(querySpecInput, BidItemSpecDto.class);
 				
 				detailDto.setSpecInput(specInput);
 			}
@@ -1006,7 +1006,7 @@ public class BidCompleteService {
 					queryCustSpec.setParameter("biNo", params.get("biNo"));
 					queryCustSpec.setParameter("custCode", custDto.getCustCode());
 					
-					List<BidCompleteSpecDto> specDto = new JpaResultMapper().list(queryCustSpec, BidCompleteSpecDto.class);
+					List<BidItemSpecDto> specDto = new JpaResultMapper().list(queryCustSpec, BidItemSpecDto.class);
 					
 					custDto.setBidSpec(specDto);
 				}
@@ -1064,7 +1064,7 @@ public class BidCompleteService {
 				//조건 대입
 				querySpecInput.setParameter("biNo", params.get("biNo"));
 				
-				List<BidCompleteSpecDto> specInput = new JpaResultMapper().list(querySpecInput, BidCompleteSpecDto.class);
+				List<BidItemSpecDto> specInput = new JpaResultMapper().list(querySpecInput, BidItemSpecDto.class);
 				
 				detailDto.setSpecInput(specInput);
 			}

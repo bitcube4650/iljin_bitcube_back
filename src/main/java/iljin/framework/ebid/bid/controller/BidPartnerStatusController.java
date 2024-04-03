@@ -62,9 +62,9 @@ public class BidPartnerStatusController {
 	 * 견적금액 단위 코드
 	 * @return
 	 */
-	@PostMapping("/currlist")
-	public List<CurrDto> currlist() {
-		return bidPartnerStatusService.currlist();
+	@PostMapping("/currList")
+	public ResultBody currList() {
+		return bidPartnerStatusService.currList();
 	}
 	
 	/**

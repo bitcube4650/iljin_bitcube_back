@@ -391,7 +391,6 @@ public class BidProgressService {
         sbTableList.append(sbWhere);
         sbFileList.append(sbWhere);
         sbCustList.append(sbWhere);
-        sbCustList.append(" and a.cust_code = :custCode ");
 
         Query queryList = entityManager.createNativeQuery(sbList.toString());
         Query queryTableList = entityManager.createNativeQuery(sbTableList.toString());
@@ -401,7 +400,7 @@ public class BidProgressService {
         queryTableList.setParameter("param", param);
         queryFileList.setParameter("param", param);
         queryCustList.setParameter("param", param);
-        queryCustList.setParameter("custCode", custCode);
+        
 
         List<BidProgressListDetailDto> resultList = new JpaResultMapper().list(queryList, BidProgressListDetailDto.class);
         List<BidProgressTableDto> tableList = new JpaResultMapper().list(queryTableList, BidProgressTableDto.class);

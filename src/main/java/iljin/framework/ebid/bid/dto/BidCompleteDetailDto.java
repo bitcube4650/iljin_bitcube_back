@@ -35,7 +35,7 @@ public class BidCompleteDetailDto {
 	String whyA7;								//유찰사유
 	String addAccept;							//낙찰추가합의사항
 	List<BidProgressFileDto> specFile;			//세부사항 - 파일등록
-	List<BidCompleteSpecDto> specInput;			//세부사항 - 직접입력
+	List<BidItemSpecDto> specInput;			//세부사항 - 직접입력
 	List<BidProgressFileDto> fileList;			//첨부파일
 	String deptName;							//입찰담당부서
 	String ingTag;								//입찰상태
