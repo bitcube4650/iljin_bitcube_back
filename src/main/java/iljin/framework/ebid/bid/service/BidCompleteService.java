@@ -1076,16 +1076,13 @@ public class BidCompleteService {
 				+ ",		tbu.FILE_PATH "
 				+ "from t_bi_upload tbu "
 				+ "where tbu.USE_YN = 'Y' "
-				+ "and tbu.FILE_FLAG in ('0','1') "
+				+ "and tbu.FILE_FLAG = '1' "
 			);
 		
 			//조건문 쿼리 삽입
 			StringBuilder sbFileWhere = new StringBuilder();
 			sbFileWhere.append("and tbu.BI_NO = :biNo ");
 			sbFileData.append(sbFileWhere);
-			
-			//정렬
-			sbFileData.append("order by field(tbu.FILE_FLAG, '1', '0') ");
 			
 			//쿼리 실행
 			Query queryFile = entityManager.createNativeQuery(sbFileData.toString());

@@ -120,6 +120,15 @@ public class CommonUtils {
     }
 
     /**
+     * Object를 받아 문자열 값으로 리턴함.
+     * @param obj
+     * @return
+     */
+    public static String getString(Object obj) {
+        return getString(obj,"");
+    }
+
+    /**
      * Object를 받아 문자열 값으로 리턴함, 없을경우 DefaultValue 리턴.
      * @param obj
      * @param defaultValue

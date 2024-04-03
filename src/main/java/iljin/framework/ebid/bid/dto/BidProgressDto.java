@@ -80,5 +80,6 @@ public class BidProgressDto {
             this.ingTag = ingTag;
             this.damdangName = damdangName;
             this.damdangEmail = damdangEmail;
+            this.esmtYn = esmtYn;
         }
 }
