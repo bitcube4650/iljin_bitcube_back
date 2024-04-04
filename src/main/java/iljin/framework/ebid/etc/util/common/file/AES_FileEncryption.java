@@ -1,5 +1,11 @@
 package iljin.framework.ebid.etc.util.common.file;
 
+import iljin.framework.ebid.etc.util.Constances;
+import lombok.RequiredArgsConstructor;
+import org.checkerframework.checker.units.qual.C;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
 import java.nio.file.Files;
@@ -8,11 +14,15 @@ import java.nio.file.Paths;
 import java.security.Key;
 
 public class AES_FileEncryption {
+
     private static final String ALGORITHM = "AES";
     private static final String TRANSFORMATION = "AES/CBC/PKCS5Padding";
     private static final String KEY = "626974637562656669676874696E6721"; // 16, 24, or 32 bytes
 
-    public static void encryptFile(String filePath) throws Exception {
+
+
+
+    public static String encryptFile(String filePath) throws Exception {
 
         //파일 경로를 Path 객체로 변환
         Path path = Paths.get(filePath);
@@ -24,7 +34,7 @@ public class AES_FileEncryption {
         String directoryPath = path.getParent().toString();
 
         //임시로 생성될 파일 경로 생성
-        String encryptedFilePath = directoryPath +  "/" + "test" + fileName;
+        String encryptedFilePath = directoryPath +  "/encrypted-" + fileName;
 
         File originalFile = new File(filePath);
         File encryptedFile = new File(encryptedFilePath);
@@ -38,11 +48,15 @@ public class AES_FileEncryption {
             e.printStackTrace();
         }
 
-        // 기존 원본 파일 삭제
+        //기존 원본 파일 삭제
         Files.delete(Paths.get(filePath));
 
         // 암호화된 파일 이름을 기존 원본 파일의 이름으로 변경
-        Files.move(Paths.get(encryptedFilePath), Paths.get(filePath));
+       // Files.move(Paths.get(encryptedFilePath), Paths.get(filePath));
+
+        //ex 2024/04/파일이름~
+        String returnPath = encryptedFilePath.substring(Constances.FILE_UPLOAD_DIRECTORY.length());
+        return returnPath;
     }
 
     public static String decryptFile(String filePath) throws Exception  {

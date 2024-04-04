@@ -8,6 +8,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.UUID;
 
+import iljin.framework.ebid.etc.util.Constances;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
@@ -15,10 +16,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class FileService {
-
-    @Value("${file.upload.directory}")
-    private String uploadDirectory;
-
     // 파일 업로드 메서드
     public String uploadFile(MultipartFile file) throws IOException {
 
@@ -34,7 +31,7 @@ public class FileService {
         String month = monthFormat.format(currentDate);
 
         // 현재 연도 폴더 생성
-        Path yearPath = Paths.get(uploadDirectory, year);
+        Path yearPath = Paths.get(Constances.FILE_UPLOAD_DIRECTORY, year);
         if (!Files.exists(yearPath)) {
             Files.createDirectories(yearPath);
         }
@@ -55,12 +52,16 @@ public class FileService {
         // 파일 저장
         Files.copy(file.getInputStream(), filePath);
 
+        String returnFilePath = filePath.toString().substring(Constances.FILE_UPLOAD_DIRECTORY.length());
+
         // 파일 저장 경로 반환
-        return filePath.toString();
+        return returnFilePath;
     }
     
     //첨부파일 다운로드
     public ByteArrayResource downloadFile(String filePath) throws Exception {
+
+        filePath = Constances.FILE_UPLOAD_DIRECTORY + filePath;
 
         Path path = Paths.get(filePath);
         byte[] fileContent = Files.readAllBytes(path);
@@ -87,7 +88,7 @@ public class FileService {
         String month = monthFormat.format(currentDate);
 
         // 현재 연도 폴더 생성
-        Path yearPath = Paths.get(uploadDirectory, year);
+        Path yearPath = Paths.get(Constances.FILE_UPLOAD_DIRECTORY, year);
         if (!Files.exists(yearPath)) {
             Files.createDirectories(yearPath);
         }
@@ -108,25 +109,34 @@ public class FileService {
         // 파일 저장
         Files.copy(file.getInputStream(), filePath);
 
-        AES_FileEncryption.encryptFile(filePath.toString());
+        String encryptFilePath = AES_FileEncryption.encryptFile(filePath.toString());
 
         // 파일 저장 경로 반환
-        return filePath.toString();
+        return encryptFilePath;
     }
 
     //복호화 첨부파일
     public ByteArrayResource downloadDecryptedFile(String filePath) throws Exception {
 
+
         String decryptFile = null;
         try {
-            decryptFile = AES_FileEncryption.decryptFile(filePath.toString());
+            //암호화된 파일
+            if(filePath.contains("encrypted")) {
+                decryptFile = AES_FileEncryption.decryptFile(Constances.FILE_UPLOAD_DIRECTORY + filePath);
 
-            Path path = Paths.get(decryptFile);
-            byte[] fileContent = Files.readAllBytes(path);
+                Path path = Paths.get(decryptFile);
+                byte[] fileContent = Files.readAllBytes(path);
 
-            // ByteArrayResource를 사용하여 byte 배열을 리소스로 변환
-            ByteArrayResource resource = new ByteArrayResource(fileContent);
-            return resource;
+                // ByteArrayResource를 사용하여 byte 배열을 리소스로 변환
+                ByteArrayResource resource = new ByteArrayResource(fileContent);
+                return resource;
+
+            //암호화되지 않은 파일.
+            } else {
+                ByteArrayResource resource = downloadFile(filePath);
+                return resource;
+            }
         } finally {
             deleteFile(decryptFile);
         }

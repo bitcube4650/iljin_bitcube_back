@@ -15,6 +15,12 @@ public class Constances {
 
     public static String IS_REAL_SERVER;
     public static String SYSTEM_FILEENCRYPT_KEY;
+    public static String FILE_UPLOAD_DIRECTORY;
+
+    @Value("${file.upload.directory}")
+    private void setFileUploadDirectory(String fileUploadDirectory) {
+        Constances.FILE_UPLOAD_DIRECTORY = fileUploadDirectory;
+    }
 
 
     //스케줄러 실행여부
