@@ -151,6 +151,19 @@ public class CommonUtils {
     }
 
     /**
+     * Object -> int
+     */
+    public static int getInt (Object quan) {
+        int     value = 0;
+        try{
+            String  strValue = getString(quan);
+            value = Integer.valueOf(strValue);
+        }catch(Exception e){
+        }
+        return value;
+    }
+    
+    /**
      * String 받아 3자리수마다 . 찍고 String으로 리턴함, null이거나 공백일시 그대로 리턴
      * @param value
      * @return

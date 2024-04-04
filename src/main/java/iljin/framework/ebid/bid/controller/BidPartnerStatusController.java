@@ -78,17 +78,21 @@ public class BidPartnerStatusController {
 	@PostMapping("/bidSubmitting")
 	public ResultBody bidSubmitting(
 			@RequestPart("data") String jsonData,
-			@RequestPart(value = "file1", required = false) MultipartFile file1, 
-			@RequestPart(value = "file2", required = false) MultipartFile file2,
+			@RequestPart(value = "detailFile", required = false) MultipartFile detailFile, 
+			@RequestPart(value = "etcFile", required = false) MultipartFile etcFile,
 			@AuthenticationPrincipal CustomUserDetails user
 		) {
+		
+		ResultBody resultBody = new ResultBody();
+		
 		ObjectMapper mapper = new ObjectMapper();
 		Map<String, Object> params = null;
 		try {
 			params = mapper.readValue(jsonData, Map.class);
+			resultBody = bidPartnerStatusService.bidSubmitting(params, detailFile, etcFile, user);
 		} catch (Exception e) {
 			e.printStackTrace();
 		} 
-		return bidPartnerStatusService.bidSubmitting(params, file1, file2, user);
+		return resultBody;
 	}
 }

@@ -2,22 +2,12 @@ package iljin.framework.ebid.bid.service;
 
 import iljin.framework.core.dto.ResultBody;
 import iljin.framework.core.security.user.CustomUserDetails;
-import iljin.framework.core.security.user.UserDto;
-import iljin.framework.core.security.user.UserRepository;
-import iljin.framework.core.security.user.UserRepositoryCustom;
 import iljin.framework.core.util.Util;
 import iljin.framework.ebid.bid.dto.BidCompleteDetailDto;
 import iljin.framework.ebid.bid.dto.BidItemSpecDto;
-import iljin.framework.ebid.bid.dto.BidProgressDetailDto;
 import iljin.framework.ebid.bid.dto.BidProgressDto;
 import iljin.framework.ebid.bid.dto.BidProgressFileDto;
-import iljin.framework.ebid.bid.dto.BidProgressTableDto;
-import iljin.framework.ebid.bid.dto.CoUserInfoDto;
 import iljin.framework.ebid.bid.dto.CurrDto;
-import iljin.framework.ebid.bid.dto.EmailDto;
-import iljin.framework.ebid.bid.dto.InterUserInfoDto;
-import iljin.framework.ebid.bid.dto.InterrelatedCustDto;
-import iljin.framework.ebid.bid.dto.SubmitHistDto;
 import iljin.framework.ebid.bid.entity.TBiInfoMatCust;
 import iljin.framework.ebid.bid.entity.TBiInfoMatCustID;
 import iljin.framework.ebid.bid.entity.TBiInfoMatCustTemp;
@@ -27,23 +17,18 @@ import iljin.framework.ebid.bid.entity.TBiUpload;
 import iljin.framework.ebid.bid.repository.TBiInfoMatCustRepository;
 import iljin.framework.ebid.bid.repository.TBiInfoMatCustTempRepository;
 import iljin.framework.ebid.custom.entity.TCoCustUser;
-import iljin.framework.ebid.custom.entity.TCoUser;
 import iljin.framework.ebid.custom.repository.TCoCustUserRepository;
-import iljin.framework.ebid.custom.repository.TCoUserRepository;
 import iljin.framework.ebid.etc.util.CommonUtils;
 import iljin.framework.ebid.etc.util.PagaUtils;
 import iljin.framework.ebid.etc.util.common.file.FileService;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import org.qlrm.mapper.JpaResultMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -51,26 +36,15 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.multipart.MultipartFile;
-import iljin.framework.ebid.etc.util.common.file.FileService;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
-
-import java.io.IOException;
-import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 @Service
 @Slf4j
@@ -83,9 +57,6 @@ public class BidPartnerStatusService {
 
     @Autowired
     private FileService fileService;
-
-    @Autowired
-    private BidProgressService bidProgressService;
     
     @Autowired
     private TCoCustUserRepository tCoCustUserRepository; 
@@ -271,7 +242,7 @@ public class BidPartnerStatusService {
 			String esmtYn = tBiInfoMatCust.getEsmtYn();
 			if(esmtYn.equals("0") || esmtYn.equals("") || esmtYn == null) {//공고확인을 안한상태
 				tBiInfoMatCust.setEsmtYn("1");//( 업체투찰 flag  0-업체지정, 1-업체공고확인, 2-업체투찰)
-				tBiInfoMatCust.setRebidAtt("N");//재투찰여부
+//				tBiInfoMatCust.setRebidAtt("N");//재투찰여부
 				tBiInfoMatCust.setEsmtAmt(null);
 				tBiInfoMatCust.setSuccYn("N");
 				tBiInfoMatCust.setUpdateUser(userId);
@@ -341,6 +312,9 @@ public class BidPartnerStatusService {
 				+ ",		tbim.INS_MODE "
 				+ ",		tbim.ADD_ACCEPT "
 				+ ",		tbim.ING_TAG "
+				+ ",		IFNULL((select REBID_ATT from t_bi_info_mat_cust tbimc where tbimc.BI_NO = :biNo and tbimc.CUST_CODE = :custCode), 'N') as CUST_REBID_YN "
+				+ ",		IFNULL((select ESMT_YN from t_bi_info_mat_cust tbimc where tbimc.BI_NO = :biNo and tbimc.CUST_CODE = :custCode), '1') as CUST_ESMT_YN "
+				+ ",		IFNULL((select DATE_FORMAT(tbimc.UPDATE_DATE, '%Y-%m-%d %H:%i') from t_bi_info_mat_cust tbimc where tbimc.BI_NO = :biNo and tbimc.CUST_CODE = :custCode), '') as CUST_ESMT_UPDATE_DATE "
 				+ "from t_bi_info_mat tbim "
 				+ "left outer join t_co_user tcu "
 				+ "	on tbim.GONGO_ID = tcu.USER_ID "
@@ -361,89 +335,9 @@ public class BidPartnerStatusService {
 			
 			//조건 대입
 			queryMain.setParameter("biNo", biNo);
+			queryMain.setParameter("custCode", custCode);
 			
 			detailDto = new JpaResultMapper().uniqueResult(queryMain, BidCompleteDetailDto.class);
-			
-			// ************ 데이터 검색 -- 입찰참가업체 ************
-//			StringBuilder sbCustData = new StringBuilder(
-//				  "select	tbimc.BI_NO "
-//				+ ",		cast(tbimc.CUST_CODE as char) as CUST_CODE "
-//				+ ",		tccm.CUST_NAME "
-//				+ ",		tccm.PRES_NAME "
-//				+ ",		tcc.CODE_NAME as ESMT_CURR "
-//				+ ",		tbimc.ESMT_AMT "
-//				+ ",		DATE_FORMAT(tbimc.SUBMIT_DATE, '%Y-%m-%d %H:%i') as SUBMIT_DATE "
-//				+ ",		(select tccu.USER_NAME from t_co_cust_user tccu where tccu.CUST_CODE = tbimc.CUST_CODE AND tccu.USER_TYPE = '1' LIMIT 1) AS DAMDANG_NAME "
-//				+ ",		case when tbimc.SUCC_YN = 'Y' then DATE_FORMAT(tbimc.UPDATE_DATE, '%Y-%m-%d %H:%i') else '' end as UPDATE_DATE "
-//				+ ",		tbimc.ESMT_YN "
-//				+ ",		tbu.FILE_NM "
-//				+ ",		tbu.FILE_PATH "
-//				+ ",		tbimc.SUCC_YN "
-//				+ ",		tbimc.ETC_B_FILE as ETC_FILE "
-//				+ ",		tbimc.ETC_B_FILE_PATH as ETC_PATH "
-//				+ "from t_bi_info_mat_cust tbimc "
-//				+ "inner join t_co_cust_master tccm "
-//				+ "	on tbimc.CUST_CODE = tccm.CUST_CODE "
-//				+ "left outer join t_co_code tcc "
-//				+ "	on tcc.COL_CODE = 'T_CO_RATE' "
-//				+ "	and tbimc.ESMT_CURR = tcc.CODE_VAL "
-//				+ "left outer join t_bi_upload tbu "
-//				+ "	on tbimc.FILE_ID = tbu.FILE_ID "
-//			);
-//			
-//			//조건문 쿼리 삽입
-//			StringBuilder sbCustWhere = new StringBuilder();
-//			sbCustWhere.append("where tbimc.BI_NO = :biNo ");
-//			sbCustWhere.append("and tbimc.CUST_CODE = :custCode ");
-//			
-//			sbCustData.append(sbCustWhere);
-//			
-//			//쿼리 실행
-//			Query queryCust = entityManager.createNativeQuery(sbCustData.toString());
-//			
-//			//조건 대입
-//			queryCust.setParameter("biNo", biNo);
-//			queryCust.setParameter("custCode", custCode);
-//			
-//			List<BidCustDto> custData = new JpaResultMapper().list(queryCust, BidCustDto.class);
-//			
-//			//내역방식이 직접등록일 경우
-//			if(detailDto.getInsMode().equals("2")) {
-//				for(BidCustDto custDto : custData) {
-//					StringBuilder sbCustSpec = new StringBuilder(
-//						  "select	cast(tbdmc.CUST_CODE as char) as CUST_CODE "
-//						+ ",		tbsm.NAME "
-//						+ ",		tbsm.SSIZE "
-//						+ ",		tbsm.UNITCODE "
-//						+ ",		tbsm.ORDER_QTY "
-//						+ ",		tbdmc.ESMT_UC "
-//						+ "from t_bi_detail_mat_cust tbdmc "
-//						+ "inner join t_bi_spec_mat tbsm "
-//						+ "	on tbdmc.BI_NO = tbsm.BI_NO "
-//						+ "	and tbdmc.SEQ = tbsm.SEQ "
-//					);
-//					
-//					//조건문 쿼리 삽입
-//					StringBuilder sbCustSpecWhere = new StringBuilder();
-//					sbCustSpecWhere.append("where tbdmc.BI_NO = :biNo ");
-//					sbCustSpecWhere.append("and tbdmc.CUST_CODE = :custCode ");
-//					
-//					sbCustSpec.append(sbCustSpecWhere);
-//					
-//					//쿼리 실행
-//					Query queryCustSpec = entityManager.createNativeQuery(sbCustSpec.toString());
-//					
-//					//조건 대입
-//					queryCustSpec.setParameter("biNo", biNo);
-//					queryCustSpec.setParameter("custCode", custDto.getCustCode());
-//					
-//					List<BidCompleteSpecDto> specDto = new JpaResultMapper().list(queryCustSpec, BidCompleteSpecDto.class);
-//					
-//					custDto.setBidSpec(specDto);
-//				}
-//			}
-//			
-//			detailDto.setCustList(custData);
 			
 			// ************ 데이터 검색 -- 세부내역 ************
 			if(detailDto.getInsMode().equals("1")) {		//내역방식이 파일등록일 경우
@@ -560,20 +454,21 @@ public class BidPartnerStatusService {
 	/**
 	 * 투찰
 	 * @param params
-	 * @param file1
-	 * @param file2
+	 * @param detailFile
+	 * @param etcFile
 	 * @param user
 	 * @return
 	 */
 	@Transactional
-	public ResultBody bidSubmitting(@RequestBody Map<String, Object> params, MultipartFile file1, MultipartFile file2, CustomUserDetails user) {
+	@SuppressWarnings({ "unchecked" })
+	public ResultBody bidSubmitting(@RequestBody Map<String, Object> params, MultipartFile detailFile, MultipartFile etcFile, CustomUserDetails user) {
 
 		ResultBody resultBody = new ResultBody();
 		String userId = user.getUsername();
 		int custCode = Integer.parseInt(user.getCustCode());//협력사 번호 
-		String biNo = "";
+		String biNo = CommonUtils.getString(params.get("biNo"));//입찰번호
 		String rebidAtt = "N";//업체 재투찰 여부
-		String insModeCode = "";//입력방식( 1-파일등록, 2-내역직접 )
+		String insModeCode = CommonUtils.getString(params.get("insModeCode"));//입력방식
 		String amt = "";//총 견적금액
 		LocalDateTime currentDate = LocalDateTime.now();//update 또는 insert 되는 현재시점
 		
@@ -591,31 +486,31 @@ public class BidPartnerStatusService {
 		String etcFilePath = "";//기타파일 경로
 		
 		if (!StringUtils.isEmpty(params.get("biNo"))) {
-			biNo = (String) params.get("biNo");//입찰번호
+			biNo = CommonUtils.getString(params.get("biNo"));//입찰번호
 		}
 		
 		if (!StringUtils.isEmpty(params.get("insModeCode"))) {
-			insModeCode = (String) params.get("insModeCode");//입력방식
+			insModeCode = CommonUtils.getString(params.get("insModeCode"));//입력방식
 		}
-		
+		//입력방식 파일등록일 때 총 견적금액
 		if (!StringUtils.isEmpty(params.get("amt"))) {
-			amt =  (String) params.get("amt");//총 견적금액
+			amt = CommonUtils.getString(params.get("amt"));//총 견적금액
 		}
 		
-		if (!StringUtils.isEmpty(params.get("tableContent"))) {
-			itemList = (List<Map<String, Object>>) params.get("tableContent");//직접입력 품목
+		if (!StringUtils.isEmpty(params.get("submitData"))) {
+			itemList = (List<Map<String, Object>>) params.get("submitData");//직접입력 품목
 			
 			for(int i = 0; i < itemList.size(); i++) {
 				Map<String,Object> item = itemList.get(i);
 				
-				int seq = (int) item.get("seq");
-				String esmtAmt = (String) item.get("esmtAmt");
+				int seq = CommonUtils.getInt(item.get("seq"));
+				String esmtUc = CommonUtils.getString(item.get("esmtUc"));
 				
 				if(i > 0) {//구분자
 					strItemList += "‡";
 				}
 				//품목순번 = 가격
-				strItemList += (seq + "=" + esmtAmt);
+				strItemList += (seq + "=" + esmtUc);
 			}
 		}
 		
@@ -625,14 +520,14 @@ public class BidPartnerStatusService {
 			//파일입력방식인 경우 파일 업로드
 			if(insModeCode.equals("1")) {
 				//견적내역파일(필수)
-				fileName = file1.getOriginalFilename();
-				filePath = fileService.uploadFile(file1);//업로드
+				fileName = detailFile.getOriginalFilename();
+				filePath = fileService.uploadFile(detailFile);//업로드
 			}
 			
-			if(file2 != null) {
+			if(etcFile != null) {
 				//기타파일
-				etcFileName = file2.getOriginalFilename();
-				etcFilePath = fileService.uploadFile(file2);//업로드
+				etcFileName = etcFile.getOriginalFilename();
+				etcFilePath = fileService.uploadFile(etcFile);//업로드
 			}
 			
 		

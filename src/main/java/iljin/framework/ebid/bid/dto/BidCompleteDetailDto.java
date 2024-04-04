@@ -47,6 +47,10 @@ public class BidCompleteDetailDto {
 	String matFactoryLine;						//롯데에너지머티리얼즈 - 라인
 	String matFactoryCnt;						//롯데에너지머티리얼즈 - 호기
 	
+	String custRebidYn;							//업체 재투찰 여부
+	String custEsmtYn;							//업체 투찰 여부
+	String custEsmtUpdateDate;					//업체 투찰 일시
+	
 	public BidCompleteDetailDto(
 			String biNo, String biName, String itemName, String biMode, String bidJoinSpec, 
 			String specialCond, String spotDate, String spotArea, String succDeciMeth, 
@@ -117,5 +121,36 @@ public class BidCompleteDetailDto {
 		this.insMode = insMode; 
 		this.addAccept = addAccept;
 		this.ingTag = ingTag;
+	}
+	
+	public BidCompleteDetailDto(
+			String biNo, String biName, String itemName, String biMode, String succDeciMeth, String bidJoinSpec, String spotDate, String spotArea, 
+			String specialCond, String supplyCond, String amtBasis, String payCond, String damdangName, String deptName, String whyA3, String whyA7,
+			String estStartDate, String estCloseDate, String insMode, String addAccept, String ingTag, String custRebidYn, String custEsmtYn, String custEsmtUpdateDate
+	) {
+		this.biNo = biNo;
+		this.biName = biName;
+		this.itemName = itemName; 
+		this.biMode = biMode; 
+		this.succDeciMeth = succDeciMeth; 
+		this.bidJoinSpec = bidJoinSpec; 
+		this.spotDate = spotDate; 
+		this.spotArea = spotArea; 
+		this.specialCond = specialCond; 
+		this.supplyCond = supplyCond; 
+		this.amtBasis = amtBasis; 
+		this.payCond = payCond; 
+		this.damdangName = damdangName; 
+		this.deptName = deptName; 
+		this.whyA3 = whyA3;
+		this.whyA7 = whyA7;
+		this.estStartDate = estStartDate; 
+		this.estCloseDate = estCloseDate; 
+		this.insMode = insMode; 
+		this.addAccept = addAccept;
+		this.ingTag = ingTag;
+		this.custRebidYn = custRebidYn; 
+		this.custEsmtYn = custEsmtYn;
+		this.custEsmtUpdateDate = custEsmtUpdateDate;
 	}
 }
