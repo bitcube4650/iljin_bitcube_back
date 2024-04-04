@@ -875,9 +875,8 @@ public class BidProgressService {
         UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication()
                 .getPrincipal();
         String userId = principal.getUsername();
-        if (params.size() > 0) {
+        //if (params.size() > 0) {
             String biNo = (String) params.get(0).get("biNo");
-            String type = (String) params.get(0).get("type");
 
             StringBuilder init = new StringBuilder(
                     "DELETE from t_bi_info_mat_cust where bi_no = :biNo");
@@ -886,18 +885,21 @@ public class BidProgressService {
             initQuery.setParameter("biNo", biNo);
             initQuery.executeUpdate();
 
-            for (Map<String, Object> data : params) {
-                StringBuilder sbList = new StringBuilder(
-                        "INSERT into t_bi_info_mat_cust (bi_no, cust_code, rebid_att, esmt_yn, esmt_amt, succ_yn, create_user, create_date) "
-                                +
-                                "values (:biNo, :custCode, 'N', '0', 0, 'N', :userId, sysdate())");
-                Query queryList = entityManager.createNativeQuery(sbList.toString());
-                queryList.setParameter("biNo", (String) data.get("biNo"));
-                queryList.setParameter("custCode", (String) data.get("custCode"));
-                queryList.setParameter("userId", userId);
-                queryList.executeUpdate();
+            if(params.get(0).containsKey("insertYn") ) {
+                for (Map<String, Object> data : params) {
+                    StringBuilder sbList = new StringBuilder(
+                            "INSERT into t_bi_info_mat_cust (bi_no, cust_code, rebid_att, esmt_yn, esmt_amt, succ_yn, create_user, create_date) "
+                                    +
+                                    "values (:biNo, :custCode, 'N', '0', 0, 'N', :userId, sysdate())");
+                    Query queryList = entityManager.createNativeQuery(sbList.toString());
+                    queryList.setParameter("biNo", (String) data.get("biNo"));
+                    queryList.setParameter("custCode", (String) data.get("custCode"));
+                    queryList.setParameter("userId", userId);
+                    queryList.executeUpdate();
+                }
             }
-        }
+            
+        //}
 
         ResultBody resultBody = new ResultBody();
         return resultBody;
