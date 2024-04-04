@@ -537,38 +537,41 @@ public class CustService {
         // 협력사 이력 등록
         insertHistory(params.get("custCode"));
 
-        // 계열사_협력사_매핑 수정
-        sbQuery = new StringBuilder(" UPDATE t_co_cust_ir SET cust_level = :custLevel, cust_valuation = :custValuation, care_content = :careContent, cert_date = now()  WHERE cust_code = :custCode AND interrelated_cust_code = :interrelatedCustCode");
-        query = entityManager.createNativeQuery(sbQuery.toString());
-        query.setParameter("custLevel", params.get("custLevel"));
-        query.setParameter("custValuation", params.get("custValuation"));
-        query.setParameter("careContent", params.get("careContent"));
-        query.setParameter("custCode", params.get("custCode"));
-        query.setParameter("interrelatedCustCode", user.getCustCode());
-        int cnt = query.executeUpdate();
-        if (cnt == 0) {
-            // 수정이 안되면 계열사_협력사_매핑 등록
-            sbQuery = new StringBuilder(" INSERT INTO t_co_cust_ir (cust_code, interrelated_cust_code, cust_level, cust_valuation, care_content, cert_date) VALUES (:custCode, :interrelatedCustCode, :custLevel, :custValuation, :careContent, now())");
+        // 계열사 사용자 수정만 해당
+        if ("inter".equals(user.getCustType())) {
+            // 계열사_협력사_매핑 수정
+            sbQuery = new StringBuilder(" UPDATE t_co_cust_ir SET cust_level = :custLevel, cust_valuation = :custValuation, care_content = :careContent, cert_date = now()  WHERE cust_code = :custCode AND interrelated_cust_code = :interrelatedCustCode");
             query = entityManager.createNativeQuery(sbQuery.toString());
             query.setParameter("custLevel", params.get("custLevel"));
             query.setParameter("custValuation", params.get("custValuation"));
             query.setParameter("careContent", params.get("careContent"));
             query.setParameter("custCode", params.get("custCode"));
             query.setParameter("interrelatedCustCode", user.getCustCode());
+            int cnt = query.executeUpdate();
+            if (cnt == 0) {
+                // 수정이 안되면 계열사_협력사_매핑 등록
+                sbQuery = new StringBuilder(" INSERT INTO t_co_cust_ir (cust_code, interrelated_cust_code, cust_level, cust_valuation, care_content, cert_date) VALUES (:custCode, :interrelatedCustCode, :custLevel, :custValuation, :careContent, now())");
+                query = entityManager.createNativeQuery(sbQuery.toString());
+                query.setParameter("custLevel", params.get("custLevel"));
+                query.setParameter("custValuation", params.get("custValuation"));
+                query.setParameter("careContent", params.get("careContent"));
+                query.setParameter("custCode", params.get("custCode"));
+                query.setParameter("interrelatedCustCode", user.getCustCode());
+                query.executeUpdate();
+            }
+
+            sbQuery = new StringBuilder(" UPDATE t_co_cust_user SET user_name = :userName, user_tel = :userTel, user_hp = :userHp, user_email = :userEmail, user_buseo = :userBuseo, user_position = :userPosition, update_user = :updUserId, update_date = now() WHERE user_id = :userId");
+            query = entityManager.createNativeQuery(sbQuery.toString());
+            query.setParameter("userName", params.get("userName"));
+            query.setParameter("userTel", params.get("userTel"));
+            query.setParameter("userHp", params.get("userHp"));
+            query.setParameter("userEmail", params.get("userEmail"));
+            query.setParameter("userBuseo", params.get("userBuseo"));
+            query.setParameter("userPosition", params.get("userPosition"));
+            query.setParameter("updUserId", user.getUsername());
+            query.setParameter("userId", params.get("userId"));
             query.executeUpdate();
         }
-
-        sbQuery = new StringBuilder(" UPDATE t_co_cust_user SET user_name = :userName, user_tel = :userTel, user_hp = :userHp, user_email = :userEmail, user_buseo = :userBuseo, user_position = :userPosition, update_user = :updUserId, update_date = now() WHERE user_id = :userId");
-        query = entityManager.createNativeQuery(sbQuery.toString());
-        query.setParameter("userName", params.get("userName"));
-        query.setParameter("userTel", params.get("userTel"));
-        query.setParameter("userHp", params.get("userHp"));
-        query.setParameter("userEmail", params.get("userEmail"));
-        query.setParameter("userBuseo", params.get("userBuseo"));
-        query.setParameter("userPosition", params.get("userPosition"));
-        query.setParameter("updUserId", user.getUsername());
-        query.setParameter("userId", params.get("userId"));
-        query.executeUpdate();
         return resultBody;
     }
     public ResultBody idcheck(Map<String, Object> params) {

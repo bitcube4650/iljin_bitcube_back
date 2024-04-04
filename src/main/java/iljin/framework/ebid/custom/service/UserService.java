@@ -53,7 +53,7 @@ public class UserService {
         StringBuilder sbWhere = new StringBuilder();
 
         if (!StringUtils.isEmpty(params.get("interrelatedCustCode"))) {
-            sbWhere.append(" and interrelated_cust_code = '"+params.get("interrelatedCustCode")+"'");
+            sbWhere.append(" and interrelated_cust_code = :interrelatedCustCode");
         }
         if (!StringUtils.isEmpty(params.get("useYn"))) {
             sbWhere.append(" and use_yn = :useYn");
