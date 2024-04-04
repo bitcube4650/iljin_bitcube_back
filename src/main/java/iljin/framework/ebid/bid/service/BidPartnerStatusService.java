@@ -467,17 +467,15 @@ public class BidPartnerStatusService {
 		String userId = user.getUsername();
 		int custCode = Integer.parseInt(user.getCustCode());//협력사 번호 
 		String biNo = CommonUtils.getString(params.get("biNo"));//입찰번호
-		String rebidAtt = "N";//업체 재투찰 여부
 		String insModeCode = CommonUtils.getString(params.get("insModeCode"));//입력방식
 		String amt = "";//총 견적금액
 		LocalDateTime currentDate = LocalDateTime.now();//update 또는 insert 되는 현재시점
 		
 		//직접입력
-		List<Map<String, Object>> itemList = null;//직접입력 품목
-		String strItemList = "";//직접입력 품목당 가격을 "‡" 구분자와 같이 넣은 문자열
+		StringBuilder sbItemList = new StringBuilder("");//직접입력 품목당 가격을 "‡" 구분자와 같이 넣은 문자열
+		String strItemList = "";
 		
 		//파일입력
-		int fileId = 0;//t_bi_upload에 insert한 견적내역파일 id
 		String fileHashValue = "";//파일입력의 경우 복호화때 필요한 key값
 		String fileName = "";//견적내역파일 이름
 		String filePath = "";//견적내역파일 경로
@@ -485,35 +483,35 @@ public class BidPartnerStatusService {
 		String etcFileName = "";//기타파일 이름
 		String etcFilePath = "";//기타파일 경로
 		
-		if (!StringUtils.isEmpty(params.get("biNo"))) {
-			biNo = CommonUtils.getString(params.get("biNo"));//입찰번호
-		}
-		
-		if (!StringUtils.isEmpty(params.get("insModeCode"))) {
-			insModeCode = CommonUtils.getString(params.get("insModeCode"));//입력방식
-		}
-		//입력방식 파일등록일 때 총 견적금액
+		//입력방식 파일등록일 때 총 견적금액 (직접입력은 아래 반목문에서 모두 더해서 계산)
 		if (!StringUtils.isEmpty(params.get("amt"))) {
 			amt = CommonUtils.getString(params.get("amt"));//총 견적금액
 		}
 		
 		if (!StringUtils.isEmpty(params.get("submitData"))) {
-			itemList = (List<Map<String, Object>>) params.get("submitData");//직접입력 품목
+			List<Map<String, Object>> itemList = (List<Map<String, Object>>) params.get("submitData");//직접입력 품목
 			
+			int totalAmt = 0;
 			for(int i = 0; i < itemList.size(); i++) {
 				Map<String,Object> item = itemList.get(i);
 				
 				int seq = CommonUtils.getInt(item.get("seq"));
-				String esmtUc = CommonUtils.getString(item.get("esmtUc"));
+				int esmtUc = CommonUtils.getInt(item.get("esmtUc"));
+				totalAmt += esmtUc;
 				
 				if(i > 0) {//구분자
-					strItemList += "‡";
+					sbItemList.append("‡");
 				}
 				//품목순번 = 가격
-				strItemList += (seq + "=" + esmtUc);
+				sbItemList.append(seq + "=" + esmtUc);
 			}
+			
+			//직접입력 str
+			strItemList = sbItemList.toString();
+			
+			//총 견적금액
+			amt = CommonUtils.getString(totalAmt);
 		}
-		
 		
 		try {
 			
@@ -529,14 +527,11 @@ public class BidPartnerStatusService {
 				etcFileName = etcFile.getOriginalFilename();
 				etcFilePath = fileService.uploadFile(etcFile);//업로드
 			}
-			
 		
 		}catch(Exception e) {
-			e.printStackTrace();
+			log.error("bidSubmitting fileUpload error : {}", e);
 			resultBody.setCode("ERROR");
-			resultBody.setStatus(500);
-			resultBody.setMsg("An error occurred while uploading file.");
-			resultBody.setData(e.getMessage()); 
+			resultBody.setStatus(999);
 			
 			return resultBody;
 		}
@@ -547,27 +542,47 @@ public class BidPartnerStatusService {
 		//여기에 암호화 처리
 		//strItemList
 		//amt
-		//filePath
 
 
 		try {
 			
-			//입찰협력업체차수(t_bi_info_mat_cust_temp)에 이미 1차로 투찰했던 이력이 있는지 확인하고 
-			//1차로 투찰했던 이력이 있으면 업체재투찰여부(rebid_att)는 "Y"
-			TBiInfoMatCustTempID tBiInfoMatCustTempID = new TBiInfoMatCustTempID(); 
-			tBiInfoMatCustTempID.setBiNo(biNo);
-			tBiInfoMatCustTempID.setCustCode(custCode);
-			tBiInfoMatCustTempID.setBiOrder(1);
+			//입찰협력업체(t_bi_info_mat_cust)에 반영
+			TBiInfoMatCustID tBiInfoMatCustId = new TBiInfoMatCustID();
 			
-			Optional<TBiInfoMatCustTemp> tBiInfoMatCustTemp = tBiInfoMatCustTempRepository.findById(tBiInfoMatCustTempID);
+			tBiInfoMatCustId.setBiNo(biNo);
+			tBiInfoMatCustId.setCustCode(custCode);
 			
-			if(tBiInfoMatCustTemp.isPresent()) {
-				rebidAtt = "Y";
+			Optional<TBiInfoMatCust> optional = tBiInfoMatCustRepository.findById(tBiInfoMatCustId);
+			TBiInfoMatCust tBiInfoMatCust = null;
+			
+			//기 등록된 입찰이 없을 경우 신규입찰생성
+			if(!optional.isPresent()) {
+				tBiInfoMatCust = new TBiInfoMatCust();
+				
+				tBiInfoMatCust.setBiNo(biNo);
+				tBiInfoMatCust.setCustCode(custCode);
+				tBiInfoMatCust.setEsmtYn("2");
+				tBiInfoMatCust.setCreateUser(userId);
+				tBiInfoMatCust.setCreateDate(currentDate);
+				tBiInfoMatCust.setUpdateUser(userId);
+				tBiInfoMatCust.setUpdateDate(currentDate);
+				tBiInfoMatCust.setEncQutn(amt);
+				tBiInfoMatCust.setRebidAtt("N");
+				tBiInfoMatCust.setBiOrder(1);
+				tBiInfoMatCust.setEsmtCurr(CommonUtils.getString(params.get("esmtCurr")));
+				
+			}else {
+				tBiInfoMatCust = optional.get();
+				tBiInfoMatCust.setEsmtYn("2");//esmt_yn( 업체투찰 flag  0-업체지정, 1-업체공고확인, 2-업체투찰)
+				tBiInfoMatCust.setUpdateUser(userId);
+				tBiInfoMatCust.setUpdateDate(currentDate);
+				tBiInfoMatCust.setEncQutn(amt);
+				tBiInfoMatCust.setRebidAtt(optional.get().getRebidAtt());
+				tBiInfoMatCust.setBiOrder(CommonUtils.getInt(optional.get().getBiOrder()) + 1);
+				tBiInfoMatCust.setEsmtCurr(CommonUtils.getString(params.get("esmtCurr")));
 			}
 			
-			
-			//파일등록 방식인 경우 견적내역파일을 입찰파일(t_bi_upload)에 반영
-			//기타파일의 경우 입찰협력업체(t_bi_info_mat_cust)에 반영
+			//파일등록 방식
 			if(insModeCode.equals("1")) {
 				
 				//입찰파일테이블(t_bi_upload)에 insert
@@ -582,84 +597,22 @@ public class BidPartnerStatusService {
 				
 				entityManager.persist(tBiUpload);
 				
-				fileId = tBiUpload.getFileId();//t_bi_upload에 insert한 견적내역파일 id
+				int fileId = tBiUpload.getFileId();//t_bi_upload에 insert한 견적내역파일 id
 				
+				tBiInfoMatCust.setFileId(fileId);
+				tBiInfoMatCust.setFileHashValue(fileHashValue);
+			//내역직접 방식
+			}else {
+				tBiInfoMatCust.setEncEsmtSpec(strItemList);
 			}
 			
+			//기타파일
+			if(etcFilePath != null && !etcFilePath.equals("")) {//기타첨부 파일이 있는 경우
+				tBiInfoMatCust.setEtcBFile(etcFileName);
+				tBiInfoMatCust.setEtcBFilePath(etcFilePath);
+			}			
 			
-			//입찰협력업체(t_bi_info_mat_cust)에 반영
-			TBiInfoMatCustID tBiInfoMatCustId = new TBiInfoMatCustID();
-			
-			tBiInfoMatCustId.setBiNo(biNo);
-			tBiInfoMatCustId.setCustCode(custCode);
-			
-			Optional<TBiInfoMatCust> optional = tBiInfoMatCustRepository.findById(tBiInfoMatCustId);
-
-			//입찰_협력업체 테이블에 데이터가 들어가 있는지 확인
-			if(optional.isPresent()) {//이미 입찰_협력업체 테이블에 데이터가 있는 경우 update(지명경쟁 or 이미투찰함)
-
-				TBiInfoMatCust tBiInfoMatCust = optional.get();
-				
-				tBiInfoMatCust.setEsmtYn("2");//esmt_yn( 업체투찰 flag  0-업체지정, 1-업체공고확인, 2-업체투찰)
-				tBiInfoMatCust.setUpdateUser(userId);
-				tBiInfoMatCust.setUpdateDate(currentDate);
-				tBiInfoMatCust.setEncQutn(amt);
-				tBiInfoMatCust.setRebidAtt(rebidAtt);
-				
-				//기타파일
-				if(!etcFilePath.equals("") &&  etcFilePath != null) {//기타첨부 파일이 있는 경우
-					
-					tBiInfoMatCust.setEtcBFile(etcFileName);
-					tBiInfoMatCust.setEtcBFilePath(etcFilePath);
-					
-				}
-				
-				if(insModeCode.equals("1")) {//파일등록 방식
-					
-					//견적내역파일
-					tBiInfoMatCust.setFileId(fileId);
-					tBiInfoMatCust.setFileHashValue(fileHashValue);
-					
-				
-				}else {//내역직접 방식
-					tBiInfoMatCust.setEncEsmtSpec(strItemList);
-				}
-				
-				
-			}else {//입찰_협력업체 테이블에 데이터가 없는 경우 insert
-
-				TBiInfoMatCust tBiInfoMatCust = new TBiInfoMatCust();
-				
-				tBiInfoMatCust.setBiNo(biNo);
-				tBiInfoMatCust.setCustCode(custCode);
-				tBiInfoMatCust.setEsmtYn("2");
-				tBiInfoMatCust.setCreateUser(userId);
-				tBiInfoMatCust.setCreateDate(currentDate);
-				tBiInfoMatCust.setBiOrder(1);
-				tBiInfoMatCust.setEncQutn(amt);
-				tBiInfoMatCust.setRebidAtt(rebidAtt);
-				
-				//기타파일
-				if(!etcFilePath.equals("") &&  etcFilePath != null) {//기타첨부 파일이 있는 경우
-					
-					tBiInfoMatCust.setEtcBFile(etcFileName);
-					tBiInfoMatCust.setEtcBFilePath(etcFilePath);
-					
-				}
-				
-				if(insModeCode.equals("1")) {//파일등록 방식
-					
-					//견적내역파일
-					tBiInfoMatCust.setFileId(fileId);
-					tBiInfoMatCust.setFileHashValue(fileHashValue);
-					
-				}else {//내역직접 방식
-					tBiInfoMatCust.setEncEsmtSpec(strItemList);
-				}
-				
-				entityManager.persist(tBiInfoMatCust);
-				
-			}
+			entityManager.persist(tBiInfoMatCust);
 			
 			//로그 남기기
 			TBiLog tBiLog = new TBiLog();
@@ -672,13 +625,9 @@ public class BidPartnerStatusService {
 			entityManager.persist(tBiLog);
 			
 		}catch(Exception e) {
-			e.printStackTrace();
+			log.error("bidSubmitting error : {}", e);
 			resultBody.setCode("ERROR");
-			resultBody.setStatus(500);
-			resultBody.setMsg("An error occurred while suggesting bid.");
-			resultBody.setData(e.getMessage()); 
-			
-			return resultBody;
+			resultBody.setStatus(999);
 		}
 			
 		return resultBody;

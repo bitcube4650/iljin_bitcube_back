@@ -264,7 +264,7 @@ public class BidCompleteService {
 			// ************ 데이터 검색 -- 입찰참가업체 ************
 			StringBuilder sbCustData = new StringBuilder(
 				  "select	tbimc.BI_NO "
-				+ ",		cast(tbimc.CUST_CODE as char) as CUST_CODE "
+				+ ",		tbimc.CUST_CODE "
 				+ ",		tccm.CUST_NAME "
 				+ ",		tccm.PRES_NAME "
 				+ ",		tcc.CODE_NAME as ESMT_CURR "
@@ -936,7 +936,7 @@ public class BidCompleteService {
 			// ************ 데이터 검색 -- 입찰참가업체 ************
 			StringBuilder sbCustData = new StringBuilder(
 				  "select	tbimc.BI_NO "
-				+ ",		cast(tbimc.CUST_CODE as char) as CUST_CODE "
+				+ ",		tbimc.CUST_CODE "
 				+ ",		tccm.CUST_NAME "
 				+ ",		tccm.PRES_NAME "
 				+ ",		tcc.CODE_NAME as ESMT_CURR "

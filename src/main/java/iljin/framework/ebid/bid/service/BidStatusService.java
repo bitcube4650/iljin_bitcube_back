@@ -10,6 +10,8 @@ import iljin.framework.ebid.bid.dto.BidProgressFileDto;
 import iljin.framework.ebid.bid.dto.CoUserInfoDto;
 import iljin.framework.ebid.bid.dto.ItemDto;
 import iljin.framework.ebid.bid.dto.SubmitHistDto;
+import iljin.framework.ebid.bid.entity.TBiDetailMatCust;
+import iljin.framework.ebid.bid.entity.TBiDetailMatCustTemp;
 import iljin.framework.ebid.custom.entity.TCoUser;
 import iljin.framework.ebid.custom.repository.TCoUserRepository;
 import iljin.framework.ebid.etc.util.CommonUtils;
@@ -34,6 +36,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -320,13 +323,15 @@ public class BidStatusService {
 			// ************ 데이터 검색 -- 입찰참가업체 ************
 			StringBuilder sbCustData = new StringBuilder(
 				  "select	tbimc.BI_NO "
-				+ ",		cast(tbimc.CUST_CODE as char) as CUST_CODE "
+				+ ",		tbimc.CUST_CODE "
 				+ ",		tccm.CUST_NAME "
 				+ ",		tccm.PRES_NAME "
 				+ ",		tcc.CODE_NAME as ESMT_CURR "
 				+ ",		DATE_FORMAT(tbimc.SUBMIT_DATE, '%Y-%m-%d %H:%i') as SUBMIT_DATE "
 				+ ",		(select tccu.USER_NAME from t_co_cust_user tccu where tccu.CUST_CODE = tbimc.CUST_CODE AND tccu.USER_TYPE = '1' LIMIT 1) AS DAMDANG_NAME "
 				+ ",		tbimc.ESMT_YN "
+				+ ",		tbimc.ESMT_AMT "
+				+ ",		tbimc.ETC_B_FILE as ETC_FILE "
 				+ ",		tbimc.ETC_B_FILE_PATH as ETC_PATH "
 				+ "from t_bi_info_mat_cust tbimc "
 				+ "inner join t_co_cust_master tccm "
@@ -571,6 +576,7 @@ public class BidStatusService {
 				+	",		tbimc.ENC_QUTN "
 				+	",		tbimc.ENC_ESMT_SPEC "
 				+	",		tbim.INS_MODE "
+				+	",		tbimc.BI_ORDER "
 				+	"FROM	t_bi_info_mat_cust tbimc " 
 				+	"INNER JOIN	t_bi_info_mat tbim "
 				+	"	ON	tbimc.BI_NO = tbim.BI_NO "
@@ -586,69 +592,75 @@ public class BidStatusService {
 			
 			for(BidCustDto custDto : custList) {
 				
-				//복호화한 값 입력
-				String fileId = null;
-				String esmtAmt = null;
-				ArrayList<Object> esmtSpec = new ArrayList<Object>();
-				
-				//견적금액 복호화
+				//총 견적금액 복호화 (encQutn -> encQutn)
+				String encQutn = custDto.getEncQutn();
 				
 				
-				//내역방식이 파일 등록일 경우
-				if(custDto.getInsMode().equals("1")) {
-					//파일 복호화
-					
-				//내역방식이 직접입력일 경우
-				}else if(custDto.getInsMode().equals("2")) {
-					//직접입력 정보 복호화
-					
-				}
+				
+				
+				
+				
 				
 				//복호화 후 업데이트
 				StringBuilder sbCust = new StringBuilder(
 						"UPDATE	t_bi_info_mat_cust " 
 				+		"set	ESMT_AMT = :esmtAmt "
-				);
-				
-				//파일등록일 경우
-				if(custDto.getInsMode().equals("1")) {
-					sbCust.append(
-						",		FILE_ID = :fileId "
-					);
-					
-				}
-				
-				sbCust.append(
-						",		SUBMIT_DATE = sysdate() "
-					+	",		UPDATE_DATE = sysdate() "
-					+	",		UPDATE_USER = :userId "
-					+	"WHERE bi_no = :biNo "
+				+		",		SUBMIT_DATE = sysdate() "
+				+		",		UPDATE_DATE = sysdate() "
+				+		",		UPDATE_USER = :userId "
+				+		"WHERE bi_no = :biNo "
+				+		"AND CUST_CODE = :custCode "
 				);
 				
 				Query queryCust = entityManager.createNativeQuery(sbCust.toString());
-				queryCust.setParameter("fileId", fileId);
-				queryCust.setParameter("esmtAmt", esmtAmt);
+				queryCust.setParameter("esmtAmt", encQutn);
 				queryCust.setParameter("userId", userId);
 				queryCust.setParameter("biNo", custDto.getBiNo());
+				queryCust.setParameter("custCode", custDto.getCustCode());
 				queryCust.executeUpdate();
+				
+				//협력사 입찰 temp 테이블 insert
+				this.insertBiInfoMatCustTemp(custDto.getBiNo(), custDto.getCustCode());
 				
 				//직접입력일 경우 협력사 직접입력 테이블 insert
 				if(custDto.getInsMode().equals("2")) {
+					//직접입력 정보 복호화(encEsmtSpec -> encEsmtSpec)
+					String encEsmtSpec = custDto.getEncEsmtSpec();
 					
-					for(Object obj : esmtSpec) {
+					
+					
+					
+					
+					
+					
+					if(!encEsmtSpec.equals("")) {
+						//직접입력 복호화
+						String[] esmtSpecArr = encEsmtSpec.split("‡");
 						
-						String seq = null;
-						String esmtUc = null;
-						
-						StringBuilder sbCustDetail = new StringBuilder(
-								"INSERT INTO t_bi_detail_mat_cust (bi_no,cust_code,seq,esmt_uc) VALUES (:biNo, :custCode, :seq, :esmtUc)"
-						);
-						Query queryCustDetail = entityManager.createNativeQuery(sbCustDetail.toString());
-						queryCustDetail.setParameter("biNo", custDto.getBiNo());
-						queryCustDetail.setParameter("custCode", custDto.getCustCode());
-						queryCustDetail.setParameter("seq", seq);
-						queryCustDetail.setParameter("esmtUc", esmtUc);
-						queryCustDetail.executeUpdate();
+						for(String esmtSpec : esmtSpecArr) {
+							
+							String[] info = esmtSpec.split("=");
+							
+							//입찰 직접입력 테이블(t_bi_detail_mat_cust)에 insert
+							TBiDetailMatCust tBiDetailMatCust = new TBiDetailMatCust();
+							tBiDetailMatCust.setBiNo(custDto.getBiNo());
+							tBiDetailMatCust.setSeq(CommonUtils.getInt(info[0]));
+							tBiDetailMatCust.setCustCode(CommonUtils.getInt(custDto.getCustCode()));
+							tBiDetailMatCust.setEsmtUc(new BigDecimal(info[1]));
+							
+							entityManager.persist(tBiDetailMatCust);
+							
+							//입찰 직접입력 테이블 차수(t_bi_detail_mat_cust_temp)에 insert
+							TBiDetailMatCustTemp tBiDetailMatCustTemp = new TBiDetailMatCustTemp();
+							tBiDetailMatCustTemp.setBiNo(custDto.getBiNo());
+							tBiDetailMatCustTemp.setSeq(CommonUtils.getInt(info[0]));
+							tBiDetailMatCustTemp.setCustCode(CommonUtils.getInt(custDto.getCustCode()));
+							tBiDetailMatCustTemp.setBiOrder(custDto.getBiOrder());
+							tBiDetailMatCustTemp.setEsmtUc(new BigDecimal(info[1]));
+							
+							entityManager.persist(tBiDetailMatCustTemp);
+							
+						}
 					}
 				}
 			}
@@ -906,6 +918,33 @@ public class BidStatusService {
 		}
 		
 		return resultBody;
+	}
+	
+	/**
+	 * 입찰 협력업체 차수 등록
+	 */
+	public void insertBiInfoMatCustTemp(String biNo, Integer custCode) {
+		if(!StringUtils.isEmpty(biNo) && !StringUtils.isEmpty(custCode)) {
+			StringBuilder sbHist = new StringBuilder( // 입찰 hist 업데이트
+				  "insert into t_bi_info_mat_cust_temp( "
+				+ "BI_NO, CUST_CODE, BI_ORDER, REBID_ATT, ESMT_YN, ESMT_AMT, SUCC_YN "
+				+ ", ENC_QUTN, ENC_ESMT_SPEC, FILE_ID, SUBMIT_DATE, CREATE_USER, CREATE_DATE "
+				+ ", UPDATE_USER, UPDATE_DATE, ESMT_CURR, ETC_B_FILE, FILE_HASH_VALUE, ETC_B_FILE_PATH "
+				+ ") select  "
+				+ "BI_NO, CUST_CODE, BI_ORDER, REBID_ATT, ESMT_YN, ESMT_AMT, SUCC_YN "
+				+ ", ENC_QUTN, ENC_ESMT_SPEC, FILE_ID, SUBMIT_DATE, CREATE_USER, CREATE_DATE "
+				+ ", UPDATE_USER, UPDATE_DATE, ESMT_CURR, ETC_B_FILE, FILE_HASH_VALUE, ETC_B_FILE_PATH "
+				+ "from t_bi_info_mat_cust tbimc "
+				+ "where tbimc.BI_NO = :biNo "
+				+ "and tbimc.CUST_CODE = :custCode "
+			);
+	
+			Query histQuery = entityManager.createNativeQuery(sbHist.toString());
+			histQuery.setParameter("biNo", biNo);
+			histQuery.setParameter("custCode", custCode);
+	
+			histQuery.executeUpdate();
+		}
 	}
 	
     public Page submitHist(@RequestBody Map<String, Object> params) {

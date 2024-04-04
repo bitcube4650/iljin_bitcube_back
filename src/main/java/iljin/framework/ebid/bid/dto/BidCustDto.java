@@ -8,7 +8,7 @@ import lombok.Data;
 @Data
 public class BidCustDto {
 	String biNo;			//입찰번호
-	String custCode;		//협력사코드
+	Integer custCode;		//협력사코드
 	String custName;		//협력사명
 	String presName;		//대표자명
 	String esmtCurr;		//통화
@@ -31,7 +31,10 @@ public class BidCustDto {
 	String encEsmtSpec;		//협력사 입찰 직접입력정보 (암호화)
 	String insMode;			//입찰 내역방식
 	
-	public BidCustDto(String biNo, String custCode, String custName, String presName, String esmtCurr, 
+	Short biOrder;			//입찰 차수
+	
+	//그룹사, 협력사 입찰완료 상세 - 업체견적사항
+	public BidCustDto(String biNo, Integer custCode, String custName, String presName, String esmtCurr, 
 			BigDecimal esmtAmt, String submitDate, String damdangName, String updateDate, 
 			String esmtYn, String fileNm, String filePath, String succYn, String etcFile, String etcPath){
 		this.biNo = biNo;			
@@ -51,6 +54,7 @@ public class BidCustDto {
 		this.etcPath = etcPath;	
 	}
 	
+	//투찰 정보 팝업
 	public BidCustDto(String biNo, String biName, String custName, BigDecimal esmtAmt, String submitDate, String succYn) {
 		this.biNo = biNo;
 		this.biName = biName;
@@ -59,9 +63,9 @@ public class BidCustDto {
 		this.submitDate = submitDate;
 		this.succYn = succYn;
 	}
-	
-	//입찰진행 - 업체견적사항
-	public BidCustDto(String biNo, String custCode, String custName, String presName, String esmtCurr, String submitDate, String damdangName, String esmtYn, String etcPath) {
+		
+	//입찰진행상세 - 업체견적사항
+	public BidCustDto(String biNo, Integer custCode, String custName, String presName, String esmtCurr, String submitDate, String damdangName, String esmtYn, BigDecimal esmtAmt, String etcFile, String etcPath) {
 		this.biNo = biNo;
 		this.custCode = custCode;
 		this.custName = custName;
@@ -70,16 +74,19 @@ public class BidCustDto {
 		this.submitDate = submitDate;
 		this.damdangName = damdangName;
 		this.esmtYn = esmtYn;
+		this.esmtAmt = esmtAmt;
 		this.etcPath = etcPath;
+		this.etcFile = etcFile;
 	}
 	
 	//입찰진행 - 개찰
-	public BidCustDto(String biNo, String custCode, String fileId, String encQutn, String encEsmtSpec, String insMode) {
+	public BidCustDto(String biNo, Integer custCode, String fileId, String encQutn, String encEsmtSpec, String insMode, Short biOrder) {
 		this.biNo = biNo;
 		this.custCode = custCode;
 		this.fileId = fileId;
 		this.encQutn = encQutn;
 		this.encEsmtSpec = encEsmtSpec;
 		this.insMode = insMode;
+		this.biOrder = biOrder;
 	}
 }
