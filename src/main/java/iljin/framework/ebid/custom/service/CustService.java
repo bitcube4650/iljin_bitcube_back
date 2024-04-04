@@ -474,8 +474,7 @@ public class CustService {
             sbQuery = new StringBuilder(" SELECT user_email FROM t_co_user WHERE user_auth = '2' AND use_yn = 'Y' AND interrelated_cust_code = :interrelatedCustCode)");
             query = entityManager.createNativeQuery(sbQuery.toString());
             query.setParameter("interrelatedCustCode", params.get("interrelatedCustCode"));
-            query.getResultList();
-            List<String> list = new JpaResultMapper().list(query, String.class);
+            List<String> list = (List<String>) query.getResultList();
 
             // 회원가입 승인요청 메일 저장 처리
             for (String userEmail : list) {
