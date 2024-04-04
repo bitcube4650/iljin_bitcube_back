@@ -149,7 +149,7 @@ public class BidPartnerStatusService {
 				);
 			}else if(!noticeYn && participateYn && !rebidYn) {
 				sbWhere.append(
-					  "and tbim.ING_TAG = 'A1' "
+					  "and tbim.ING_TAG IN ( 'A1', 'A3' ) "
 					+ "and tbimc.ESMT_YN IN ('2') "
 				);
 			}else if(!noticeYn && !participateYn && rebidYn) {
