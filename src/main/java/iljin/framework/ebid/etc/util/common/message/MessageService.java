@@ -40,6 +40,7 @@ public class MessageService {
      * @param sendName 보낸사람(비밀번호/아이디 찾기 등 시스템에서 보낼 경우 일진그룹)
      * @param rPhone 수신자 번호
      * @param recvName 수신자명
+     * @param msg 메시지 내용
      * @param biNo 입찰과 관련된 문자일 경우 입찰번호 그외엔 NULL
      */
     public void send(String sendName, String rPhone,  String recvName, String msg, String biNo) {
