@@ -12,6 +12,16 @@ public class ScheduleRepository {
     @PersistenceContext
     private EntityManager em;
 
+    public List<String> selectByDeleteByIngTag() {
+        String selectByDeleteByIngTag = "SELECT BI_NO " +
+                                        "FROM t_Bi_info_mat " +
+                                        "WHERE DATE(EST_CLOSE_DATE) < CURDATE() " +
+                                        "AND ING_TAG = 'A0'";
+
+        return em.createNativeQuery(selectByDeleteByIngTag)
+                .getResultList();
+    }
+
     public void deleteByIngTag() {
         String deleteByIngTag = "DELETE FROM t_Bi_info_mat " +
                                 "WHERE DATE(EST_CLOSE_DATE) < CURDATE() " +
@@ -20,6 +30,18 @@ public class ScheduleRepository {
         em.createNativeQuery(deleteByIngTag)
                 .executeUpdate();
     }
+
+    public List<String> selectBiNoForLast30Days() {
+        String selectBiNoForLast30Days = "SELECT BI_NO " +
+                                           "FROM T_BI_INFO_MAT " +
+                                           "WHERE DATE(BID_OPEN_DATE) < DATE_SUB(CURDATE(), INTERVAL 30 DAY) " +
+                                           "AND (ING_TAG = 'A1' or ING_TAG  = 'a2' or ING_TAG = 'A3')";
+                return em.createNativeQuery(selectBiNoForLast30Days)
+                        .getResultList();
+    }
+
+
+
     public void updateIngTagForLast30Days() {
         String updateIngTagForLast30Days = "UPDATE T_BI_INFO_MAT SET ING_TAG = 'A7' " +
                                             "WHERE DATE(BID_OPEN_DATE) < DATE_SUB(CURDATE(), INTERVAL 30 DAY) " +
