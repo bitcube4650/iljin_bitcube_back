@@ -261,6 +261,10 @@ public class BidStatusService {
 				+ ",		tbim.MAT_FACTORY "
 				+ ",		tbim.MAT_FACTORY_LINE "
 				+ ",		tbim.MAT_FACTORY_CNT "
+				+ ",		tbim.OPEN_ATT1 as OPEN_ATT1_ID "
+				+ ",		tbim.OPEN_ATT2 as OPEN_ATT2_ID "
+				+ ",		CASE WHEN tbim.OPEN_ATT1 IS NOT NULL AND tbim.OPEN_ATT1 != '' THEN tbim.OPEN_ATT1_SIGN ELSE 'Y' END AS OPEN_ATT1_SIGN "
+				+ ",		CASE WHEN tbim.OPEN_ATT2 IS NOT NULL AND tbim.OPEN_ATT2 != '' THEN tbim.OPEN_ATT2_SIGN ELSE 'Y' END AS OPEN_ATT2_SIGN "
 				+ "from t_bi_info_mat tbim "
 				+ "left outer join t_co_user tcu "
 				+ "	on tbim.GONGO_ID = tcu.USER_ID "
@@ -331,6 +335,8 @@ public class BidStatusService {
 				+ ",		(select tccu.USER_NAME from t_co_cust_user tccu where tccu.CUST_CODE = tbimc.CUST_CODE AND tccu.USER_TYPE = '1' LIMIT 1) AS DAMDANG_NAME "
 				+ ",		tbimc.ESMT_YN "
 				+ ",		tbimc.ESMT_AMT "
+				+ ",		tbu.FILE_NM "
+				+ ",		tbu.FILE_PATH "
 				+ ",		tbimc.ETC_B_FILE as ETC_FILE "
 				+ ",		tbimc.ETC_B_FILE_PATH as ETC_PATH "
 				+ "from t_bi_info_mat_cust tbimc "
@@ -339,6 +345,9 @@ public class BidStatusService {
 				+ "left outer join t_co_code tcc "
 				+ "	on tcc.COL_CODE = 'T_CO_RATE' "
 				+ "	and tbimc.ESMT_CURR = tcc.CODE_VAL "
+				+ "left outer join t_bi_upload tbu "
+				+ "	on tbimc.FILE_ID = tbu.FILE_ID "
+				+ "	and tbu.FILE_FLAG = 'C' "
 			);
 			
 			//조건문 쿼리 삽입
@@ -948,8 +957,8 @@ public class BidStatusService {
 	}
 	
     public Page submitHist(@RequestBody Map<String, Object> params) {
-        String biNo = (String) params.get("biNo");
-        String custCode = (String) params.get("custCode");
+        String biNo = CommonUtils.getString(params.get("biNo"));
+        String custCode = CommonUtils.getString(params.get("custCode"));
 
         StringBuilder sbCount = new StringBuilder("");
         StringBuilder sbList = new StringBuilder("");
@@ -1032,23 +1041,47 @@ public class BidStatusService {
         return new JpaResultMapper().list(itemlistQ, ItemDto.class);
     }
 
-    public void updateSign(@RequestBody Map<String, Object> params) {
-        StringBuilder sbList = new StringBuilder(
-            "UPDATE t_bi_info_mat SET ");
-        if((Boolean) params.get("att1")){
-            sbList.append("open_att1_sign = 'Y' ");
-        }    
-        if((Boolean) params.get("att1") && (Boolean) params.get("att2")){
-            sbList.append(",");
-        }  
-        if((Boolean) params.get("att2")){
-            sbList.append("open_att2_sign = 'Y' ");
-        }
-        sbList.append("where bi_no = :biNo");
-        
-        Query queryList = entityManager.createNativeQuery(sbList.toString());
-        queryList.setParameter("biNo", (String) params.get("biNo"));
-        queryList.executeUpdate();
-    }
+//    public void updateSign(@RequestBody Map<String, Object> params) {
+//        StringBuilder sbList = new StringBuilder(
+//            "UPDATE t_bi_info_mat SET ");
+//        if((Boolean) params.get("att1")){
+//            sbList.append("open_att1_sign = 'Y' ");
+//        }    
+//        if((Boolean) params.get("att1") && (Boolean) params.get("att2")){
+//            sbList.append(",");
+//        }  
+//        if((Boolean) params.get("att2")){
+//            sbList.append("open_att2_sign = 'Y' ");
+//        }
+//        sbList.append("where bi_no = :biNo");
+//        
+//        Query queryList = entityManager.createNativeQuery(sbList.toString());
+//        queryList.setParameter("biNo", (String) params.get("biNo"));
+//        queryList.executeUpdate();
+//    }
 
+
+	/**
+	 * 입회자 서명
+	 * @param params
+	 * @return
+	 */
+	@Transactional
+	public ResultBody attSign(@RequestBody Map<String, Object> params) {
+
+		ResultBody resultBody = new ResultBody();
+		
+		String userId = CommonUtils.getString(params.get("attPw"));
+		String password = CommonUtils.getString(params.get("attPw"));
+		
+		try {
+			
+//			return userService.checkPassword(userId, password);
+		
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		
+		return resultBody;
+	}
 }

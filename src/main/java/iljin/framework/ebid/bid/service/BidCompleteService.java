@@ -286,6 +286,7 @@ public class BidCompleteService {
 				+ "	and tbimc.ESMT_CURR = tcc.CODE_VAL "
 				+ "left outer join t_bi_upload tbu "
 				+ "	on tbimc.FILE_ID = tbu.FILE_ID "
+				+ "	and tbu.FILE_FLAG = 'C' "
 			);
 			
 			//조건문 쿼리 삽입

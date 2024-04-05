@@ -83,13 +83,19 @@ public class BidStatusController {
         return bidStatusService.itemlist(params);
     }
 
+    /**
+     * 낙찰
+     * @param params
+     * @return
+     */
     @PostMapping("/bidSucc")
     public ResultBody bidSucc(@RequestBody Map<String, Object> params) {
         return bidStatusService.bidSucc(params);
     }
 
-    @PostMapping("/updateSign")
-    public void updateSign(@RequestBody Map<String, Object> params) {
+    @PostMapping("/attSign")
+    public ResultBody attSign(@RequestBody Map<String, Object> params) {
+    	return bidStatusService.attSign(params);
     }
     
     /**

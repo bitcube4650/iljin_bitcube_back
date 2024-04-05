@@ -26,7 +26,7 @@ public class BidCustDto {
 	
 	String biName;			//입찰명
 	
-	String fileId;			//투찰파일 id (암호화)
+	Integer fileId;			//투찰파일 id (암호화)
 	String encQutn;			//견적금액 (암호화)
 	String encEsmtSpec;		//협력사 입찰 직접입력정보 (암호화)
 	String insMode;			//입찰 내역방식
@@ -65,7 +65,8 @@ public class BidCustDto {
 	}
 		
 	//입찰진행상세 - 업체견적사항
-	public BidCustDto(String biNo, Integer custCode, String custName, String presName, String esmtCurr, String submitDate, String damdangName, String esmtYn, BigDecimal esmtAmt, String etcFile, String etcPath) {
+	public BidCustDto(String biNo, Integer custCode, String custName, String presName, String esmtCurr, 
+			String submitDate, String damdangName, String esmtYn, BigDecimal esmtAmt, String fileNm, String filePath, String etcFile, String etcPath) {
 		this.biNo = biNo;
 		this.custCode = custCode;
 		this.custName = custName;
@@ -77,10 +78,12 @@ public class BidCustDto {
 		this.esmtAmt = esmtAmt;
 		this.etcPath = etcPath;
 		this.etcFile = etcFile;
+		this.fileNm = fileNm;
+		this.filePath = filePath;
 	}
 	
 	//입찰진행 - 개찰
-	public BidCustDto(String biNo, Integer custCode, String fileId, String encQutn, String encEsmtSpec, String insMode, Short biOrder) {
+	public BidCustDto(String biNo, Integer custCode, Integer fileId, String encQutn, String encEsmtSpec, String insMode, Short biOrder) {
 		this.biNo = biNo;
 		this.custCode = custCode;
 		this.fileId = fileId;
