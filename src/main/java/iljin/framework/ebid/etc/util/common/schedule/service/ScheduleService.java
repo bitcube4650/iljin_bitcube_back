@@ -34,7 +34,7 @@ public class ScheduleService {
         scheduleRepository.deleteByIngTag();
 
         //로그 입력
-        for(int i = 0; i < 1; i++) {
+        for(int i = 0; i < biNoList.size(); i++) {
             //로그입력
             Map<String, String> logParams = new HashMap<>();
             logParams.put("msg", "[본사] 자동 입찰계획 삭제");
