@@ -135,7 +135,7 @@ public class StatisticsService {
 			
 		}catch(Exception e) {
 			log.error("interrelatedCustCodeList list error : {}", e);
-			resultBody.setCode("999");
+			resultBody.setCode("fail");
 			resultBody.setMsg("계열사 리스트를 가져오는것을 실패하였습니다.");
 		}
 		
@@ -252,7 +252,7 @@ public class StatisticsService {
 			
 		}catch(Exception e) {
 			log.error("bidDetailList list error : {}", e);
-			resultBody.setCode("999");
+			resultBody.setCode("fail");
 			resultBody.setMsg("입찰상세내역 리스트를 가져오는것을 실패하였습니다.");	
 		}
 		
@@ -459,7 +459,7 @@ public class StatisticsService {
 			
 		}catch(Exception e) {
 			log.error("bidDetailList list error : {}", e);
-			resultBody.setCode("999");
+			resultBody.setCode("fail");
 			resultBody.setMsg("입찰실적 상세내역 리스트를 가져오는 것을 실패하였습니다.");	
 		}
 		

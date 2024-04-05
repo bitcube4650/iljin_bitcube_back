@@ -202,7 +202,7 @@ public class BidPartnerStatusService {
 			
 		}catch(Exception e) {
 			log.error("bidPartnerStatusService statuslist list error : {}", e);
-			resultBody.setCode("999");
+			resultBody.setCode("fail");
 			resultBody.setMsg("입찰 진행 리스트를 가져오는것을 실패하였습니다.");	
 		}
 		return resultBody;
@@ -423,7 +423,7 @@ public class BidPartnerStatusService {
 			
 		}catch(Exception e) {
 			log.error("bidStatusDetail error : {}", e);
-			resultBody.setCode("999");
+			resultBody.setCode("fail");
 			resultBody.setMsg("입찰진행 상세 데이터를 가져오는것을 실패하였습니다.");
 		}
 		

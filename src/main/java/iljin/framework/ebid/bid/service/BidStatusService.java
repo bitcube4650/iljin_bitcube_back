@@ -203,7 +203,7 @@ public class BidStatusService {
 			
 		}catch(Exception e) {
 			log.error("statuslist list error : {}", e);
-			resultBody.setCode("999");
+			resultBody.setCode("fail");
 			resultBody.setMsg("입찰 진행 리스트를 가져오는것을 실패하였습니다.");	
 		}
 		
@@ -492,7 +492,7 @@ public class BidStatusService {
 			
 		}catch(Exception e) {
 			log.error("statusDetail error : {}", e);
-			resultBody.setCode("999");
+			resultBody.setCode("fail");
 			resultBody.setMsg("입찰진행 상세 데이터를 가져오는것을 실패하였습니다.");
 		}
 		
@@ -553,7 +553,7 @@ public class BidStatusService {
 			}
 		}catch(Exception e) {
 			log.error("bidFailure error : {}", e);
-			resultBody.setCode("999");
+			resultBody.setCode("fail");
 			resultBody.setMsg("유찰 처리중 오류가 발생했습니다.");
 		}
 		
@@ -705,7 +705,7 @@ public class BidStatusService {
 			}
 		}catch(Exception e) {
 			log.error("bidOpening error : {}", e);
-			resultBody.setCode("999");
+			resultBody.setCode("fail");
 			resultBody.setMsg("개찰 처리중 오류가 발생했습니다.");	
 		}
 		
@@ -787,7 +787,7 @@ public class BidStatusService {
 			
 		}catch(Exception e) {
 			log.error("bidSucc error : {}", e);
-			resultBody.setCode("999");
+			resultBody.setCode("fail");
 			resultBody.setMsg("낙찰 처리중 오류가 발생했습니다.");	
 		}
 
@@ -923,7 +923,7 @@ public class BidStatusService {
 	
 		}catch(Exception e) {
 			log.error("rebid error : {}", e);
-			resultBody.setCode("999");
+			resultBody.setCode("fail");
 			resultBody.setMsg("재입찰 처리 중 오류가 발생했습니다.");	
 		}
 		
