@@ -35,7 +35,7 @@ public class ScheduleRepository {
         String selectBiNoForLast30Days = "SELECT BI_NO " +
                                            "FROM T_BI_INFO_MAT " +
                                            "WHERE DATE(BID_OPEN_DATE) < DATE_SUB(CURDATE(), INTERVAL 30 DAY) " +
-                                           "AND (ING_TAG = 'A1' or ING_TAG  = 'a2' or ING_TAG = 'A3')";
+                                           "AND (ING_TAG = 'A1' or ING_TAG  = 'A2' or ING_TAG = 'A3')";
                 return em.createNativeQuery(selectBiNoForLast30Days)
                         .getResultList();
     }
