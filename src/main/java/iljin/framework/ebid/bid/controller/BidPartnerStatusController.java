@@ -8,6 +8,8 @@ import iljin.framework.ebid.bid.service.BidPartnerStatusService;
 import iljin.framework.ebid.bid.service.BidProgressService;
 import iljin.framework.ebid.bid.service.BidStatusService;
 import iljin.framework.ebid.custom.entity.TCoItem;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.Page;
@@ -25,6 +27,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/v1/bidPtStatus")
 @CrossOrigin
+@Slf4j
 public class BidPartnerStatusController {
     @Autowired
     private BidPartnerStatusService bidPartnerStatusService;
@@ -46,7 +49,13 @@ public class BidPartnerStatusController {
 	 */
 	@PostMapping("/checkBid")
 	public ResultBody checkBid(@RequestBody Map<String, Object> params) {
-		return bidPartnerStatusService.checkBid(params);
+		ResultBody resultBody = new ResultBody();
+		try {
+			resultBody = bidPartnerStatusService.checkBid(params); 
+		}catch(Exception e) {
+			log.error("rebid error : {}", e);
+		}
+		return resultBody;
 	}
 	
 	/**
@@ -91,7 +100,9 @@ public class BidPartnerStatusController {
 			params = mapper.readValue(jsonData, Map.class);
 			resultBody = bidPartnerStatusService.bidSubmitting(params, detailFile, etcFile, user);
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("bidSubmitting error : {}", e);
+			resultBody.setCode("ERROR");
+			resultBody.setStatus(999);
 		} 
 		return resultBody;
 	}

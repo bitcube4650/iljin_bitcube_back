@@ -110,10 +110,6 @@ public class BidProgressController {
         return bidProgressService.insertBid(params);
     }
 
-    @PostMapping("/updateEmail")
-    public void updateEmail(@RequestBody Map<String, String> params) {
-    }
-
     @PostMapping("/pastBidList")
     public Page pastBidList(@RequestBody Map<String, Object> params) {
         return bidProgressService.pastBidList(params);
