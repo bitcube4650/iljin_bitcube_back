@@ -26,7 +26,7 @@ public class TCoBoardNotice {
 	@Column(name="b_no")
 	Integer bNo;
 	
-	@Column(name="b_userid")
+	@Column(name="b_userid", updatable=false)
 	String bUserid;
 	
 	@Column(name="b_title")
