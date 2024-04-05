@@ -6,6 +6,8 @@ import iljin.framework.ebid.bid.dto.ItemDto;
 import iljin.framework.ebid.bid.service.BidProgressService;
 import iljin.framework.ebid.bid.service.BidStatusService;
 import iljin.framework.ebid.custom.entity.TCoItem;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.Page;
@@ -23,6 +25,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/v1/bidstatus")
 @CrossOrigin
+@Slf4j
 public class BidStatusController {
     @Autowired
     private BidStatusService bidStatusService;
@@ -34,7 +37,15 @@ public class BidStatusController {
 	 */
 	@PostMapping("/statuslist")
 	public ResultBody statuslist(@RequestBody Map<String, Object> params) {
-		return bidStatusService.statuslist(params);
+		ResultBody resultBody = new ResultBody();
+		try {
+			resultBody = bidStatusService.statuslist(params); 
+		}catch(Exception e) {
+			log.error("statuslist list error : {}", e);
+			resultBody.setCode("fail");
+			resultBody.setMsg("입찰 진행 리스트를 가져오는것을 실패하였습니다.");	
+		}
+		return resultBody;
 	}
 
 	/**
@@ -44,7 +55,15 @@ public class BidStatusController {
 	 */
 	@PostMapping("/statusDetail")
 	public ResultBody progresslistDetail(@RequestBody Map<String, Object> param) {
-		return bidStatusService.statusDetail(param);
+		ResultBody resultBody = new ResultBody();
+		try {
+			resultBody = bidStatusService.statusDetail(param); 
+		}catch(Exception e) {
+			log.error("statusDetail error : {}", e);
+			resultBody.setCode("fail");
+			resultBody.setMsg("입찰진행 상세 데이터를 가져오는것을 실패하였습니다.");
+		}
+		return resultBody;
 	}
 	
 	/**
@@ -54,7 +73,15 @@ public class BidStatusController {
 	 */
 	@PostMapping("/bidFailure")
 	public ResultBody bidFailure(@RequestBody Map<String, String> params) {
-		return bidStatusService.bidFailure(params);
+		ResultBody resultBody = new ResultBody();
+		try {
+			resultBody = bidStatusService.bidFailure(params); 
+		}catch(Exception e) {
+			log.error("bidFailure error : {}", e);
+			resultBody.setCode("fail");
+			resultBody.setMsg("유찰 처리중 오류가 발생했습니다.");
+		}
+		return resultBody;
 	}
 
 	/**
@@ -62,10 +89,18 @@ public class BidStatusController {
 	 * @param params
 	 * @return
 	 */
-    @PostMapping("/rebid")
-    public ResultBody rebid(@RequestBody Map<String, Object> params) {
-        return bidStatusService.rebid(params);
-    }
+	@PostMapping("/rebid")
+	public ResultBody rebid(@RequestBody Map<String, Object> params) {
+		ResultBody resultBody = new ResultBody();
+		try {
+			resultBody = bidStatusService.rebid(params); 
+		}catch(Exception e) {
+			log.error("rebid error : {}", e);
+			resultBody.setCode("fail");
+			resultBody.setMsg("재입찰 처리 중 오류가 발생했습니다.");	
+		}
+		return resultBody;
+	}
 
     
     @PostMapping("/submitHist")
@@ -73,40 +108,58 @@ public class BidStatusController {
         return bidStatusService.submitHist(params);
     }
 
-    @PostMapping("/rebidCust")
-    public ResultBody rebidCust(@RequestBody List<Map<String, Object>> params) {
-        return bidStatusService.rebidCust(params);
-    }
 
-    @PostMapping("/itemlist")
-    public List<ItemDto> itemlist(@RequestBody Map<String, Object> params) {
-        return bidStatusService.itemlist(params);
-    }
-
-    /**
-     * 낙찰
-     * @param params
-     * @return
-     */
-    @PostMapping("/bidSucc")
-    public ResultBody bidSucc(@RequestBody Map<String, Object> params) {
-        return bidStatusService.bidSucc(params);
-    }
-
-    @PostMapping("/attSign")
-    public ResultBody attSign(@RequestBody Map<String, Object> params) {
-    	return bidStatusService.attSign(params);
-    }
-    
-    /**
-     * 개찰하기
-     * @param params
-     * @return
-     */
-    @PostMapping("/bidOpening")
-    public ResultBody bidOpening(@RequestBody Map<String, String> params) {
-        return bidStatusService.bidOpening(params);
-    }
-    
-    
+	/**
+	 * 낙찰
+	 * @param params
+	 * @return
+	 */
+	@PostMapping("/bidSucc")
+	public ResultBody bidSucc(@RequestBody Map<String, Object> params) {
+		ResultBody resultBody = new ResultBody();
+		try {
+			resultBody = bidStatusService.bidSucc(params); 
+		}catch(Exception e) {
+			log.error("bidSucc error : {}", e);
+			resultBody.setCode("fail");
+			resultBody.setMsg("낙찰 처리중 오류가 발생했습니다.");	
+		}
+		return resultBody;
+	}
+	
+	/**
+	 * 입회자 서명
+	 * @param params
+	 * @return
+	 */
+	@PostMapping("/attSign")
+	public ResultBody attSign(@RequestBody Map<String, Object> params) {
+		ResultBody resultBody = new ResultBody();
+		try {
+			resultBody = bidStatusService.attSign(params); 
+		}catch(Exception e) {
+			log.error("attSign error : {}" , e);
+			resultBody.setCode("fail");
+		}
+		return resultBody;
+	}
+	
+	/**
+	 * 개찰하기
+	 * @param params
+	 * @return
+	 */
+	@PostMapping("/bidOpening")
+	public ResultBody bidOpening(@RequestBody Map<String, String> params) {
+		ResultBody resultBody = new ResultBody();
+		try {
+			resultBody = bidStatusService.bidOpening(params); 
+		}catch(Exception e) {
+			log.error("bidOpening error : {}", e);
+			resultBody.setCode("fail");
+			resultBody.setMsg("개찰 처리중 오류가 발생했습니다.");	
+		}
+		return resultBody;
+	}
+	
 }

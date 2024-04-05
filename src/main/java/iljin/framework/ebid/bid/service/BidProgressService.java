@@ -14,11 +14,12 @@ import iljin.framework.ebid.bid.dto.BidProgressFileDto;
 import iljin.framework.ebid.bid.dto.BidProgressListDetailDto;
 import iljin.framework.ebid.bid.dto.BidProgressTableDto;
 import iljin.framework.ebid.bid.dto.CoUserInfoDto;
-import iljin.framework.ebid.bid.dto.EmailDto;
+import iljin.framework.ebid.bid.dto.SendDto;
 import iljin.framework.ebid.bid.dto.InterUserInfoDto;
 import iljin.framework.ebid.bid.dto.InterrelatedCustDto;
 import iljin.framework.ebid.custom.entity.TCoUser;
 import iljin.framework.ebid.custom.repository.TCoUserRepository;
+import iljin.framework.ebid.etc.util.CommonUtils;
 import iljin.framework.ebid.etc.util.PagaUtils;
 import iljin.framework.ebid.etc.util.common.file.FileService;
 import lombok.SneakyThrows;
@@ -558,8 +559,10 @@ public class BidProgressService {
             logParams.put("userId", userId);
             updateLog(logParams);
         }
-
-        updateEmail(params);
+        
+        
+        Map<String, Object> emailParam = new HashMap<String, Object>();
+        updateEmail(emailParam);
 
         ResultBody resultBody = new ResultBody();
         return resultBody;
@@ -918,7 +921,8 @@ public class BidProgressService {
         queryList.setParameter("biNo", biNo);
         queryList.executeUpdate();
 
-        updateEmail(params);
+        Map<String, Object> emailParam = new HashMap<String, Object>();
+        updateEmail(emailParam);
         return resultBody;
     }
 
@@ -1009,98 +1013,90 @@ public class BidProgressService {
         return resultBody;
     }
     
-    /**
-     * 메일전송
-     * @param params
-     */
-    @Transactional
-    public void updateEmail(Map<String, String> params) {
-        String biNo = params.get("biNo");
-        String type = params.get("type"); // del : 입찰삭제 , notice : 입찰공고, insert: 입찰등록, fail: 유찰, rebid:재입찰,succ:낙찰
-        String biName = params.get("biName");
-        String reason = params.get("reason");
-        String interNm = params.get("interNm");
+	/**
+	 * 메일전송
+	 * @param params : (String) type, (String) biName, (String) reason, (String) interNm, (List<SendDto>) sendList
+	 */
+	public void updateEmail(Map<String, Object> params) {
+		List<SendDto> sendList = (List<SendDto>) params.get("sendList");		//수신인/발송인 메일 리스트
+		
+		//메일 내용 셋팅
+		Map<String, String> emailContent = this.emailContent(params);
+		
+		if (sendList != null) {
+			for (SendDto recvInfo : sendList) {
+				StringBuilder sbList = new StringBuilder(
+						"INSERT INTO t_email (title, conts, send_flag, create_date, receives, from_mail) VALUES " +
+								"(:title, :content, 'N', CURRENT_TIMESTAMP, :userEmail, :fromMail)");
 
-        String titleType = "";
-        String contentBody = "";
-        String contentReason = "";
-        StringBuilder userList = new StringBuilder("");
-
-        if (type.equals("del")) {
-            // 삭제인 경우 메일보내는 대상 등록
-            userList.append(
-                    "SELECT b.user_email from (SELECT * from t_bi_info_mat where bi_no = :biNo) a, t_co_user b where (a.gongo_id = b.user_id)");
-        } else {
-            userList.append(
-                    "SELECT b.user_email from (SELECT bi_no, cust_code from t_bi_info_mat_cust where bi_no =:biNo) a, t_co_cust_user b where b.cust_code = a.cust_code ");
-        }
-        Query query = entityManager.createNativeQuery(userList.toString());
-        query.setParameter("biNo", biNo);
-        List<String> receiverList = query.getResultList();
-
-        if (interNm == null && (type.equals("notice") || type.equals("insert") )) {
-            StringBuilder interCoList = new StringBuilder(
-                    "SELECT interrelated_cust_code from t_co_interrelated where interrelated_cust_code = :interCd");
-            Query cdQ = entityManager.createNativeQuery(interCoList.toString());
-            cdQ.setParameter("interCd", params.get("interCd"));
-            interNm = (String) cdQ.getSingleResult();
-        }
-
-        switch (type) {
-            case "del":
-                titleType = "입찰 계획 삭제";
-                contentBody = "입찰명 [" + biName + "] 입찰계획을\n삭제하였습니다.\n아래 삭제사유를 확인해 주십시오.\n\n";
-                contentReason = "-삭제사유\n" + reason;
-                break;
-            case "notice":
-                titleType = "입찰 공고";
-                contentBody = "[" + interNm + "]에서 입찰공고 하였습니다.\n입찰명은 [" + biName
-                        + "] 입니다.\n자세한 사항은 e-bidding 시스템에 로그인하여 확인해 주십시오.\n\n";
-            case "insert":
-                titleType = "계획 등록";
-                contentBody = "[" + interNm + "]에서 입찰계획을 등록하였습니다.\n입찰명은 [" + biName
-                        + "] 입니다.\n자세한 사항은 e-bidding 시스템에 로그인하여 확인해 주십시오.\n\n";
-                break;
-            case "fail":
-                titleType = "유찰 처리";
-                contentBody = "입찰명 [" + biName + "]를 유찰처리 하였습니다.\n" +
-                        "아래 유찰사유를 확인해 주십시오.\n\n";
-                contentReason = "-유찰사유\n" + reason;
-                break;
-            case "rebid":
-                titleType = "재입찰";
-                contentBody = "입찰명 [" + biName + "]이 재입찰\n되었습니다.\n" +
-                        "아래 재입찰사유를 확인해 주시고 e-bidding 시스템에\n" +
-                        "로그인하여 다시 한번 투찰해 주십시오\n\n";
-                contentReason = "-재입찰사유\n" + reason;
-                break;
-            case "succ":
-                titleType = "낙찰";
-                contentBody = "입찰명 [" + biName + "]에 업체선정\n되었습니다.\n" +
-                        "자세한 사항은 e-bidding 시스템에  로그인하여 입찰내용 확인 및\n" +
-                        "낙찰확인을 하시기 바랍니다.\n(낙찰확인은 계약과 관련없는 내부절차 입니다.)\n\n";
-                contentReason = "-추가합의사항\n" + reason;
-                break;
-        }
-        String title = "[일진그룹 e-bidding]" + titleType + "(" + biName + ")";
-        String content = contentBody + contentReason;
-
-        if (receiverList != null) {
-            for (String userEmail : receiverList) {
-                StringBuilder sbList = new StringBuilder(
-                        "INSERT INTO t_email (title, conts, send_flag, create_date, receives) VALUES " +
-                                "(:title, :content, 'N', CURRENT_TIMESTAMP, :userEmail)");
-
-                Query queryList = entityManager.createNativeQuery(sbList.toString());
-                queryList.setParameter("title", title);
-                queryList.setParameter("content", content);
-                queryList.setParameter("userEmail", userEmail);
-                queryList.executeUpdate();
-            }
-
-        }
-
-    }
+				Query queryList = entityManager.createNativeQuery(sbList.toString());
+				queryList.setParameter("title", emailContent.get("title"));
+				queryList.setParameter("content", emailContent.get("content"));
+				queryList.setParameter("userEmail", recvInfo.getUserEmail());
+				queryList.setParameter("fromMail", recvInfo.getFromEmail());
+				queryList.executeUpdate();
+			}
+		}
+	}
+		
+	//메일 제목 및 내용 셋팅
+	public Map<String, String> emailContent(Map<String, Object> params){
+		Map<String, String> result = new HashMap<String, String>();
+		
+		String type = CommonUtils.getString(params.get("type"));			// del : 입찰삭제 , notice : 입찰공고, insert: 입찰등록, fail: 유찰, rebid:재입찰,succ:낙찰
+		String biName = CommonUtils.getString(params.get("biName"));		//입찰명
+		String reason = CommonUtils.getString(params.get("reason"));		//사유
+		String interNm = CommonUtils.getString(params.get("interNm"));		//계열사명
+		
+		String title = "";
+		String content = "";
+		
+		//입찰 계획 삭제
+		if(type.equals("del")) {
+			title = "[일진그룹 e-bidding] 입찰 계획 삭제(" + biName + ")";
+			content = "입찰명 [" + biName + "] 입찰계획을\n삭제하였습니다.\n아래 삭제사유를 확인해 주십시오.\n\n"+
+						"-삭제사유\n" + reason;
+			
+		//입찰 공고
+		}else if(type.equals("notice")) {
+			title = "[일진그룹 e-bidding] 입찰 공고(" + biName + ")";
+			content = "[" + interNm + "]에서 입찰공고 하였습니다.\n입찰명은 [" + biName + "] 입니다.\n"
+					+ "자세한 사항은 e-bidding 시스템에 로그인하여 확인해 주십시오.\n\n";
+			
+		//입찰 계획 등록
+		}else if(type.equals("insert")) {
+			title = "[일진그룹 e-bidding] 계획 등록(" + biName + ")";
+			content = "[" + interNm + "]에서 입찰계획을 등록하였습니다.\n입찰명은 [" + biName + "] 입니다.\n"
+					+ "자세한 사항은 e-bidding 시스템에 로그인하여 확인해 주십시오.\n\n";
+			
+		//입찰 유찰처리
+		}else if(type.equals("fail")) {
+			title = "[일진그룹 e-bidding] 유찰 처리(" + biName + ")";
+			content = "입찰명 [" + biName + "]를 유찰처리 하였습니다.\n" +
+					"아래 유찰사유를 확인해 주십시오.\n\n"+
+					"-유찰사유\n" + reason;
+			
+		//재입찰
+		}else if(type.equals("rebid")) {
+			title = "[일진그룹 e-bidding] 재입찰(" + biName + ")";
+			content = "입찰명 [" + biName + "]이 재입찰\n되었습니다.\n" +
+					"아래 재입찰사유를 확인해 주시고 e-bidding 시스템에\n" +
+					"로그인하여 다시 한번 투찰해 주십시오\n\n"+
+					"-재입찰사유\n" + reason;
+			
+		//낙찰
+		}else if(type.equals("succ")) {
+			title = "[일진그룹 e-bidding] 낙찰(" + biName + ")";
+			content = "입찰명 [" + biName + "]에 업체선정\n되었습니다.\n" +
+					"자세한 사항은 e-bidding 시스템에  로그인하여 입찰내용 확인 및\n" +
+					"낙찰확인을 하시기 바랍니다.\n(낙찰확인은 계약과 관련없는 내부절차 입니다.)\n\n"+
+					"-추가합의사항\n" + reason;
+		}
+		
+		result.put("title", title);
+		result.put("content", content);
+		return result;
+	}
 
     /**
      * 입찰 로그

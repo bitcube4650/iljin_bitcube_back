@@ -202,7 +202,7 @@ public class BidPartnerStatusService {
 			
 		}catch(Exception e) {
 			log.error("bidPartnerStatusService statuslist list error : {}", e);
-			resultBody.setCode("999");
+			resultBody.setCode("fail");
 			resultBody.setMsg("입찰 진행 리스트를 가져오는것을 실패하였습니다.");	
 		}
 		return resultBody;
@@ -423,7 +423,7 @@ public class BidPartnerStatusService {
 			
 		}catch(Exception e) {
 			log.error("bidStatusDetail error : {}", e);
-			resultBody.setCode("999");
+			resultBody.setCode("fail");
 			resultBody.setMsg("입찰진행 상세 데이터를 가져오는것을 실패하였습니다.");
 		}
 		
@@ -546,77 +546,76 @@ public class BidPartnerStatusService {
 		//amt
 
 
+		//입찰협력업체(t_bi_info_mat_cust)에 반영
+		TBiInfoMatCustID tBiInfoMatCustId = new TBiInfoMatCustID();
+		
+		tBiInfoMatCustId.setBiNo(biNo);
+		tBiInfoMatCustId.setCustCode(custCode);
+		
+		Optional<TBiInfoMatCust> optional = tBiInfoMatCustRepository.findById(tBiInfoMatCustId);
+		TBiInfoMatCust tBiInfoMatCust = null;
+		
+		//기 등록된 입찰이 없을 경우 신규입찰생성
+		if(!optional.isPresent()) {
+			tBiInfoMatCust = new TBiInfoMatCust();
+			
+			tBiInfoMatCust.setBiNo(biNo);
+			tBiInfoMatCust.setCustCode(custCode);
+			tBiInfoMatCust.setEsmtYn("2");
+			tBiInfoMatCust.setCreateUser(userId);
+			tBiInfoMatCust.setCreateDate(currentDate);
+			tBiInfoMatCust.setUpdateUser(userId);
+			tBiInfoMatCust.setUpdateDate(currentDate);
+			tBiInfoMatCust.setEncQutn(amt);
+			tBiInfoMatCust.setRebidAtt("N");
+			tBiInfoMatCust.setBiOrder(1);
+			tBiInfoMatCust.setEsmtCurr(CommonUtils.getString(params.get("esmtCurr")));
+			
+		}else {
+			tBiInfoMatCust = optional.get();
+			tBiInfoMatCust.setEsmtYn("2");//esmt_yn( 업체투찰 flag  0-업체지정, 1-업체공고확인, 2-업체투찰)
+			tBiInfoMatCust.setUpdateUser(userId);
+			tBiInfoMatCust.setUpdateDate(currentDate);
+			tBiInfoMatCust.setEncQutn(amt);
+			tBiInfoMatCust.setRebidAtt(optional.get().getRebidAtt());
+			tBiInfoMatCust.setBiOrder(CommonUtils.getInt(optional.get().getBiOrder()) + 1);
+			tBiInfoMatCust.setEsmtCurr(CommonUtils.getString(params.get("esmtCurr")));
+		}
+		
+		//파일등록 방식
+		if(insModeCode.equals("1")) {
+			
+			//입찰파일테이블(t_bi_upload)에 insert
+			TBiUpload tBiUpload = new TBiUpload();
+			tBiUpload.setBiNo(biNo);
+			tBiUpload.setFileFlag("C");//(K : 세부내역, 0 : 첨부대내용, 1 : 첨부대외용, C : 업체투찰파일)
+			tBiUpload.setFCustCode(custCode);
+			tBiUpload.setFileNm(fileName);
+			tBiUpload.setFilePath(filePath);
+			tBiUpload.setCreateDate(currentDate);
+			tBiUpload.setUseYn("Y");
+			
+			entityManager.persist(tBiUpload);
+			
+			int fileId = tBiUpload.getFileId();//t_bi_upload에 insert한 견적내역파일 id
+			
+			tBiInfoMatCust.setFileId(fileId);
+			tBiInfoMatCust.setFileHashValue(fileHashValue);
+		//내역직접 방식
+		}else {
+			tBiInfoMatCust.setEncEsmtSpec(strItemList);
+		}
+		
+		//기타파일
+		if(etcFilePath != null && !etcFilePath.equals("")) {//기타첨부 파일이 있는 경우
+			tBiInfoMatCust.setEtcBFile(etcFileName);
+			tBiInfoMatCust.setEtcBFilePath(etcFilePath);
+		}			
+		
+		entityManager.persist(tBiInfoMatCust);
+		
+		//로그 남기기
 		try {
-			
-			//입찰협력업체(t_bi_info_mat_cust)에 반영
-			TBiInfoMatCustID tBiInfoMatCustId = new TBiInfoMatCustID();
-			
-			tBiInfoMatCustId.setBiNo(biNo);
-			tBiInfoMatCustId.setCustCode(custCode);
-			
-			Optional<TBiInfoMatCust> optional = tBiInfoMatCustRepository.findById(tBiInfoMatCustId);
-			TBiInfoMatCust tBiInfoMatCust = null;
-			
-			//기 등록된 입찰이 없을 경우 신규입찰생성
-			if(!optional.isPresent()) {
-				tBiInfoMatCust = new TBiInfoMatCust();
-				
-				tBiInfoMatCust.setBiNo(biNo);
-				tBiInfoMatCust.setCustCode(custCode);
-				tBiInfoMatCust.setEsmtYn("2");
-				tBiInfoMatCust.setCreateUser(userId);
-				tBiInfoMatCust.setCreateDate(currentDate);
-				tBiInfoMatCust.setUpdateUser(userId);
-				tBiInfoMatCust.setUpdateDate(currentDate);
-				tBiInfoMatCust.setEncQutn(amt);
-				tBiInfoMatCust.setRebidAtt("N");
-				tBiInfoMatCust.setBiOrder(1);
-				tBiInfoMatCust.setEsmtCurr(CommonUtils.getString(params.get("esmtCurr")));
-				
-			}else {
-				tBiInfoMatCust = optional.get();
-				tBiInfoMatCust.setEsmtYn("2");//esmt_yn( 업체투찰 flag  0-업체지정, 1-업체공고확인, 2-업체투찰)
-				tBiInfoMatCust.setUpdateUser(userId);
-				tBiInfoMatCust.setUpdateDate(currentDate);
-				tBiInfoMatCust.setEncQutn(amt);
-				tBiInfoMatCust.setRebidAtt(optional.get().getRebidAtt());
-				tBiInfoMatCust.setBiOrder(CommonUtils.getInt(optional.get().getBiOrder()) + 1);
-				tBiInfoMatCust.setEsmtCurr(CommonUtils.getString(params.get("esmtCurr")));
-			}
-			
-			//파일등록 방식
-			if(insModeCode.equals("1")) {
-				
-				//입찰파일테이블(t_bi_upload)에 insert
-				TBiUpload tBiUpload = new TBiUpload();
-				tBiUpload.setBiNo(biNo);
-				tBiUpload.setFileFlag("C");//(K : 세부내역, 0 : 첨부대내용, 1 : 첨부대외용, C : 업체투찰파일)
-				tBiUpload.setFCustCode(custCode);
-				tBiUpload.setFileNm(fileName);
-				tBiUpload.setFilePath(filePath);
-				tBiUpload.setCreateDate(currentDate);
-				tBiUpload.setUseYn("Y");
-				
-				entityManager.persist(tBiUpload);
-				
-				int fileId = tBiUpload.getFileId();//t_bi_upload에 insert한 견적내역파일 id
-				
-				tBiInfoMatCust.setFileId(fileId);
-				tBiInfoMatCust.setFileHashValue(fileHashValue);
-			//내역직접 방식
-			}else {
-				tBiInfoMatCust.setEncEsmtSpec(strItemList);
-			}
-			
-			//기타파일
-			if(etcFilePath != null && !etcFilePath.equals("")) {//기타첨부 파일이 있는 경우
-				tBiInfoMatCust.setEtcBFile(etcFileName);
-				tBiInfoMatCust.setEtcBFilePath(etcFilePath);
-			}			
-			
-			entityManager.persist(tBiInfoMatCust);
-			
-			//로그 남기기
 			TBiLog tBiLog = new TBiLog();
 			
 			tBiLog.setBiNo(biNo);
@@ -625,11 +624,8 @@ public class BidPartnerStatusService {
 			tBiLog.setCreateDate(currentDate);
 			
 			entityManager.persist(tBiLog);
-			
 		}catch(Exception e) {
-			log.error("bidSubmitting error : {}", e);
-			resultBody.setCode("ERROR");
-			resultBody.setStatus(999);
+			log.error("bidSubmitting log error : {}", e);
 		}
 			
 		return resultBody;
