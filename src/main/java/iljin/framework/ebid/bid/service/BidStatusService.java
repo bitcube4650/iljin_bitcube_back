@@ -1,6 +1,7 @@
 package iljin.framework.ebid.bid.service;
 
 import iljin.framework.core.dto.ResultBody;
+import iljin.framework.core.security.user.UserService;
 import iljin.framework.core.util.Util;
 import iljin.framework.ebid.bid.dto.BidCustDto;
 import iljin.framework.ebid.bid.dto.BidItemSpecDto;
@@ -56,8 +57,8 @@ public class BidStatusService {
     @Autowired
     Util util;
 
-    @Autowired
-    private FileService fileService;
+	@Autowired
+	private UserService userService;
 
     @Autowired
     private BidProgressService bidProgressService;
@@ -1071,15 +1072,50 @@ public class BidStatusService {
 
 		ResultBody resultBody = new ResultBody();
 		
-		String userId = CommonUtils.getString(params.get("attPw"));
-		String password = CommonUtils.getString(params.get("attPw"));
-		
 		try {
 			
-//			return userService.checkPassword(userId, password);
+			String userId = CommonUtils.getString(params.get("attSignId"));
+			String password = CommonUtils.getString(params.get("attPw"));
+			
+			Boolean pwCheck = userService.checkPassword(userId, password);
+			
+			if(pwCheck) {
+				String whoAtt = CommonUtils.getString(params.get("whoAtt"));
+				String biNo = CommonUtils.getString(params.get("biNo"));
+				
+				if(!whoAtt.equals("1") && !whoAtt.equals("2")) {
+					log.error("attSign error : whoAtt = {}" , whoAtt);
+					resultBody.setCode("fail");
+					return resultBody;
+				}
+				
+				StringBuilder sbMain = new StringBuilder(
+					  "UPDATE t_bi_info_mat SET "
+				);
+				
+				if(whoAtt.equals("1")) {
+					sbMain.append(
+						"OPEN_ATT1_SIGN = 'Y' "
+					);
+				} else if(whoAtt.equals("2")) {
+					sbMain.append(
+						"OPEN_ATT2_SIGN = 'Y' "
+					);
+				}
+				
+				sbMain.append("WHERE BI_NO = :biNo ");
+				
+				Query query = entityManager.createNativeQuery(sbMain.toString());
+				query.setParameter("biNo", biNo);
+				query.executeUpdate();
+				
+			}else {
+				resultBody.setCode("inValid");
+			}
 		
 		}catch(Exception e){
-			e.printStackTrace();
+			log.error("attSign error : {}" , e);
+			resultBody.setCode("fail");
 		}
 		
 		return resultBody;
