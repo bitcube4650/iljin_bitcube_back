@@ -19,6 +19,7 @@ public class UserDto implements Serializable {
     String custName;
     String userName;
     String userAuth;
+    String userHp;
     String token;
 
     public UserDto() {
@@ -34,5 +35,10 @@ public class UserDto implements Serializable {
         this.userName = userName;
         this.userAuth = userAuth;
         this.token = token;
+    }
+    public UserDto(String userId, String userHp, String userName) {
+        this.loginId = userId;
+        this.userHp = userHp;
+        this.userName = userName;
     }
 }

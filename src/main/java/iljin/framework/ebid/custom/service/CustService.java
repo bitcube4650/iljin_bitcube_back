@@ -7,6 +7,7 @@ import iljin.framework.ebid.custom.dto.TCoUserDto;
 import iljin.framework.ebid.etc.util.PagaUtils;
 import iljin.framework.ebid.etc.util.common.file.FileService;
 import iljin.framework.ebid.etc.util.common.mail.service.MailService;
+import iljin.framework.ebid.etc.util.common.message.MessageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.qlrm.mapper.JpaResultMapper;
@@ -97,7 +98,9 @@ public class CustService {
         List list = new JpaResultMapper().list(queryList, TCoCustMasterDto.class);
 
         BigInteger count = (BigInteger) queryTotal.getSingleResult();
-        return new PageImpl(list, pageable, count.intValue());
+        Page page = new PageImpl(list, pageable, count.intValue());
+
+        return page;
     }
 
     public Page otherCustList(Map<String, Object> params) {
