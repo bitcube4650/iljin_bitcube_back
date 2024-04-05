@@ -83,6 +83,60 @@ public class CommonUtils {
 //		}
     }
 
+    public static void sendEmail(String fromMail, String[] toEmailAddrArray, String mailSubject, String mailContents) throws Exception {
+        String MAIL_SMTP_CONNECTIONTIMEOUT ="mail.smtp.connectiontimeout";
+        String MAIL_SMTP_TIMEOUT = "mail.smtp.timeout";
+        String MAIL_SMTP_WRITETIMEOUT = "mail.smtp.writetimeout";
+        String MAIL_SOCKET_TIMEOUT = "60000";
+
+        if(toEmailAddrArray==null || toEmailAddrArray.length==0) return;
+        int mailToCnt = 0;
+        for(String toEmailAddr : toEmailAddrArray) {
+            if(isCheckMailAddr(toEmailAddr)) { mailToCnt++; }
+        }
+        if(mailToCnt==0) return;
+        Properties prop = new Properties();
+
+        prop.put("mail.smtp.host", Constances.MAIL_HOST);
+        prop.put(MAIL_SMTP_CONNECTIONTIMEOUT, MAIL_SOCKET_TIMEOUT);
+        prop.put(MAIL_SMTP_TIMEOUT, MAIL_SOCKET_TIMEOUT);
+        prop.put(MAIL_SMTP_WRITETIMEOUT, MAIL_SOCKET_TIMEOUT);
+
+
+        Session session = Session.getDefaultInstance(prop, null);
+        MimeMessage message = new MimeMessage(session);
+//		try {
+        InternetAddress from = new InternetAddress(fromMail);
+        message.setFrom(from);
+        InternetAddress[] toList = new InternetAddress[mailToCnt];
+        int i = 0;
+        for(String toEmailAddr : toEmailAddrArray) {
+            if(isCheckMailAddr(toEmailAddr)) {
+                InternetAddress to = new InternetAddress(toEmailAddr.trim());
+                toList[i++] = to;
+            }
+        }
+        try{
+            InternetAddress[] reply = new InternetAddress[1];
+            reply[0] = new InternetAddress(Constances.MAIL_REPLYTO_ADDRESS.trim());
+            message.setReplyTo(reply);
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+        message.setRecipients(Message.RecipientType.TO, toList);
+//			message.setSubject(mailSubject);
+        message.setSubject(MimeUtility.encodeText(mailSubject,"EUC-KR","B"));
+//			message.setContent(mailContents, "text/plain");
+        message.setContent(setMailContents(mailContents), "text/html; charset=EUC-KR");
+
+        Transport.send(message);
+//		} catch (Exception e) {
+//
+//			throw e;
+//		}
+    }
+
+
 
     public static boolean isCheckMailAddr(String mailAddress) {
         if (mailAddress == null || "".equals(mailAddress.trim())) return false;
@@ -98,16 +152,16 @@ public class CommonUtils {
         mailContents.append("<html xmlns='http://www.w3.org/1999/xhtml'>");
         mailContents.append("<head><meta http-equiv='Content-Type' content='text/html; charset=UTF-8'></head>");
         mailContents.append("<body style='background:#f2f3f6'>");
-        mailContents.append("    <link href='./mail01_files/css2' rel='stylesheet'>");
+        mailContents.append("    <link href='https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap' rel='stylesheet'>");
         mailContents.append("    <div style='width:600px; min-height:600px; margin:20px auto; background:#fff; padding:40px 40px 100px 40px; box-sizing:border-box; position:relative; font-family:\"Noto Sans KR\", sans-serif'>");
-        mailContents.append("        <div style='border-bottom:1px solid #9F9F9F; padding-bottom:30px; margin-bottom:30px'><img src='./mail01_files/loginLogo_iljin.svg' alt='일진' style='height:40px'></div>");
+        mailContents.append("        <div style='border-bottom:1px solid #9F9F9F; padding-bottom:30px; margin-bottom:30px'><img src='https://ebid.iljin.co.kr/images/loginLogo_iljin.svg' alt='일진' style='height:40px'></div>");
         mailContents.append("        <div style='font-size:18px; font-weight:700; line-height:150%'>");
         mailContents.append("            안녕하십니까<br>");
         mailContents.append("            일진그룹 전자입찰 e-bidding 입니다.<br>");
         mailContents.append("        </div>");
         mailContents.append("        <div style='font-size:16px; line-height:150%; margin-top:30px'>");
         mailContents.append(contents + "<br><br>");
-        mailContents.append("            자세한 사항은 <a href='https://iljin.idr.myds.me/login.html' target='_blank' style='color:#004B9E !important; font-weight:700; text-decoration:none; border-bottom:1px solid #004B9E'>e-bidding</a> 시스템에 로그인하여 확인해 주십시오<br><br><br>");
+        mailContents.append("            자세한 사항은 <a href='https://ebid.iljin.co.kr' target='_blank' style='color:#004B9E !important; font-weight:700; text-decoration:none; border-bottom:1px solid #004B9E'>e-bidding</a> 시스템에 로그인하여 확인해 주십시오<br><br><br>");
         mailContents.append("            감사합니다.");
         mailContents.append("        </div>");
         mailContents.append("        <div style='position:absolute; left:0; bottom:0; width:100%; box-sizing:border-box; padding:0 40px'>");

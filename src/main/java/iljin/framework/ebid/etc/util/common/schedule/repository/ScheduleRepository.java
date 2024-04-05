@@ -56,8 +56,9 @@ public class ScheduleRepository {
     }
 
     public List<MailEntity> findAllMailInfo() {
-        return em.createQuery("select m from MailEntity m where m.sendFlag = 'N'", MailEntity.class)
+        return em.createQuery("select m from MailEntity m where m.sendFlag = '9'", MailEntity.class)
                 .getResultList();
+
     }
 
 

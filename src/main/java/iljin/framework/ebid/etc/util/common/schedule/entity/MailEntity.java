@@ -38,6 +38,9 @@ public class MailEntity {
     @Column(name="CREATE_DATE")
     LocalDate createDate;
 
+    @Column(name="FROM_MAIL")
+    String fromMail;
+
    // @Column(name="BI_NO")
    // String biNo;
 

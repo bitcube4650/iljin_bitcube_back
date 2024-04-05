@@ -78,11 +78,16 @@ public class ScheduleService {
             UpdateEmailInfoDto updateEmailInfoDto = new UpdateEmailInfoDto();
 
             try {
+                String fromMail = mailEntity.getFromMail();
                 String[] toEmailAddrArray = mailEntity.getReceives().split(";");
                 String mailTitle = mailEntity.getTitle();
                 String mailContents = mailEntity.getConts();
 
-               commonUtils.sendEmail(toEmailAddrArray, mailTitle, mailContents);
+                if(!fromMail.isEmpty()) {
+                    commonUtils.sendEmail(fromMail, toEmailAddrArray, mailTitle, mailContents);
+                } else {
+                    commonUtils.sendEmail(toEmailAddrArray, mailTitle, mailContents);
+                }
 
                 updateEmailInfoDto.setSendFlag("1");
                 updateEmailInfoDto.setErrMsg("");
