@@ -14,14 +14,15 @@ public class ScheduleRepository {
 
     public void deleteByIngTag() {
         String deleteByIngTag = "DELETE FROM t_Bi_info_mat " +
-                                "WHERE ING_TAG = 'A0'";
+                                "WHERE DATE(EST_CLOSE_DATE) < CURDATE() " +
+                                "AND ING_TAG = 'A0'";
 
         em.createNativeQuery(deleteByIngTag)
                 .executeUpdate();
     }
     public void updateIngTagForLast30Days() {
         String updateIngTagForLast30Days = "UPDATE T_BI_INFO_MAT SET ING_TAG = 'A7' " +
-                                            "WHERE DATE(BID_OPEN_DATE) <= DATE_SUB(CURDATE(), INTERVAL 30 DAY) " +
+                                            "WHERE DATE(BID_OPEN_DATE) < DATE_SUB(CURDATE(), INTERVAL 30 DAY) " +
                                             "AND ING_TAG IN ('A1', 'A2', 'A3')";
         em.createNativeQuery(updateIngTagForLast30Days)
                 .executeUpdate();
