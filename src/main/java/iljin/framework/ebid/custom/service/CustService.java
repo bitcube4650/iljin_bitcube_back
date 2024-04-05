@@ -43,6 +43,8 @@ public class CustService {
     private MailService mailService;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private MessageService messageService;
 
     public Page custList(Map<String, Object> params) {
         StringBuilder sbCount = new StringBuilder(" SELECT COUNT(1) FROM t_co_cust_master a, t_co_cust_ir b WHERE a.cust_code = b.cust_code ");
@@ -316,6 +318,9 @@ public class CustService {
                 "입찰 업무는 로그인 후 하단에 입찰업무 안내를 참고하시거나 공지메뉴의 매뉴얼을 참조해 주십시오\n" +
                 "\n" +
                 "감사합니다.\n", (String) params.get("userEmail"));
+
+        messageService.send("일진그룹", (String) params.get("userHp"), (String) params.get("userName"), "[일진그룹 전자입찰시스템] 요청하신 일진그룹 전자입찰 시스템 회원가입이 승인되었습니다.");
+
         return resultBody;
     }
     @Transactional
@@ -493,6 +498,8 @@ public class CustService {
                     "입찰 업무는 로그인 후 하단에 입찰업무 안내를 참고하시거나 공지메뉴의 매뉴얼을 참조해 주십시오\n" +
                     "\n" +
                     "감사합니다.\n", (String) params.get("userEmail"));
+
+            messageService.send("일진그룹", (String) params.get("userHp"), (String) params.get("userName"), "[일진그룹 전자입찰시스템] 요청하신 일진그룹 전자입찰 시스템 회원가입이 승인되었습니다.");
         }
         return resultBody;
     }
