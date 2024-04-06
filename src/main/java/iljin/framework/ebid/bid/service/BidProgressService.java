@@ -937,13 +937,25 @@ public class BidProgressService {
 		queryMail.setParameter("biNo", biNo);
 		List<SendDto> sendList = new JpaResultMapper().list(queryMail, SendDto.class);
         
+
+        // 계열사명 가져오기
+        StringBuilder sbInterNm = new StringBuilder(
+        		"select tci.INTERRELATED_NM "
+        		+ "from t_co_interrelated tci "
+        		+ "inner join t_co_user tcu "
+        		+ "	on tci.INTERRELATED_CUST_CODE = tcu.INTERRELATED_CUST_CODE "
+        		+ "where tcu.USER_ID = :userId");
+        
+        Query queryInterNm = entityManager.createNativeQuery(sbInterNm.toString());
+		queryInterNm.setParameter("userId", userId);
+		List<String> interNm = new JpaResultMapper().list(queryInterNm, String.class);
+		
         emailMap.put("type", "insert");
         emailMap.put("biName", (String) bidContent.get("biName"));
+        emailMap.put("interNm", interNm.get(0)); // 계열사명
         emailMap.put("reason", "");	// 입찰계획은 사유 없음
-        emailMap.put("sendList", sendList);	// 수신자 대상?
-        // field 'MAIL_ID' doesn't have a default value
-        // 현재 t_mail 테이블에 MAIL_ID 에 오토 인크리먼츠가 안되있는지 넣으면 오류나서 주석함
-        //this.updateEmail(emailMap);
+        emailMap.put("sendList", sendList);	// 수신자 리스트
+        this.updateEmail(emailMap);
         
         // 첨부파일 대내용
         if( innerFile != null ) {
@@ -1081,7 +1093,7 @@ public class BidProgressService {
         queryList.setParameter("biNo", biNo);
         queryList.executeUpdate();
         
-        Map<String, Object> emailParam = new HashMap<String, Object>();
+        // 발송대상 가져오기
         Map<String, Object> emailMap = new HashMap<String, Object>();
         StringBuilder sbMail = new StringBuilder(
 				"select	tccu.user_email "
@@ -1108,11 +1120,9 @@ public class BidProgressService {
         emailMap.put("type", "del");
         emailMap.put("biName", (String) params.get("biName"));
         emailMap.put("reason", (String) params.get("reason")); // 삭제사유
-        emailMap.put("sendList", sendList);	// 수신자 대상?
+        emailMap.put("sendList", sendList);	// 수신자 리스트
         
-        // field 'MAIL_ID' doesn't have a default value
-        // 현재 t_mail 테이블에 MAIL_ID 에 오토 인크리먼츠가 안되있는지 넣으면 오류나서 주석함
-        //this.updateEmail(emailMap);
+        this.updateEmail(emailMap);
         return resultBody;
     }
 
