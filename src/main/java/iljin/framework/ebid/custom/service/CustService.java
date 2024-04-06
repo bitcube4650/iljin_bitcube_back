@@ -110,7 +110,7 @@ public class CustService {
         StringBuilder sbList = new StringBuilder(" SELECT cust_code \n" +
                 "     , cust_name \n" +
                 "     , CONCAT((SELECT CONCAT('1. ', item_name, '<br/>') FROM t_co_item x WHERE x.item_code = a.cust_type1)\n" +
-                "     , (SELECT CONCAT('2. ', item_name) FROM t_co_item x WHERE x.item_code = a.cust_type2)) AS cust_type1\n" +
+                "     , IFNULL((SELECT CONCAT('2. ', item_name) FROM t_co_item x WHERE x.item_code = a.cust_type2),'')) AS cust_type1\n" +
                 "     , CONCAT(SUBSTR(regnum, 1, 3), '-', SUBSTR(regnum, 4, 2), '-', SUBSTR(regnum, 6, 5)) AS regnum\n" +
                 "     , pres_name \n" +
                 "     , (SELECT GROUP_CONCAT(interrelated_nm SEPARATOR '<br/>') FROM t_co_cust_ir x, t_co_interrelated y WHERE x.cust_code = a.cust_code AND x.interrelated_cust_code = y.interrelated_cust_code) AS interrelated_nm\n" +

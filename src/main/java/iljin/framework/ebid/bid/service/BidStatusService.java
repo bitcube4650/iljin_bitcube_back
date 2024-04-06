@@ -17,6 +17,7 @@ import iljin.framework.ebid.custom.entity.TCoUser;
 import iljin.framework.ebid.custom.repository.TCoUserRepository;
 import iljin.framework.ebid.etc.util.CommonUtils;
 import iljin.framework.ebid.etc.util.PagaUtils;
+import iljin.framework.ebid.etc.util.common.certificate.service.CertificateService;
 import lombok.extern.slf4j.Slf4j;
 
 import org.qlrm.mapper.JpaResultMapper;
@@ -61,6 +62,9 @@ public class BidStatusService {
 
     @Autowired
     private BidProgressService bidProgressService;
+    
+    @Autowired
+    private CertificateService certificateService;
 
     @Value("${file.upload.directory}")
     private String uploadDirectory;
@@ -584,8 +588,9 @@ public class BidStatusService {
 		UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		Optional<TCoUser> userOptional = tCoUserRepository.findById(principal.getUsername());
 		String userId = userOptional.get().getUserId();
-		
+		String interrelatedCustCode = userOptional.get().getInterrelatedCustCode();
 		String biNo = CommonUtils.getString(params.get("biNo"));
+		String certPwd = CommonUtils.getString(params.get("certPwd"));
 		
 		//복호화 대상 협력사
 		StringBuilder sbCustList = new StringBuilder(
@@ -614,12 +619,12 @@ public class BidStatusService {
 			//총 견적금액 복호화 (encQutn -> encQutn)
 			String encQutn = custDto.getEncQutn();
 			
+			//envelope 복호화
+			encQutn = certificateService.decryptData(encQutn, interrelatedCustCode, certPwd);
 			
-			
-			
-			
-			
-			
+			//서명된 데이터 검증
+			encQutn = certificateService.signDataFix(encQutn);
+			System.out.println("최종 복호화된 금액 >> " + encQutn);
 			//복호화 후 업데이트
 			StringBuilder sbCust = new StringBuilder(
 					"UPDATE	t_bi_info_mat_cust " 
@@ -646,11 +651,13 @@ public class BidStatusService {
 				//직접입력 정보 복호화(encEsmtSpec -> encEsmtSpec)
 				String encEsmtSpec = custDto.getEncEsmtSpec();
 				
+				//envelope 복호화
+				encEsmtSpec = certificateService.decryptData(encEsmtSpec, interrelatedCustCode, certPwd);
 				
+				//서명된 데이터 검증
+				encEsmtSpec = certificateService.signDataFix(encEsmtSpec);
 				
-				
-				
-				
+				System.out.println("최종 복호화된 직접입력 >> " + encQutn);
 				
 				if(!encEsmtSpec.equals("")) {
 					//직접입력 복호화

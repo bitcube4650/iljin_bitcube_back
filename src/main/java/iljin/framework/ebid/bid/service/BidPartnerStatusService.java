@@ -8,6 +8,7 @@ import iljin.framework.ebid.bid.dto.BidItemSpecDto;
 import iljin.framework.ebid.bid.dto.BidProgressDto;
 import iljin.framework.ebid.bid.dto.BidProgressFileDto;
 import iljin.framework.ebid.bid.dto.CurrDto;
+import iljin.framework.ebid.bid.entity.TBiInfoMat;
 import iljin.framework.ebid.bid.entity.TBiInfoMatCust;
 import iljin.framework.ebid.bid.entity.TBiInfoMatCustID;
 import iljin.framework.ebid.bid.entity.TBiInfoMatCustTemp;
@@ -16,10 +17,12 @@ import iljin.framework.ebid.bid.entity.TBiLog;
 import iljin.framework.ebid.bid.entity.TBiUpload;
 import iljin.framework.ebid.bid.repository.TBiInfoMatCustRepository;
 import iljin.framework.ebid.bid.repository.TBiInfoMatCustTempRepository;
+import iljin.framework.ebid.bid.repository.TBiInfoMatRepository;
 import iljin.framework.ebid.custom.entity.TCoCustUser;
 import iljin.framework.ebid.custom.repository.TCoCustUserRepository;
 import iljin.framework.ebid.etc.util.CommonUtils;
 import iljin.framework.ebid.etc.util.PagaUtils;
+import iljin.framework.ebid.etc.util.common.certificate.service.CertificateService;
 import iljin.framework.ebid.etc.util.common.file.FileService;
 import lombok.extern.slf4j.Slf4j;
 
@@ -59,14 +62,20 @@ public class BidPartnerStatusService {
     private FileService fileService;
     
     @Autowired
+    private CertificateService certificateService;
+    
+    @Autowired
     private TCoCustUserRepository tCoCustUserRepository; 
+    
+    @Autowired
+    private TBiInfoMatRepository tBiInfoMatRepository;
     
     @Autowired
     private TBiInfoMatCustRepository tBiInfoMatCustRepository;
     
     @Autowired
     private TBiInfoMatCustTempRepository tBiInfoMatCustTempRepository;
-
+    
     @Value("${file.upload.directory}")
     private String uploadDirectory;
 
@@ -466,6 +475,7 @@ public class BidPartnerStatusService {
 		ResultBody resultBody = new ResultBody();
 		String userId = user.getUsername();
 		int custCode = Integer.parseInt(user.getCustCode());//협력사 번호 
+		String interrelatedCustCode = "";//입찰에 해당하는 계열사 번호
 		String biNo = CommonUtils.getString(params.get("biNo"));//입찰번호
 		String insModeCode = CommonUtils.getString(params.get("insModeCode"));//입력방식
 		String amt = "";//총 견적금액
@@ -541,11 +551,36 @@ public class BidPartnerStatusService {
 		
 		
 		//암호화
-		//여기에 암호화 처리
-		//strItemList
-		//amt
+		try {
+			//입찰정보를 조회하여 입찰을 한 계열사 조회
+			Optional<TBiInfoMat> optionData = tBiInfoMatRepository.findById(biNo);
+			
+			if(optionData.isPresent()) {
+				
+				TBiInfoMat tBiInfoMat = optionData.get();
+				interrelatedCustCode = tBiInfoMat.getInterrelatedCustCode();//계열사 코드
+				
+			}
+			System.out.println("들어온 견적액 >> " +amt);
+			//입찰한 계열사의 인증서로 암호화
+			amt = certificateService.encryptData(amt, interrelatedCustCode);//견적액 envelope 암호화
+			System.out.println("암호화된 견적액 >> " +amt);
+			System.out.println("들어온 아이템리스트 >> " +strItemList);
+			if(insModeCode.equals("2")) {//직접내역 방식
+				strItemList = certificateService.signData(strItemList);//데이터 서명
+				System.out.println("서명된 아이템리스트 >> " +strItemList);
+				strItemList = certificateService.encryptData(strItemList, interrelatedCustCode);//직접내역 envelope 암호화
+				System.out.println("암호화된 아이템리스트 >> " +strItemList);
+			}
 
-
+		}catch(Exception e){
+			log.error("encrypting error : {} ", e);
+			resultBody.setCode("ERROR");
+			resultBody.setStatus(999);
+			
+			return resultBody;
+		}
+	
 		//입찰협력업체(t_bi_info_mat_cust)에 반영
 		TBiInfoMatCustID tBiInfoMatCustId = new TBiInfoMatCustID();
 		
