@@ -914,10 +914,35 @@ public class BidProgressService {
         }
 
         // 지명경쟁 협력사의 모든 대상자 이메일 insert
-        Map<String, String> emailMap = new HashMap<String, String>();
-        emailMap.put("biNo", biNo);
+        Map<String, Object> emailMap = new HashMap<String, Object>();
+        StringBuilder sbMail = new StringBuilder(
+				"select	tccu.user_email "
+				+ ",	tcu.user_email as from_email "
+				+ "from t_bi_info_mat_cust tbimc "
+				+ "inner join t_co_cust_master tccm "
+				+ "	on tbimc.cust_code = tccm.cust_code "
+				+ "inner join t_co_cust_user tccu "
+				+ "	on tccm.cust_code = tccu.cust_code "
+				+ "inner join t_bi_info_mat tbim "
+				+ "	on tbimc.bi_no = tbim.bi_no "
+				+ "left outer join t_co_user tcu "
+				+ "	on tbim.create_user = tcu.user_id "
+				+ "where tbimc.bi_no = :biNo "
+				//+ "and tbimc.esmt_yn = '2' " // 왜 2 했는지 물어봐야함
+		);
+		
+		//쿼리 실행
+		Query queryMail = entityManager.createNativeQuery(sbMail.toString());
+		//조건 대입
+		queryMail.setParameter("biNo", biNo);
+		List<SendDto> sendList = new JpaResultMapper().list(queryMail, SendDto.class);
+        
         emailMap.put("type", "insert");
-        emailMap.put("inserCd", (String) bidContent.get("interrelatedCustCode"));
+        emailMap.put("biName", (String) bidContent.get("biName"));
+        emailMap.put("reason", "");	// 입찰계획은 사유 없음
+        emailMap.put("sendList", sendList);	// 수신자 대상?
+        // field 'MAIL_ID' doesn't have a default value
+        // 현재 t_mail 테이블에 MAIL_ID 에 오토 인크리먼츠가 안되있는지 넣으면 오류나서 주석함
         //this.updateEmail(emailMap);
         
         // 첨부파일 대내용
@@ -1036,19 +1061,58 @@ public class BidProgressService {
 
     @Transactional
     public ResultBody delete(Map<String, String> params) {
+        UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String userId = principal.getUsername();
         String biNo = params.get("biNo");
-
         ResultBody resultBody = new ResultBody();
+        // 입찰서내용 삭제가 아닌 ING_TAG 를 D 로 업데이트 처리
+//        StringBuilder sbList = new StringBuilder(
+//                "DELETE FROM t_bi_info_mat " +
+//                        "WHERE bi_no = :biNo");
         StringBuilder sbList = new StringBuilder(
-                "DELETE FROM t_bi_info_mat " +
-                        "WHERE bi_no = :biNo");
-
+                "UPDATE t_bi_info_mat "
+                + "SET	ING_TAG = 'D' "
+                + ",	UPDATE_USER = :userId "
+                + ",	UPDATE_DATE = SYSDATE() "
+                + "WHERE bi_no = :biNo");
+        
         Query queryList = entityManager.createNativeQuery(sbList.toString());
+        queryList.setParameter("userId", userId);
         queryList.setParameter("biNo", biNo);
         queryList.executeUpdate();
-
+        
         Map<String, Object> emailParam = new HashMap<String, Object>();
-        updateEmail(emailParam);
+        Map<String, Object> emailMap = new HashMap<String, Object>();
+        StringBuilder sbMail = new StringBuilder(
+				"select	tccu.user_email "
+				+ ",	tcu.user_email as from_email "
+				+ "from t_bi_info_mat_cust tbimc "
+				+ "inner join t_co_cust_master tccm "
+				+ "	on tbimc.cust_code = tccm.cust_code "
+				+ "inner join t_co_cust_user tccu "
+				+ "	on tccm.cust_code = tccu.cust_code "
+				+ "inner join t_bi_info_mat tbim "
+				+ "	on tbimc.bi_no = tbim.bi_no "
+				+ "left outer join t_co_user tcu "
+				+ "	on tbim.create_user = tcu.user_id "
+				+ "where tbimc.bi_no = :biNo "
+				//+ "and tbimc.esmt_yn = '2' " // 왜 2 했는지 물어봐야함
+		);
+		
+		//쿼리 실행
+		Query queryMail = entityManager.createNativeQuery(sbMail.toString());
+		//조건 대입
+		queryMail.setParameter("biNo", biNo);
+		List<SendDto> sendList = new JpaResultMapper().list(queryMail, SendDto.class);
+        
+        emailMap.put("type", "del");
+        emailMap.put("biName", (String) params.get("biName"));
+        emailMap.put("reason", (String) params.get("reason")); // 삭제사유
+        emailMap.put("sendList", sendList);	// 수신자 대상?
+        
+        // field 'MAIL_ID' doesn't have a default value
+        // 현재 t_mail 테이블에 MAIL_ID 에 오토 인크리먼츠가 안되있는지 넣으면 오류나서 주석함
+        //this.updateEmail(emailMap);
         return resultBody;
     }
 
