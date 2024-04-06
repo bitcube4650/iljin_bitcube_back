@@ -8,6 +8,8 @@ import iljin.framework.core.security.role.UserRole;
 import iljin.framework.core.security.role.UserRoleRepository;
 import iljin.framework.core.util.Util;
 import iljin.framework.ebid.custom.dto.TCoCustMasterDto;
+import iljin.framework.ebid.custom.entity.TCoCustUser;
+import iljin.framework.ebid.custom.repository.TCoCustUserRepository;
 import iljin.framework.ebid.etc.util.common.mail.service.MailService;
 import iljin.framework.ebid.etc.util.common.message.MessageService;
 import lombok.AllArgsConstructor;
@@ -61,11 +63,12 @@ public class UserServiceImpl implements UserService {
     private EntityManager entityManager;
 
     private final AuthenticationManager authenticationManager;
-    private final UserRepository userRepository;
-    private final UserRoleRepository userRoleRepository;
     private final MailService mailService;
     private final PasswordEncoder passwordEncoder;
     private final MessageService messageService;
+    private final TCoCustUserRepository tCoUserCustRepository;
+    private final OracleUserService oracleUserService;
+    private final String profile = System.getProperty("spring.profiles.active");
 
     @Override
     public ResponseEntity<AuthToken> login(UserDto userDto, HttpSession session, HttpServletRequest request) {
@@ -73,9 +76,56 @@ public class UserServiceImpl implements UserService {
         try {
             String loginId = userDto.loginId;
             String loginPw = userDto.loginPw;
+            String userAuth = userDto.userAuth;
             String loginToken = userDto.token;
 
             Optional<UserDto> user = Optional.of(userDto);
+
+            // 실서버만 적용 2024-12-31까지만
+            if ("production".equals(profile)) {
+//            if ("dev".equals(profile)) {
+                // 최초 로그인시 비밀번호 변경 처리
+                if ("tempChange".equals(userAuth)) {
+                    Optional<TCoCustUser> userOptional = tCoUserCustRepository.findById(loginId);
+                    if (userOptional.isPresent()) {
+                        TCoCustUser tCoCustUser = userOptional.get();
+                        String encodedPassword = passwordEncoder.encode(loginPw);
+                        LocalDateTime currentDate = LocalDateTime.now();
+                        tCoCustUser.setUserPwd(encodedPassword);
+                        tCoCustUser.setPwdChgDate(currentDate);
+                        tCoUserCustRepository.save(tCoCustUser);
+                    }
+                } else {
+                    // 협력사 사용자만 해당
+                    StringBuilder sbQuery = new StringBuilder(" SELECT user_id \n" +
+                            "  FROM t_co_cust_user   a\n" +
+                            "     , t_co_cust_master b\n" +
+                            " WHERE a.cust_code = b.cust_code\n" +
+                            "   AND user_id = :loginId\n" +
+                            "   AND user_pwd IS NULL\n" +
+                            "   AND a.use_yn  = 'Y'\n" +
+                            "   AND b.cert_yn = 'Y'");
+
+                    Query query = entityManager.createNativeQuery(sbQuery.toString());
+                    query.setParameter("loginId", loginId);
+                    Optional<String> userId = query.getResultList().stream().findFirst();
+
+                    if (userId.isPresent()) {
+                        // 오라클 DB에서 사용자 정보 체크 맞으면
+                        if (oracleUserService.check(loginId, loginPw)) {
+                            return new ResponseEntity<>(new AuthToken(
+                                    null
+                                    , null
+                                    , null
+                                    , null
+                                    , null
+                                    , null
+                                    , null
+                                    , false), HttpStatus.LOCKED);
+                        }
+                    }
+                }
+            }
 
             Optional<AuthToken> result =
                     user.map(obj -> {
@@ -95,7 +145,6 @@ public class UserServiceImpl implements UserService {
                             authentication = authenticationManager.authenticate(token);// 3. 인증에 성공하면 Authentication 인스턴스 리턴
                             //logger.debug("*Authentication: " + String.valueOf(authentication.isAuthenticated()));
                         }
-
                         return getAuthToken(session, loginId, obj, token, authentication, false);
                     });
 
@@ -159,7 +208,7 @@ public class UserServiceImpl implements UserService {
                 "   AND a.use_yn  = 'Y'\n" +
                 "   AND b.cert_yn = 'Y' ");
         Query query = entityManager.createNativeQuery(sb.toString());
-        query.setParameter("loginId", obj.getLoginId());
+        query.setParameter("loginId", loginId);
         UserDto data = new JpaResultMapper().uniqueResult(query, UserDto.class);
 
         return new AuthToken(data.getCustType(),

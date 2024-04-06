@@ -54,11 +54,35 @@ public class MessageService {
         EntityTransaction tx = em.getTransaction();
         tx.begin();
         try {
-            Query query = em.createNativeQuery("INSERT INTO smsdata (send_name, r_phone, recv_name, msg, bi_no) VALUES (:sendName, :rPhone, :recvName, :msg, :biNo)");
-            query.setParameter("sendName", sendName);
-            query.setParameter("rPhone", rPhone);
-            query.setParameter("recvName", recvName);
+            LocalDateTime currentDate = LocalDateTime.now();
+            String [] datetime = currentDate.toString().split("T");
+            String date = datetime[0].replaceAll("-","");
+            String time = datetime[1].replaceAll(":","").substring(0, 6);
+            String rPhone1 = rPhone.substring(0, 3);
+            String rPhone2 = rPhone.substring(3, rPhone.length());
+            String rPhone3 = rPhone2.length() == 7 ? rPhone2.substring(3, rPhone2.length()) : rPhone2.substring(4, rPhone2.length());
+            rPhone2 = rPhone2.length() == 7 ? rPhone2.substring(0, 3) : rPhone2.substring(0, 4);
+            Query query = em.createNativeQuery("INSERT INTO smsdata2 (indate, intime, member, sendid, sendname, rphone1, rphone2, rphone3, recvname, sphone1, sphone2, sphone3, msg, rdate, rtime, result, kind, errcode, bi_no) " +
+                    "VALUES (:indate, :intime, :member, :sendid, :sendname, :rphone1, :rphone2, :rphone3, :recvname, :sphone1, :sphone2, :sphone3, :msg, :rdate, :rtime, :result, :kind, :errcode, :biNo)");
+
+            query.setParameter("indate", date);
+            query.setParameter("intime", time);
+            query.setParameter("member", "1");
+            query.setParameter("sendid", "ebid");
+            query.setParameter("sendname", sendName);
+            query.setParameter("rphone1", rPhone1);
+            query.setParameter("rphone2", rPhone2);
+            query.setParameter("rphone3", rPhone3);
+            query.setParameter("recvname", recvName);
+            query.setParameter("sphone1", "02");
+            query.setParameter("sphone2", "707");
+            query.setParameter("sphone3", "9319");
             query.setParameter("msg", msg);
+            query.setParameter("rdate", "00000000");
+            query.setParameter("rtime", "000000");
+            query.setParameter("result", "N");
+            query.setParameter("kind", "S");
+            query.setParameter("errcode", "0");
             query.setParameter("biNo", biNo);
             query.executeUpdate();
         } catch (Exception e) {
