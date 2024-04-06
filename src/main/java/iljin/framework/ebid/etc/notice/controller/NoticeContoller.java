@@ -1,35 +1,27 @@
 package iljin.framework.ebid.etc.notice.controller;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
-import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import iljin.framework.core.dto.ResultBody;
+import iljin.framework.core.security.user.CustomUserDetails;
 import iljin.framework.ebid.etc.notice.entity.TCoBoardCustCode;
 import iljin.framework.ebid.etc.notice.service.NoticeService;
-import iljin.framework.ebid.etc.util.common.file.FileService;
 
 @RestController
 @RequestMapping("/api/v1/notice")
@@ -43,9 +35,9 @@ public class NoticeContoller {
 	
 	//공지사항 조회
 	@PostMapping("/noticeList")
-    public Page noticeList(@RequestBody Map<String, Object> params) {
+    public Page noticeList(@RequestBody Map<String, Object> params, @AuthenticationPrincipal CustomUserDetails user) {
 		
-        return noticeService.noticeList(params);
+        return noticeService.noticeList(params, user);
     }
 	
 	//공지사항 조회수 + 1

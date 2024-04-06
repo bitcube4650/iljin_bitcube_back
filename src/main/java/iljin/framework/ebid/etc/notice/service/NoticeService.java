@@ -1,27 +1,15 @@
 package iljin.framework.ebid.etc.notice.service;
 
-import java.io.File;
-import java.io.IOException;
 import java.math.BigInteger;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 import javax.persistence.EntityManager;
-import javax.persistence.EntityTransaction;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
 
 import org.qlrm.mapper.JpaResultMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,16 +26,16 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import iljin.framework.core.dto.ResultBody;
+import iljin.framework.core.security.user.CustomUserDetails;
 import iljin.framework.ebid.bid.dto.InterUserInfoDto;
 import iljin.framework.ebid.bid.service.BidProgressService;
 import iljin.framework.ebid.custom.entity.TCoUser;
 import iljin.framework.ebid.custom.repository.TCoUserRepository;
 import iljin.framework.ebid.etc.notice.dto.NoticeDto;
-import iljin.framework.ebid.etc.notice.dto.TCoBoardCustDto;
 import iljin.framework.ebid.etc.notice.entity.TCoBoardCustCode;
-import iljin.framework.ebid.etc.notice.entity.TCoBoardCustID;
 import iljin.framework.ebid.etc.notice.entity.TCoBoardNotice;
 import iljin.framework.ebid.etc.notice.repository.TCoBoardCustRepository;
+import iljin.framework.ebid.etc.util.CommonUtils;
 import iljin.framework.ebid.etc.util.PagaUtils;
 import iljin.framework.ebid.etc.util.common.file.FileService;
 import lombok.extern.slf4j.Slf4j;
@@ -77,9 +65,10 @@ public class NoticeService {
 	
 	//공지사항 목록 조회
 	@Transactional
-	public Page noticeList(Map<String, Object> params) {
+	public Page noticeList(Map<String, Object> params, CustomUserDetails user) {
   
 		UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		
 		Optional<TCoUser> userOptional = tCoUserRepository.findById(principal.getUsername());
 		String userId = principal.getUsername();
 		String userAuth = "";// userAuth(1 = 시스템관리자, 2 = 각사관리자, 3 = 일반사용자, 4 = 감사사용자)
@@ -90,238 +79,100 @@ public class NoticeService {
 								//계열사 시스템 관리자가 로그인했으면 공지사항 목록페이지에는 공통공지와 모든 계열사 공지가 출력 
 		
 		List<InterUserInfoDto> userInfoList = new ArrayList<>(); 
-        List<String> custCodes = new ArrayList<>();
-        
-        if (!StringUtils.isEmpty(params.get("requestPage"))) {
-        	requestPage = (String) params.get("requestPage");
-        }
-        
-        if (userOptional.isPresent()) {//계열사인 경우
-        	
-        	userAuth = userOptional.get().getUserAuth();// userAuth(1 = 시스템관리자, 2 = 각사관리자, 3 = 일반사용자, 4 = 감사사용자)
-    		interrelatedCode = userOptional.get().getInterrelatedCustCode();
-        	company ="inter";
-        	
-        	if(userAuth.equals("4")) {//감사사용자에 해당하는 계열사 조회
-        		userInfoList = (List<InterUserInfoDto>) bidProgressService.findInterCustCode(userId);
-        		//감사사용자에 해당하는 계열사리스트 담기
-	            for (InterUserInfoDto userInfo : userInfoList) {
-	                custCodes.add(userInfo.getInterrelatedCustCode());
-	            }
-        	}
-        	
-        	
-        }else {//협력사인 경우
-        	
-        	company ="cust";
-     
-        }
+		List<String> custCodes = new ArrayList<>();
+		if (!StringUtils.isEmpty(params.get("requestPage"))) {
+			requestPage = (String) params.get("requestPage");
+		}
+
+		StringBuilder sbFrom = new StringBuilder();
+		StringBuilder sbWhere = new StringBuilder();
+		
+		// from 절
+		String sbFromStr = "";
+		sbFromStr += "FROM t_co_board_notice tcbn\n";
+		if(userOptional.isPresent() && "1".equals(userOptional.get().getUserAuth())) {		// 계열사 관리자 중 시스템 관리자
+			
+		} else {																			// 협력사 사용자 및 계열사 관리자(각사관리자, 일반관리자, 감사사용자)
+			sbFromStr += "LEFT OUTER JOIN t_co_board_cust tcbc\n";
+			sbFromStr += "	ON tcbn.B_NO = tcbc.B_NO\n";
+			
+			if(!userOptional.isPresent()) {													// 협력사 사용자
+				
+				sbFromStr += "LEFT OUTER JOIN t_co_cust_ir tcci\n";
+				sbFromStr += "	ON tcbc.INTERRELATED_CUST_CODE = tcci.INTERRELATED_CUST_CODE\n";
+			}
+		}
+
+		sbFromStr += "LEFT OUTER JOIN t_co_user tcu\n";
+		sbFromStr += "	ON tcbn.B_USERID = tcu.USER_ID\n";
+		sbFromStr += "WHERE 1=1\n";
+
+		sbFrom.append(sbFromStr);
+		
+		// where 절
+		String sbWhereStr = "";
+		if(!"".equals(CommonUtils.getString(params.get("title")))) {
+			sbWhereStr += "	AND tcbn.B_TITLE LIKE CONCAT('%',:title,'%')\n";
+		}
+		if(!"".equals(CommonUtils.getString(params.get("content")))) {
+			sbWhereStr += "	AND tcbn.B_CONTENT LIKE CONCAT('%',:content,'%')\n";
+		}
+		if(!"".equals(CommonUtils.getString(params.get("userName")))) {
+			sbWhereStr += "	AND tcu.USER_NAME LIKE CONCAT('%',:userName,'%')\n";
+		}
+		if(!"".equals(CommonUtils.getString(params.get("bno")))) {
+			sbWhereStr += "	AND tcbn.B_NO = :bno\n";
+		}
+		
+		if(userOptional.isPresent() && "1".equals(userOptional.get().getUserAuth())) {
+			// 계열사 관리자 중 시스템 관리자는 모든 공지 조회
+		} else {																			// 협력사 사용자 및 계열사 관리자(각사관리자, 일반관리자, 감사사용자)
+			sbWhereStr += "	AND (tcbn.B_CO = 'ALL' OR (tcbn.B_CO = 'CUST'";
+			
+			if(!userOptional.isPresent()) {													// 협력사 사용자
+				// 본인이 속한 협력사의 계열사만 보이도록 처리
+				sbWhereStr += " AND tcbc.INTERRELATED_CUST_CODE IN (SELECT INTERRELATED_CUST_CODE from t_co_cust_ir tcci  where CUST_CODE = '"+ user.getCustCode() +"')";
+			} else {
+				// 감사사용자는 매핑된 계열사 모두 보이도록 처리
+				if("4".equals(userOptional.get().getUserAuth())){
+					sbWhereStr += " and tcbc.INTERRELATED_CUST_CODE IN (SELECT INTERRELATED_CUST_CODE from t_co_user_interrelated tcui where tcui.USER_ID = '"+ userOptional.get().getUserId()+"')";
+				} else {
+				// 그 외 계약사 관리자(각사관리자, 일반관리자) 본인 소속 계열사 공지 조회
+					sbWhereStr += " and tcbc.INTERRELATED_CUST_CODE = '"+ userOptional.get().getInterrelatedCustCode() +"'";
+				}
+			}
+			sbWhereStr += "	)\n";
+			sbWhereStr += ")\n";
+		}
+		sbWhereStr += "GROUP BY tcbn.B_NO\n";
+		sbWhere.append(sbWhereStr);
+			
+			
 
 		try {
-			StringBuilder sbCount = new StringBuilder(" select count(1) "
-									        		 +" from ( "
-					                                             // 공통 공지
-													 	     + " ( "
-													 	    	 + " select tcbn.b_no , "
-													 	    		    + " tcbn.b_userid , "
-													 	    		    + " tcbn.b_title , "
-													 	    		    + " tcbn.b_date , "
-													 	    		    + " tcbn.b_count , "
-													 	    		    + " tcbn.b_file , "
-													 	    		    + " tcbn.b_content , "
-													 	    		    + " tcbn.b_file_path , "
-													 	    		    + " tcbn.b_co , "
-													 	    	        + " tcu.user_name as userName "
-															     + " from t_co_board_notice tcbn "
-															     + " left outer join t_co_user tcu "
-															     + " on (tcbn.b_userid = tcu.user_id) "
-															     + " where tcbn.b_co = 'ALL' "
-														     + " ) ");
-			if(company.equals("inter")) {//계열사인 경우 계열사공지 포함
-				
-				sbCount.append(                                    
-															   " union all " 
-														         // 계열사 공지
-															 + " ("
-															     + " select distinct "
-															     		+ " tcbn2.b_no , "
-															    	    + " tcbn2.b_userid , "
-															    	    + " tcbn2.b_title , "
-															    	    + " tcbn2.b_date , "
-															    	    + " tcbn2.b_count , "
-															    	    + " tcbn2.b_file , "
-															    	    + " tcbn2.b_content , "
-															    	    + " tcbn2.b_file_path , "
-															    	    + " tcbn2.b_co , "
-															    	    + " tcu2.user_name as userName "
-															     + " from t_co_board_notice tcbn2 "
-															     + " inner join t_co_board_cust tcbc "
-															     + " on(tcbn2.b_no = tcbc.b_no) "
-															     + " left outer join t_co_user tcu2 "
-															     + " on (tcbn2.b_userid = tcu2.user_id) "
-															     + " where tcbn2.b_co = 'CUST' "
-						      );
-				/*
-				 * 시스템관리자가 아닌 경우 계열사 공지 조건 추가
-				 * 계열사 메인화면에서 공지사항을 조회하는 경우 계열사 공지 조건 추가
-				 */
-				if(!userAuth.equals("1") || requestPage.equals("main")) {
-				
-					if (userAuth.equals("4")) {//감사관리자의 경우(해당하는 계열사 여러개)
-		
-			            sbCount.append(
-			            		                                   " and ( "
-			            		      );
-			            //감사사용자의 계열사 조건 추가
-			            sbCount.append(" tcbc.interrelated_cust_code = " + interrelatedCode );
-			            
-			            //감사사용자에 해당하는 계열사 조건 추가
-			            for (int i = 0; i < custCodes.size(); i++) {
-			            	sbCount.append(" or ");
-			                sbCount.append(" tcbc.interrelated_cust_code = :custCode").append(i);
-			            }
-			            
-			            sbCount.append(
-			            		                                       " ) "
-			            		      );
-	
-			           
-			        }else {
-			        	//각사관리자 또는 일반사용자인 경우
-			        	sbCount.append(
-																	   " and tcbc.interrelated_cust_code = :custCode "
-										);
-			        }
+			StringBuilder sbList = new StringBuilder("SELECT tcbn.b_no as bNo\n"
+													+",	tcbn.b_userid as bUserid\n"
+													+",	tcbn.b_title as bTitle\n"
+													+",	DATE_FORMAT(tcbn.b_date , '%Y-%m-%d %H:%i') as bDate\n"
+													+",	tcbn.b_count as bCount\n"
+													+",	tcbn.b_file as bFile\n"
+													+",	tcbn.b_content as bContent\n"
+													+",	tcbn.b_file_path as bFilePath\n"
+													+",	tcbn.b_co as bCo\n"
+													+",	tcu.user_name as bUserName\n"
+													+",	row_number() over( order by tcbn.b_date desc ) as rowNo\n"
+													+sbFrom
+													+sbWhere
+													+"ORDER BY tcbn.B_DATE desc"
+			);
 
-				}
-				sbCount.append(                                    " ) ");
+			StringBuilder sbCount = new StringBuilder("SELECT COUNT(1)\n"
+														+"FROM ("
+														+sbList
+														+") A"
+			);
 			
-			}
-			
-			sbCount.append(
-															" ) rst "
-													+ " where 1=1 "
-						  );
-			
-											
-								
-			StringBuilder sbList = new StringBuilder(" select rst.b_no , "
-														  + " rst.b_userid , "
-														  + " rst.b_title , "
-														  + " DATE_FORMAT( rst.b_date , '%Y-%m-%d %H:%i') as bDate, "
-														  + " rst.b_count , "
-														  + " rst.b_file , "
-														  + " rst.b_content , "
-														  + " rst.b_file_path , "
-														  + " rst.b_co , "
-														  + " rst.userName , "
-														  + " row_number() over( order by rst.b_date desc ) as rowNo "
-												    +" from ( "
-		                                                    	// 공통 공지
-		                                                    + " ( "
-		                                                    	+ " select tcbn.b_no , "
-													 	    		   + " tcbn.b_userid , "
-													 	    		   + " tcbn.b_title , "
-													 	    		   + " tcbn.b_date , "
-													 	    		   + " tcbn.b_count , "
-													 	    		   + " tcbn.b_file , "
-													 	    		   + " tcbn.b_content , "
-													 	    		   + " tcbn.b_file_path , "
-													 	    		   + " tcbn.b_co , "
-													 	    	       + " tcu.user_name as userName "
-															    + " from t_co_board_notice tcbn "
-															    + " left outer join t_co_user tcu "
-															    + " on (tcbn.b_userid = tcu.user_id) "
-															    + " where tcbn.b_co = 'ALL' "
-														    + " ) ");
-			if(company.equals("inter")) {//계열사인 경우 계열사공지 포함
-	
-				sbList.append(                                    
-												   			  " union all " 
-											         		    // 계열사 공지
-												 			+ " ( "
-												 				+ " select distinct "
-												 					   + " tcbn2.b_no , "
-												 					   + " tcbn2.b_userid , "
-												 					   + " tcbn2.b_title , "
-												 					   + " tcbn2.b_date , "
-												 					   + " tcbn2.b_count , "
-												 					   + " tcbn2.b_file , "
-												 					   + " tcbn2.b_content , "
-												 					   + " tcbn2.b_file_path , "
-												 					   + " tcbn2.b_co , "
-												 					   + " tcu2.user_name as userName "
-												 			    + " from t_co_board_notice tcbn2 "
-												 			    + " inner join t_co_board_cust tcbc "
-												 			    + " on(tcbn2.b_no = tcbc.b_no) "
-												 			    + " left outer join t_co_user tcu2 "
-												 			    + " on (tcbn2.b_userid = tcu2.user_id) "
-												 			    + " where tcbn2.b_co = 'CUST' "
-			      );
-	
-				/*
-				 * 시스템관리자가 아닌 경우 계열사 공지 조건 추가
-				 * 계열사 메인화면에서 공지사항을 조회하는 경우 계열사 공지 조건 추가
-				 */
-				if(!userAuth.equals("1") || requestPage.equals("main")) {
-	
-					if (userAuth.equals("4")) {//감사관리자의 경우(해당하는 계열사 여러개)
-			
-						sbList.append(
-            		                                              " and ( "
-            		             	  );
-						//감사사용자의 계열사 조건 추가
-						sbList.append(" tcbc.interrelated_cust_code = " + interrelatedCode );
-						
-						//감사사용자에 해당하는 계열사 조건 추가
-						for (int i = 0; i < custCodes.size(); i++) {
-							sbList.append(" or ");
-							sbList.append(" tcbc.interrelated_cust_code = :custCode").append(i);
-						}
-            
-						sbList.append(
-            		                                                  " ) "
-								      );
-
-           
-					}else {
-						//각사관리자 또는 일반사용자인 경우
-						sbList.append(
-														          " and tcbc.interrelated_cust_code = :custCode "
-								      );
-					}
-
-				}
-				
-				sbList.append(                                    
-			                                                  " ) ");
-
-		    }//계열사인 경우 끝
-
-			sbList.append(
-														  " ) rst "
-												   + " where 1=1 "
-					          );			
-				
-			StringBuilder sbWhere = new StringBuilder();
-			
-			if (!StringUtils.isEmpty(params.get("title"))) {
-				sbWhere.append(" and rst.b_title like concat('%',:title,'%') ");
-			}
-			if (!StringUtils.isEmpty(params.get("content"))) {
-				sbWhere.append(" and rst.b_content like concat('%',:content,'%') ");
-			}
-			if (!StringUtils.isEmpty(params.get("userName"))) {
-				sbWhere.append(" and rst.userName like concat('%',:userName,'%') ");
-			}
-			if (!StringUtils.isEmpty(params.get("bno"))) {
-				sbWhere.append(" and rst.b_no = :bno ");
-			}
-			
-			sbList.append(sbWhere);
-			sbList.append(" order by b_date desc");
 			Query queryList = entityManager.createNativeQuery(sbList.toString());
-			sbCount.append(sbWhere);
 			Query queryTotal = entityManager.createNativeQuery(sbCount.toString());
 
 			//공지사항 제목
@@ -344,25 +195,6 @@ public class NoticeService {
 			if (!StringUtils.isEmpty(params.get("bno"))) {
 				queryList.setParameter("bno", params.get("bno"));
 				queryTotal.setParameter("bno", params.get("bno"));
-			}
-			//계열사 공지
-			if(company.equals("inter")) {//계열사인 경우
-							
-				if(!userAuth.equals("1") || requestPage.equals("main")) {//시스템관리자가 아닌 경우 또는 계열사메인에서 공지사항 조회시
-					
-					if (userAuth.equals("4")) {//감사관리자인 경우
-			
-			            for (int i = 0; i < custCodes.size(); i++) {
-			            	queryList.setParameter("custCode" + i, custCodes.get(i));
-			            	queryTotal.setParameter("custCode" + i, custCodes.get(i));
-			            }
-					}else{//각사관리자 또는 일반사용자
-						queryList.setParameter("custCode", interrelatedCode);
-						queryTotal.setParameter("custCode", interrelatedCode);
-					}
-				}
-
-				
 			}
 			
 			Pageable pageable = PagaUtils.pageable(params);
