@@ -512,8 +512,8 @@ public class CustService {
                 params.put("regnumFile", regnumFile.getOriginalFilename());
             }
             if (bFile != null) {
-                params.put("bFilePath", fileService.uploadFile(bFile));
-                params.put("bFile", bFile.getOriginalFilename());
+                params.put("bfilePath", fileService.uploadFile(bFile));
+                params.put("bfile", bFile.getOriginalFilename());
             }
         } catch (IOException e) {
             resultBody.setCode("UPLOAD");
@@ -535,8 +535,8 @@ public class CustService {
         query.setParameter("addrDetail", params.get("addrDetail"));
         query.setParameter("capital", params.get("capital"));
         query.setParameter("foundYear", params.get("foundYear"));
-        query.setParameter("bFile", params.get("bFile"));
-        query.setParameter("bFilePath", params.get("bFilePath"));
+        query.setParameter("bFile", params.get("bfile"));
+        query.setParameter("bFilePath", params.get("bfilePath"));
         query.setParameter("regnumFile", params.get("regnumFile"));
         query.setParameter("regnumPath", params.get("regnumPath"));
         CustomUserDetails user = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
