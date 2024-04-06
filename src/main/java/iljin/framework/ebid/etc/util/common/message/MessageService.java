@@ -62,9 +62,15 @@ public class MessageService {
             String rPhone2 = rPhone.substring(3, rPhone.length());
             String rPhone3 = rPhone2.length() == 7 ? rPhone2.substring(3, rPhone2.length()) : rPhone2.substring(4, rPhone2.length());
             rPhone2 = rPhone2.length() == 7 ? rPhone2.substring(0, 3) : rPhone2.substring(0, 4);
-            Query query = em.createNativeQuery("INSERT INTO smsdata (indate, intime, member, sendid, sendname, rphone1, rphone2, rphone3, recvname, sphone1, sphone2, sphone3, msg, rdate, rtime, result, kind, errcode, bi_no) " +
-                    "VALUES (:indate, :intime, :member, :sendid, :sendname, :rphone1, :rphone2, :rphone3, :recvname, :sphone1, :sphone2, :sphone3, :msg, :rdate, :rtime, :result, :kind, :errcode, :biNo)");
-
+            Query query = null;
+            // 운영에서는 오라클이기에 (스크립토로 정상 확인 
+            if (drivername.startsWith("oracle")) {
+                query = em.createNativeQuery("INSERT INTO smsdata (seqno, indate, intime, member, sendid, sendname, rphone1, rphone2, rphone3, recvname, sphone1, sphone2, sphone3, msg, rdate, rtime, result, kind, errcode, bi_no) " +
+	                    "VALUES (smsdata_seqno.nextval, :indate, :intime, :member, :sendid, :sendname, :rphone1, :rphone2, :rphone3, :recvname, :sphone1, :sphone2, :sphone3, :msg, :rdate, :rtime, :result, :kind, :errcode, :biNo)");
+            } else {
+                query = em.createNativeQuery("INSERT INTO smsdata (indate, intime, member, sendid, sendname, rphone1, rphone2, rphone3, recvname, sphone1, sphone2, sphone3, msg, rdate, rtime, result, kind, errcode, bi_no) " +
+	                    "VALUES (:indate, :intime, :member, :sendid, :sendname, :rphone1, :rphone2, :rphone3, :recvname, :sphone1, :sphone2, :sphone3, :msg, :rdate, :rtime, :result, :kind, :errcode, :biNo)");
+            }            
             query.setParameter("indate", date);
             query.setParameter("intime", time);
             query.setParameter("member", "1");
