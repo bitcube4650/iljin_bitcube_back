@@ -1,6 +1,5 @@
 package iljin.framework.ebid.etc.util;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,7 +12,7 @@ public class Constances {
 
     /*----------------------System Constances--------------------------*/
 
-    public static String IS_REAL_SERVER;
+    public static boolean COMMON_SCHEDULE_FLAG;
     public static String SYSTEM_FILEENCRYPT_KEY;
     public static String FILE_UPLOAD_DIRECTORY;
 
@@ -24,9 +23,9 @@ public class Constances {
 
 
     //스케줄러 실행여부
-    @Value("${common.isReal.server}")
-    private void setIsRealServer(String isRealServer) {
-        Constances.IS_REAL_SERVER = isRealServer;
+    @Value("${common.schedule.flag}")
+    private void setIsRealServer(boolean commonScheduleFlag) {
+        Constances.COMMON_SCHEDULE_FLAG = commonScheduleFlag;
     }
     //암호화(AES 첨부파일) 키
     @Value("${file.encrypted.key}")

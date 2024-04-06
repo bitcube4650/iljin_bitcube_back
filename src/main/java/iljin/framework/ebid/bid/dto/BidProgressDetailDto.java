@@ -73,12 +73,16 @@ public class BidProgressDetailDto {
 	
 	Boolean bidAuth;							//낙찰권한
 	Boolean openAuth;							//개찰권한
+	
+	String openAtt1Id;			//입회자1 id
+	String openAtt2Id;			//입회자2 id
 
 	public BidProgressDetailDto(
 			String biNo, String biName, String itemName, String biMode, String bidJoinSpec, String specialCond, String spotDate, String spotArea,
 			String succDeciMeth, String amtBasis, String payCond, BigDecimal bdAmt, String createUser, String damdangName, String estStartDate, String estCloseDate, Integer estCloseCheck,
 			String estOpener, String estBidder, String gongoName, String openAtt1, String openAtt2, String insMode, String supplyCond, String whyA3,
-			String ingTag, String interrelatedCustCode, String matDept, String matProc, String matCls, String matFactory, String matFactoryLine, String matFactoryCnt
+			String ingTag, String interrelatedCustCode, String matDept, String matProc, String matCls, String matFactory, String matFactoryLine, String matFactoryCnt,
+			String openAtt1Id, String openAtt2Id, String openAtt1Sign, String openAtt2Sign
 	){
 			this.biNo = biNo;
 			this.biName = biName;
@@ -113,5 +117,9 @@ public class BidProgressDetailDto {
 			this.matFactoryLine = matFactoryLine;
 			this.matFactoryCnt = matFactoryCnt;
 			this.createUser = createUser;
+			this.openAtt1Id = openAtt1Id;
+			this.openAtt2Id = openAtt2Id;
+			this.openAtt1Sign = openAtt1Sign;
+			this.openAtt2Sign = openAtt2Sign;
 	}
 }

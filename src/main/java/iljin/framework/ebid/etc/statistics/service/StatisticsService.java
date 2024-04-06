@@ -95,28 +95,39 @@ public class StatisticsService {
 		UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		Optional<TCoUser> userOptional = tCoUserRepository.findById(principal.getUsername());
 		String userId = userOptional.get().getUserId();
+		String userAuth = userOptional.get().getUserAuth();
 		
 		try {
+			StringBuilder sbList = new StringBuilder("");
 			
-			StringBuilder sbList = new StringBuilder(
-				  "select	tcui.INTERRELATED_CUST_CODE "
-				+ ",		tci.INTERRELATED_NM "
-				+ "from t_co_user_interrelated tcui "
-				+ "inner join t_co_interrelated tci "
-				+ "	on tcui.INTERRELATED_CUST_CODE = tci.INTERRELATED_CUST_CODE "
-			);
+			if(userAuth.equals("4")) {
+				sbList.append(
+					  "select	tcui.INTERRELATED_CUST_CODE "
+					+ ",		tci.INTERRELATED_NM "
+					+ "from t_co_user_interrelated tcui "
+					+ "inner join t_co_interrelated tci "
+					+ "	on tcui.INTERRELATED_CUST_CODE = tci.INTERRELATED_CUST_CODE "
+				);
 			
-			//조건문 쿼리 삽입
-			StringBuilder sbWhere = new StringBuilder();
-			sbWhere.append("where tcui.USER_ID = :userId ");
-			
-			sbList.append(sbWhere);
-			
+				//조건문 쿼리 삽입
+				StringBuilder sbWhere = new StringBuilder();
+				sbWhere.append("where tcui.USER_ID = :userId ");
+				
+				sbList.append(sbWhere);	
+			}else {
+				sbList.append(
+					  "select	tci.INTERRELATED_CUST_CODE "
+					+ ",		tci.INTERRELATED_NM "
+					+ "from t_co_interrelated tci "
+				);
+			}
 			//쿼리 실행 - mat_dept
 			Query queryList1 = entityManager.createNativeQuery(sbList.toString());
 			
-			//조건 대입
-			queryList1.setParameter("userId", userId);
+			if(userAuth.equals("4")) {
+				//조건 대입
+				queryList1.setParameter("userId", userId);
+			}
 			
 			List dept = new JpaResultMapper().list(queryList1, CoInterDto.class);
 			
@@ -124,7 +135,7 @@ public class StatisticsService {
 			
 		}catch(Exception e) {
 			log.error("interrelatedCustCodeList list error : {}", e);
-			resultBody.setCode("999");
+			resultBody.setCode("fail");
 			resultBody.setMsg("계열사 리스트를 가져오는것을 실패하였습니다.");
 		}
 		
@@ -241,7 +252,7 @@ public class StatisticsService {
 			
 		}catch(Exception e) {
 			log.error("bidDetailList list error : {}", e);
-			resultBody.setCode("999");
+			resultBody.setCode("fail");
 			resultBody.setMsg("입찰상세내역 리스트를 가져오는것을 실패하였습니다.");	
 		}
 		
@@ -448,7 +459,7 @@ public class StatisticsService {
 			
 		}catch(Exception e) {
 			log.error("bidDetailList list error : {}", e);
-			resultBody.setCode("999");
+			resultBody.setCode("fail");
 			resultBody.setMsg("입찰실적 상세내역 리스트를 가져오는 것을 실패하였습니다.");	
 		}
 		

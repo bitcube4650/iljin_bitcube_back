@@ -1,16 +1,18 @@
 package iljin.framework.ebid.bid.dto;
 
+import java.math.BigDecimal;
+
 import lombok.Data;
 
 @Data
 public class SubmitHistDto {
     String insMode;
-    String biOrder;
+    Short biOrder;
     String esmtCurr;
-    String esmtAmt;
+    BigDecimal esmtAmt;
     String submitDate;
 
-    public SubmitHistDto(String insMode, String biOrder, String esmtCurr, String esmtAmt, String submitDate){
+    public SubmitHistDto(String insMode, Short biOrder, String esmtCurr, BigDecimal esmtAmt, String submitDate){
         this.insMode = insMode;
         this.biOrder = biOrder;
         this.esmtCurr = esmtCurr;

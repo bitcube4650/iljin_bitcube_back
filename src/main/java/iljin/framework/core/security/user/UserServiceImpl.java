@@ -9,8 +9,10 @@ import iljin.framework.core.security.role.UserRoleRepository;
 import iljin.framework.core.util.Util;
 import iljin.framework.ebid.custom.dto.TCoCustMasterDto;
 import iljin.framework.ebid.etc.util.common.mail.service.MailService;
+import iljin.framework.ebid.etc.util.common.message.MessageService;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.qlrm.mapper.JpaResultMapper;
 import org.slf4j.Logger;
@@ -50,6 +52,7 @@ import java.util.stream.Collectors;
 import static java.util.stream.Collectors.toList;
 
 @RequiredArgsConstructor
+@Slf4j
 @Service
 public class UserServiceImpl implements UserService {
     private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
@@ -62,6 +65,7 @@ public class UserServiceImpl implements UserService {
     private final UserRoleRepository userRoleRepository;
     private final MailService mailService;
     private final PasswordEncoder passwordEncoder;
+    private final MessageService messageService;
 
     @Override
     public ResponseEntity<AuthToken> login(UserDto userDto, HttpSession session, HttpServletRequest request) {
@@ -217,7 +221,7 @@ public class UserServiceImpl implements UserService {
 
     public ResultBody idSearch(Map<String, String> params) {
         ResultBody resultBody = new ResultBody();
-        StringBuilder sbQuery = new StringBuilder(" SELECT user_id \n" +
+        StringBuilder sbQuery = new StringBuilder(" SELECT user_id, user_hp, user_name \n" +
                 "  FROM t_co_cust_user   a\n" +
                 "     , t_co_cust_master b\n" +
                 " WHERE a.cust_code = b.cust_code\n" +
@@ -230,18 +234,21 @@ public class UserServiceImpl implements UserService {
         query.setParameter("regnum", params.get("regnum1").toString()+params.get("regnum2").toString()+params.get("regnum3").toString());
         query.setParameter("userName", params.get("userName"));
         query.setParameter("userEmail", params.get("userEmail"));
-        Optional<String> userId = query.getResultList().stream().findFirst();
+        List<UserDto> list = new JpaResultMapper().list(query, UserDto.class);
 
-        if (userId.isPresent()) {
+        if (!list.isEmpty()) {
+            UserDto user = list.get(0);
             // 로그인 아이디 메일 저장 처리
             mailService.saveMailInfo("[일진그룹 e-bidding] 로그인 아이디", "안녕하십니까\n" +
                     "일진그룹 전자입찰 e-bidding 입니다.\n" +
                     "\n" +
                     "고객님께서 찾으시는 e-bidding 시스템 로그인 아이디는\n" +
-                    "<b style='color:red'>" + userId.get() + "</b>\n" +
+                    "<b style='color:red'>" + user.getLoginId() + "</b>\n" +
                     "입니다.\n" +
                     "\n" +
                     "감사합니다.\n", (String) params.get("userEmail"));
+
+            messageService.send("일진그룹", user.getUserHp(), user.getUserName(), "[일진그룹 전자입찰시스템] 찾고자 하는 아이디는 " + user.getLoginId() + " 입니다.");
         } else {
             resultBody.setCode("notFound");
         }
@@ -278,6 +285,26 @@ public class UserServiceImpl implements UserService {
                     "입니다.\n" +
                     "\n" +
                     "감사합니다.\n", (String) params.get("userEmail"));
+
+            sbQuery = new StringBuilder(" SELECT user_hp \n" +
+                    "  FROM t_co_cust_user   a\n" +
+                    "     , t_co_cust_master b\n" +
+                    " WHERE a.cust_code = b.cust_code\n" +
+                    "   AND b.regnum  = :regnum\n" +
+                    "   AND a.user_name = :userName\n" +
+                    "   AND a.user_email = :userEmail\n" +
+                    "   AND a.use_yn  = 'Y'\n" +
+                    "   AND b.cert_yn = 'Y'");
+
+            query = entityManager.createNativeQuery(sbQuery.toString());
+            query.setParameter("regnum", params.get("regnum1").toString()+params.get("regnum2").toString()+params.get("regnum3").toString());
+            query.setParameter("userName", params.get("userName"));
+            query.setParameter("userEmail", params.get("userEmail"));
+            Optional<String> userHp = query.getResultList().stream().findFirst();
+
+            if (userHp.isPresent()) {
+                messageService.send("일진그룹", userHp.get(), params.get("userName"), "[일진그룹 전자입찰시스템] 초기화 된 비밀번호는 " + userPwd + " 입니다.");
+            }
         } else {
             resultBody.setCode("notFound");
         }

@@ -1,5 +1,6 @@
 package iljin.framework.ebid.etc.util.common.schedule.controller;
 
+import iljin.framework.ebid.etc.util.Constances;
 import iljin.framework.ebid.etc.util.common.mail.service.MailService;
 import iljin.framework.ebid.etc.util.common.schedule.service.ScheduleService;
 import lombok.RequiredArgsConstructor;
@@ -18,22 +19,19 @@ public class ScheduleController {
     private final ScheduleService scheduleService;
     private final MailService mailService;
 
-    @Value("${common.isReal.server}")
-    private boolean isRealServer;
-
     @PostConstruct
     public void init() {
    //     emailSendExe();
     }
 
     //공고되지 않은 입찰 계획 삭제 : 0시 1분
+    //@Scheduled(fixedRate = Long.MAX_VALUE)
     @Scheduled(cron="0 1 0 * * *")	//초 분 시 일 월 주(년)
-    @Scheduled(fixedRate = Long.MAX_VALUE)
     public void deleteBidPlan() {
-        if(isRealServer) {
+        if(Constances.COMMON_SCHEDULE_FLAG) {
             log.info("--------------------------Scheduler deleteBidPlan() method start!--------------------------");
             try {
-                scheduleService.deleteBidPlan();
+               scheduleService.deleteBidPlan();
             } catch(Exception e) {
                 log.error("deleteEbidPlan Exception : "+e);
             }
@@ -43,8 +41,9 @@ public class ScheduleController {
 
     //진행중 입찰에서 30일이 지나도 낙찰처리가 안된 입찰은 유찰처리 : 0시 11분
     @Scheduled(cron="0 11 0 * * *")	//초 분 시 일 월 주(년)
+   // @Scheduled(fixedRate = Long.MAX_VALUE)
     public void updateIngTagForLast30Days() {
-        if(isRealServer) {
+        if(Constances.COMMON_SCHEDULE_FLAG) {
             log.info("--------------------------Scheduler updateIngTagForLast30Days() method start!-----------------");
             try {
                 scheduleService.updateIngTagForLast30Days();
@@ -62,7 +61,7 @@ public class ScheduleController {
     //@Scheduled(fixedRate = Long.MAX_VALUE)
 //	@RequestMapping("emailSendExe.sys")
     public void emailSendExe() {
-        if(isRealServer) {
+        if(Constances.COMMON_SCHEDULE_FLAG) {
             log.info("--------------------------Scheduler emailSendExe() method start!------------------------------");
             try {
                 //mailService.saveMailInfo("[테스트 제목입니다.]", "테스트 내용입니다.", "test@naver.com");
@@ -74,5 +73,4 @@ public class ScheduleController {
             log.info("--------------------------Scheduler emailSendExe() method end!--------------------------------");
         }
     }
-
 }

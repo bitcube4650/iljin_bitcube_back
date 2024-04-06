@@ -106,12 +106,27 @@ public class BidProgressController {
     }
 
     @PostMapping("/insertBid")
-    public ResultBody insertBid(@RequestBody Map<String, Object> params) {
-        return bidProgressService.insertBid(params);
-    }
-
-    @PostMapping("/updateEmail")
-    public void updateEmail(@RequestBody Map<String, String> params) {
+    public ResultBody insertBid(
+//    		@RequestPart("bidContent") Map<String, Object> bidContent,
+//    		@RequestPart("custContent") List<Map<String, Object>> custContent,
+//    		@RequestPart("tableContent") List<Map<String, Object>> tableContent,
+//    		@RequestPart("updateEmail") Map<String, Object> updateEmail,
+    		@RequestPart("bidContent") String bidContent,
+    		@RequestPart(value = "insFile", required = false) MultipartFile insFile,
+    		@RequestPart(value = "innerFile", required = false) MultipartFile innerFile,
+    		@RequestPart(value = "outerFile", required = false) MultipartFile outerFile,
+			@AuthenticationPrincipal CustomUserDetails user) {
+    	ResultBody resultBody = new ResultBody();
+		ObjectMapper mapper = new ObjectMapper();
+		Map<String, Object> params = null;
+    	try {
+			params = mapper.readValue(bidContent, Map.class);
+    		resultBody = bidProgressService.insertBid(params, insFile, innerFile, outerFile);
+        } catch (Exception e) {
+            e.printStackTrace();
+            resultBody.setCode("error");
+            }
+        return resultBody;
     }
 
     @PostMapping("/pastBidList")

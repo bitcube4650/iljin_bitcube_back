@@ -7,6 +7,7 @@ import iljin.framework.ebid.custom.dto.TCoUserDto;
 import iljin.framework.ebid.etc.util.PagaUtils;
 import iljin.framework.ebid.etc.util.common.file.FileService;
 import iljin.framework.ebid.etc.util.common.mail.service.MailService;
+import iljin.framework.ebid.etc.util.common.message.MessageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.qlrm.mapper.JpaResultMapper;
@@ -42,6 +43,8 @@ public class CustService {
     private MailService mailService;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private MessageService messageService;
 
     public Page custList(Map<String, Object> params) {
         StringBuilder sbCount = new StringBuilder(" SELECT COUNT(1) FROM t_co_cust_master a, t_co_cust_ir b WHERE a.cust_code = b.cust_code ");
@@ -97,7 +100,9 @@ public class CustService {
         List list = new JpaResultMapper().list(queryList, TCoCustMasterDto.class);
 
         BigInteger count = (BigInteger) queryTotal.getSingleResult();
-        return new PageImpl(list, pageable, count.intValue());
+        Page page = new PageImpl(list, pageable, count.intValue());
+
+        return page;
     }
 
     public Page otherCustList(Map<String, Object> params) {
@@ -313,6 +318,9 @@ public class CustService {
                 "입찰 업무는 로그인 후 하단에 입찰업무 안내를 참고하시거나 공지메뉴의 매뉴얼을 참조해 주십시오\n" +
                 "\n" +
                 "감사합니다.\n", (String) params.get("userEmail"));
+
+        messageService.send("일진그룹", (String) params.get("userHp"), (String) params.get("userName"), "[일진그룹 전자입찰시스템] 요청하신 일진그룹 전자입찰 시스템 회원가입이 승인되었습니다.");
+
         return resultBody;
     }
     @Transactional
@@ -490,6 +498,8 @@ public class CustService {
                     "입찰 업무는 로그인 후 하단에 입찰업무 안내를 참고하시거나 공지메뉴의 매뉴얼을 참조해 주십시오\n" +
                     "\n" +
                     "감사합니다.\n", (String) params.get("userEmail"));
+
+            messageService.send("일진그룹", (String) params.get("userHp"), (String) params.get("userName"), "[일진그룹 전자입찰시스템] 요청하신 일진그룹 전자입찰 시스템 회원가입이 승인되었습니다.");
         }
         return resultBody;
     }
@@ -502,8 +512,8 @@ public class CustService {
                 params.put("regnumFile", regnumFile.getOriginalFilename());
             }
             if (bFile != null) {
-                params.put("bFilePath", fileService.uploadFile(bFile));
-                params.put("bFile", bFile.getOriginalFilename());
+                params.put("bfilePath", fileService.uploadFile(bFile));
+                params.put("bfile", bFile.getOriginalFilename());
             }
         } catch (IOException e) {
             resultBody.setCode("UPLOAD");
@@ -525,8 +535,8 @@ public class CustService {
         query.setParameter("addrDetail", params.get("addrDetail"));
         query.setParameter("capital", params.get("capital"));
         query.setParameter("foundYear", params.get("foundYear"));
-        query.setParameter("bFile", params.get("bFile"));
-        query.setParameter("bFilePath", params.get("bFilePath"));
+        query.setParameter("bFile", params.get("bfile"));
+        query.setParameter("bFilePath", params.get("bfilePath"));
         query.setParameter("regnumFile", params.get("regnumFile"));
         query.setParameter("regnumPath", params.get("regnumPath"));
         CustomUserDetails user = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();

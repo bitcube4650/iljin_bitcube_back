@@ -198,7 +198,7 @@ public class MainService {
 		StringBuilder sbWhere = new StringBuilder();
 	
 		//계열사 조건
-		sbWhere.append(" and tccm.interrelated_cust_code = :interrelatedCustCode ");
+		sbWhere.append(" and tcci.interrelated_cust_code = :interrelatedCustCode ");
 		
 		sbCnt.append(sbWhere);
 		

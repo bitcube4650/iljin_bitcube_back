@@ -167,7 +167,7 @@ public class BidCompleteService {
 			
 		}catch(Exception e) {
 			log.error("bidComplete list error : {}", e);
-			resultBody.setCode("999");
+			resultBody.setCode("fail");
 			resultBody.setMsg("입찰 완료 리스트를 가져오는것을 실패하였습니다.");	
 		}
 		
@@ -286,6 +286,7 @@ public class BidCompleteService {
 				+ "	and tbimc.ESMT_CURR = tcc.CODE_VAL "
 				+ "left outer join t_bi_upload tbu "
 				+ "	on tbimc.FILE_ID = tbu.FILE_ID "
+				+ "	and tbu.FILE_FLAG = 'C' "
 			);
 			
 			//조건문 쿼리 삽입
@@ -429,7 +430,7 @@ public class BidCompleteService {
 			
 		}catch(Exception e) {
 			log.error("complateBidDetail error : {}", e);
-			resultBody.setCode("999");
+			resultBody.setCode("fail");
 			resultBody.setMsg("입찰완료 상세 데이터를 가져오는것을 실패하였습니다.");
 		}
 		
@@ -479,7 +480,7 @@ public class BidCompleteService {
 
 		}catch(Exception e) {
 			log.error("updRealAmt error : {}", e);
-			resultBody.setCode("999");
+			resultBody.setCode("fail");
 			resultBody.setMsg("실제계약금액 업데이트를 실패했습니다.");
 		}
 		return resultBody;
@@ -543,7 +544,7 @@ public class BidCompleteService {
 			
 		}catch(Exception e) {
 			log.error("lotteMatCode list error : {}", e);
-			resultBody.setCode("999");
+			resultBody.setCode("fail");
 			resultBody.setMsg("코드값을 가져오는것을 실패하였습니다.");
 		}
 		
@@ -707,7 +708,7 @@ public class BidCompleteService {
 			
 		}catch(Exception e) {
 			log.error("complateBidhistory list error : {}", e);
-			resultBody.setCode("999");
+			resultBody.setCode("fail");
 			resultBody.setMsg("입찰 이력 리스트를 가져오는것을 실패하였습니다.");
 		}
 		
@@ -758,7 +759,7 @@ public class BidCompleteService {
 			
 		}catch(Exception e) {
 			log.error("joinCustList list error : {}", e);
-			resultBody.setCode("999");
+			resultBody.setCode("fail");
 			resultBody.setMsg("투찰 정보를 가져오는것을 실패하였습니다.");
 		}
 		
@@ -865,7 +866,7 @@ public class BidCompleteService {
 			
 		}catch(Exception e) {
 			log.error("complateBidPartnerList list error : {}", e);
-			resultBody.setCode("999");
+			resultBody.setCode("fail");
 			resultBody.setMsg("입찰 완료 리스트를 가져오는것을 실패하였습니다.");	
 		}
 		
@@ -1098,7 +1099,7 @@ public class BidCompleteService {
 			
 		}catch(Exception e) {
 			log.error("complateBidPartnerDetail error : {}", e);
-			resultBody.setCode("999");
+			resultBody.setCode("fail");
 			resultBody.setMsg("입찰완료 상세 데이터를 가져오는것을 실패하였습니다.");
 		}
 		
@@ -1137,7 +1138,7 @@ public class BidCompleteService {
 			
 		}catch(Exception e) {
 			log.error("updBiCustFlag error : {}", e);
-			resultBody.setCode("999");
+			resultBody.setCode("fail");
 			resultBody.setMsg("낙찰승인 저장을 실패하였습니다.");
 			
 			return resultBody;

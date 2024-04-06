@@ -27,7 +27,7 @@ public class BidProgressListDetailDto {
     String cuserCode;
     String estOpenDate;
     String openAtt1;
-    String openatt1Code;
+    String openAtt1Code;
     String estBidderCode;
     String estBidder;
     String openAtt1Sign;
@@ -84,7 +84,7 @@ public class BidProgressListDetailDto {
     	    String cuserCode,
     	    String estOpenDate,
     	    String openAtt1,
-    	    String openatt1Code,
+    	    String openAtt1Code,
     	    String estBidderCode,
     	    String estBidder,
     	    String openAtt1Sign,
@@ -135,7 +135,7 @@ public class BidProgressListDetailDto {
 	    this.cuserCode = cuserCode;
 	    this.estOpenDate = estOpenDate;
 	    this.openAtt1 = openAtt1;
-	    this.openatt1Code = openatt1Code;
+	    this.openAtt1Code = openAtt1Code;
 	    this.estBidderCode = estBidderCode;
 	    this.estBidder = estBidder;
 	    this.openAtt1Sign = openAtt1Sign;
