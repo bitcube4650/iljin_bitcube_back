@@ -62,7 +62,7 @@ public class MessageService {
             String rPhone2 = rPhone.substring(3, rPhone.length());
             String rPhone3 = rPhone2.length() == 7 ? rPhone2.substring(3, rPhone2.length()) : rPhone2.substring(4, rPhone2.length());
             rPhone2 = rPhone2.length() == 7 ? rPhone2.substring(0, 3) : rPhone2.substring(0, 4);
-            Query query = em.createNativeQuery("INSERT INTO smsdata2 (indate, intime, member, sendid, sendname, rphone1, rphone2, rphone3, recvname, sphone1, sphone2, sphone3, msg, rdate, rtime, result, kind, errcode, bi_no) " +
+            Query query = em.createNativeQuery("INSERT INTO smsdata (indate, intime, member, sendid, sendname, rphone1, rphone2, rphone3, recvname, sphone1, sphone2, sphone3, msg, rdate, rtime, result, kind, errcode, bi_no) " +
                     "VALUES (:indate, :intime, :member, :sendid, :sendname, :rphone1, :rphone2, :rphone3, :recvname, :sphone1, :sphone2, :sphone3, :msg, :rdate, :rtime, :result, :kind, :errcode, :biNo)");
 
             query.setParameter("indate", date);
