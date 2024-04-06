@@ -773,7 +773,7 @@ public class BidProgressService {
                         +
                         "open_att2, ing_tag, create_user, create_date, item_code, gongo_id, pay_cond, bi_open, interrelated_cust_code, mat_dept, "
                         +
-                        "mat_proc, mat_cls, mat_factory, mat_factory_line, mat_factory_cnt, open_att1_sign, open_att2_sign) values (:biNo, :biName, :biModeCode, :insModeCode, :bidJoinSpec, "
+                        "mat_proc, mat_cls, mat_factory, mat_factory_line, mat_factory_cnt, open_att1_sign, open_att2_sign,update_date,update_user) values (:biNo, :biName, :biModeCode, :insModeCode, :bidJoinSpec, "
                         +
                         ":specialCond, :supplyCond, STR_TO_DATE(:spotDate, '%Y-%m-%d %H:%i'), :spotArea, :succDeciMethCode, sysdate(), "
                         +
@@ -781,7 +781,7 @@ public class BidProgressService {
                         +
                         ":estOpenerCode, :estBidderCode, :openAtt1Code, :openAtt2Code, 'A0', :userId, sysdate(), :itemCode, :gongoIdCode, :payCond, 'N', "
                         +
-                        ":interrelatedCustCode, :matDept, :matProc, :matCls, :matFactory, :matFactoryLine, :matFactoryCnt, 'N', 'N')");
+                        ":interrelatedCustCode, :matDept, :matProc, :matCls, :matFactory, :matFactoryLine, :matFactoryCnt, 'N', 'N',sysdate(),:userId)");
 
         Query queryList = entityManager.createNativeQuery(sbList.toString());
         queryList.setParameter("biNo", (String) params.get("biNo"));
