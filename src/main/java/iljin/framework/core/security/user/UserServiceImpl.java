@@ -82,7 +82,7 @@ public class UserServiceImpl implements UserService {
             Optional<UserDto> user = Optional.of(userDto);
 
             // 실서버만 적용 2024-12-31까지만
-            if ("production".equals(profile)) {
+//            if ("production".equals(profile)) {
 //            if ("dev".equals(profile)) {
                 // 최초 로그인시 비밀번호 변경 처리
                 if ("tempChange".equals(userAuth)) {
@@ -125,7 +125,7 @@ public class UserServiceImpl implements UserService {
                         }
                     }
                 }
-            }
+//            }
 
             Optional<AuthToken> result =
                     user.map(obj -> {
