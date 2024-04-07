@@ -40,7 +40,14 @@ public class BidProgressController {
 
     @PostMapping("/bidNotice")
     public ResultBody bidNotice(@RequestBody Map<String, String> params) {
-        return bidProgressService.bidNotice(params);
+    	ResultBody resultBody = new ResultBody();
+    	try {
+    		bidProgressService.bidNotice(params);
+        } catch (Exception e) {
+            e.printStackTrace();
+            resultBody.setCode("error");
+            }
+        return resultBody;
     }
 
     @PostMapping("/delete")
@@ -58,11 +65,25 @@ public class BidProgressController {
         return bidProgressService.findCoUserInfo(params);
     }
 
+   
     @PostMapping("/updateBid")
-    public ResultBody updateBid(@RequestBody Map<String, Object> params) {
-        System.out.println("@@@@@@@@@");
-        System.out.println(params);
-        return bidProgressService.updateBid(params);
+    public ResultBody updateBid(
+    		@RequestPart("bidContent") String bidContent,
+    		@RequestPart(value = "insFile", required = false) MultipartFile insFile,
+    		@RequestPart(value = "innerFile", required = false) MultipartFile innerFile,
+    		@RequestPart(value = "outerFile", required = false) MultipartFile outerFile,
+			@AuthenticationPrincipal CustomUserDetails user) {
+    	ResultBody resultBody = new ResultBody();
+		ObjectMapper mapper = new ObjectMapper();
+
+    	try {
+    		Map<String, Object> params = mapper.readValue(bidContent, Map.class);
+    		resultBody = bidProgressService.updateBid(params, insFile, innerFile, outerFile);
+        } catch (Exception e) {
+            e.printStackTrace();
+            resultBody.setCode("error");
+            }
+        return resultBody;
     }
 
     @PostMapping("/updateBidCust")

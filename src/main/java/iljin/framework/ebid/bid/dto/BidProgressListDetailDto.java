@@ -56,6 +56,7 @@ public class BidProgressListDetailDto {
     String matFactory;
     String matFactoryLine;
     String matFactoryCnt;
+    String createUserName;
     
     
 
@@ -112,7 +113,8 @@ public class BidProgressListDetailDto {
     	    String matCls,
     	    String matFactory,
     	    String matFactoryLine,
-    	    String matFactoryCnt
+    	    String matFactoryCnt,
+    	    String createUserName
         ){
 	    this.biNo = biNo;
 	    this.biName = biName;
@@ -164,5 +166,6 @@ public class BidProgressListDetailDto {
 	    this.matFactory = matFactory;
 	    this.matFactoryLine = matFactoryLine;
 	    this.matFactoryCnt = matFactoryCnt;
+	    this.createUserName = createUserName;
     }
 }
