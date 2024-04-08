@@ -50,7 +50,7 @@ public class ItemService {
     }
 
     public Page itemList(Map<String, Object> params) {
-        return tCoItemRepository.findAll(searchWith(params), PagaUtils.pageable(params, "createDate"));
+        return tCoItemRepository.findAll(searchWith(params), PagaUtils.pageable(params, "itemCode", true));
     }
 
     public Specification<TCoItem> searchWith(Map<String, Object> params) {
