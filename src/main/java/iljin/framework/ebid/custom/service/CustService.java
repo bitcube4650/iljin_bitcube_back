@@ -479,7 +479,7 @@ public class CustService {
                     "\n" +
                     "감사합니다.";
 
-            sbQuery = new StringBuilder(" SELECT user_email FROM t_co_user WHERE user_auth = '2' AND use_yn = 'Y' AND interrelated_cust_code = :interrelatedCustCode)");
+            sbQuery = new StringBuilder(" SELECT user_email FROM t_co_user WHERE user_auth = '2' AND use_yn = 'Y' AND interrelated_cust_code = :interrelatedCustCode");
             query = entityManager.createNativeQuery(sbQuery.toString());
             query.setParameter("interrelatedCustCode", params.get("interrelatedCustCode"));
             List<String> list = (List<String>) query.getResultList();
