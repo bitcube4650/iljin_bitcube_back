@@ -203,6 +203,7 @@ public class BidCompleteService {
 				+ ",		tcu.USER_NAME as DAMDANG_NAME "
 				+ ",		DATE_FORMAT(tbim.EST_START_DATE, '%Y-%m-%d %H:%i') as EST_START_DATE "
 				+ ",		DATE_FORMAT(tbim.EST_CLOSE_DATE, '%Y-%m-%d %H:%i') as EST_CLOSE_DATE "
+				+ ",		DATE_FORMAT(tbim.EST_OPEN_DATE, '%Y-%m-%d %H:%i') as EST_OPEN_DATE "
 				+ ",		tcu3.USER_NAME as EST_OPENER "
 				+ ",		tcu4.USER_NAME as EST_BIDDER "
 				+ ",		tcu.USER_NAME as GONGO_NAME "
