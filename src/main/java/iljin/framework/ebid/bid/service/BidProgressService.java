@@ -1442,7 +1442,7 @@ public class BidProgressService {
 				queryList.setParameter("content", emailContent.get("content"));
 				queryList.setParameter("userEmail", recvInfo.getUserEmail());
 				queryList.setParameter("fromMail", recvInfo.getFromEmail());
-				queryList.setParameter("biNo", emailContent.get("biNo"));
+				queryList.setParameter("biNo", params.get("biNo"));
 				queryList.executeUpdate();
 			}
 		}
