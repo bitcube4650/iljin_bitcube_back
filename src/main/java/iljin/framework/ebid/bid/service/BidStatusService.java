@@ -665,7 +665,6 @@ public class BidStatusService {
 			StringBuilder sbCust = new StringBuilder(
 					"UPDATE	t_bi_info_mat_cust " 
 			+		"set	ESMT_AMT = :esmtAmt "
-			+		",		SUBMIT_DATE = sysdate() "
 			+		",		UPDATE_DATE = sysdate() "
 			+		",		UPDATE_USER = :userId "
 			+		"WHERE bi_no = :biNo "
@@ -762,6 +761,7 @@ public class BidStatusService {
 				"UPDATE	t_bi_info_mat " 
 			+	"set	ING_TAG = 'A2' "
 			+	",		EST_OPEN_DATE = sysdate() "
+			+	",		BI_OPEN = 'Y' "
 			+	",		UPDATE_DATE = sysdate() "
 			+	",		UPDATE_USER = :userId "
 			+	"WHERE bi_no = :biNo "
@@ -959,6 +959,7 @@ public class BidStatusService {
 				+ ",		UPDATE_DATE = sysdate() "
 				+ ",		UPDATE_USER = :userId "
 				+ ",		BI_MODE = 'A' "
+				+ ",		BI_OPEN = 'N' "
 				+ "WHERE	bi_no = :biNo");
 
 		Query queryMain = entityManager.createNativeQuery(sbMain.toString());

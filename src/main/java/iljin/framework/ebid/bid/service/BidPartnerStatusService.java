@@ -617,6 +617,7 @@ public class BidPartnerStatusService {
 			tBiInfoMatCust.setBiNo(biNo);
 			tBiInfoMatCust.setCustCode(custCode);
 			tBiInfoMatCust.setEsmtYn("2");
+			tBiInfoMatCust.setSubmitDate(currentDate);
 			tBiInfoMatCust.setCreateUser(userId);
 			tBiInfoMatCust.setCreateDate(currentDate);
 			tBiInfoMatCust.setUpdateUser(userId);
@@ -629,6 +630,7 @@ public class BidPartnerStatusService {
 		}else {
 			tBiInfoMatCust = optional.get();
 			tBiInfoMatCust.setEsmtYn("2");//esmt_yn( 업체투찰 flag  0-업체지정, 1-업체공고확인, 2-업체투찰)
+			tBiInfoMatCust.setSubmitDate(currentDate);
 			tBiInfoMatCust.setUpdateUser(userId);
 			tBiInfoMatCust.setUpdateDate(currentDate);
 			tBiInfoMatCust.setEncQutn(amt);
