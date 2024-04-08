@@ -265,6 +265,8 @@ public class BidStatusService {
 			+ ",		tbim.OPEN_ATT2 as OPEN_ATT2_ID "
 			+ ",		CASE WHEN tbim.OPEN_ATT1 IS NOT NULL AND tbim.OPEN_ATT1 != '' THEN tbim.OPEN_ATT1_SIGN ELSE 'Y' END AS OPEN_ATT1_SIGN "
 			+ ",		CASE WHEN tbim.OPEN_ATT2 IS NOT NULL AND tbim.OPEN_ATT2 != '' THEN tbim.OPEN_ATT2_SIGN ELSE 'Y' END AS OPEN_ATT2_SIGN "
+			+ ",		tbim.EST_OPENER as EST_OPENER_ID "
+			+ ",		tbim.EST_BIDDER as EST_BIDDER_ID "
 			+ "from t_bi_info_mat tbim "
 			+ "left outer join t_co_user tcu "
 			+ "	on tbim.GONGO_ID = tcu.USER_ID "
@@ -306,23 +308,9 @@ public class BidStatusService {
 		detailDto = new JpaResultMapper().uniqueResult(queryMain, BidProgressDetailDto.class);
 		
 		// ************ 로그인 당사자 개찰권한, 낙찰권한 확인 ************
-		StringBuilder sbAuthData = new StringBuilder(
-			  "select	tcu.OPENAUTH "
-			+ ",		tcu.BIDAUTH "
-			+ "from t_co_user tcu "
-			+ "where tcu.USER_ID = :userId "
-		);
 		
-		//쿼리 실행
-		Query queryAuth = entityManager.createNativeQuery(sbAuthData.toString());
-		
-		//조건 대입
-		queryAuth.setParameter("userId", userId);
-		
-		CoUserInfoDto userInfoDto = new JpaResultMapper().uniqueResult(queryAuth, CoUserInfoDto.class);
-		
-		detailDto.setBidAuth(!StringUtils.isEmpty(userInfoDto.getBidauth()));
-		detailDto.setOpenAuth(!StringUtils.isEmpty(userInfoDto.getOpenauth()));
+		detailDto.setBidAuth(CommonUtils.getString(detailDto.getEstBidderId()).equals(userId));
+		detailDto.setOpenAuth(CommonUtils.getString(detailDto.getEstOpenerId()).equals(userId));
 		
 		// ************ 데이터 검색 -- 입찰참가업체 ************
 		StringBuilder sbCustData = new StringBuilder(
@@ -622,8 +610,17 @@ public class BidStatusService {
 		for(BidCustDto custDto : custList) {
 			
 			//총 견적금액 복호화 (encQutn -> encQutn)
-			String encQutn = custDto.getEncQutn();
+			String encQutn = null;
 			
+			if(custDto.getEncQutn() != null) {
+				encQutn = custDto.getEncQutn();
+			};
+			
+			//제출한 총 견적금액이 없으면 continue
+			 if (encQutn == null || encQutn.equals("")) {
+		        continue;
+		    }
+			 
 			//envelope 복호화
 			ResultBody decryptResult = certificateService.decryptData(encQutn, interrelatedCustCode, certPwd);
 			
@@ -656,7 +653,6 @@ public class BidStatusService {
 			StringBuilder sbCust = new StringBuilder(
 					"UPDATE	t_bi_info_mat_cust " 
 			+		"set	ESMT_AMT = :esmtAmt "
-			+		",		SUBMIT_DATE = sysdate() "
 			+		",		UPDATE_DATE = sysdate() "
 			+		",		UPDATE_USER = :userId "
 			+		"WHERE bi_no = :biNo "
@@ -676,8 +672,17 @@ public class BidStatusService {
 			//직접입력일 경우 협력사 직접입력 테이블 insert
 			if(custDto.getInsMode().equals("2")) {
 				//직접입력 정보 복호화(encEsmtSpec -> encEsmtSpec)
-				String encEsmtSpec = custDto.getEncEsmtSpec();
+				String encEsmtSpec = null;
 				
+				if(custDto.getEncEsmtSpec() != null) {
+					encEsmtSpec = custDto.getEncEsmtSpec();
+				};
+				
+				//제출한 총 견적금액이 없으면 continue
+				 if (encEsmtSpec == null || encEsmtSpec.equals("")) {
+			        continue;
+			    }
+		
 				//envelope 복호화
 				ResultBody decryptResult3 = certificateService.decryptData(encEsmtSpec, interrelatedCustCode, certPwd);
 				
@@ -709,7 +714,7 @@ public class BidStatusService {
 				
 				if(!encEsmtSpec.equals("")) {
 					//직접입력 복호화
-					String[] esmtSpecArr = encEsmtSpec.split("‡");
+					String[] esmtSpecArr = encEsmtSpec.split("$");
 					
 					for(String esmtSpec : esmtSpecArr) {
 						
@@ -744,6 +749,7 @@ public class BidStatusService {
 				"UPDATE	t_bi_info_mat " 
 			+	"set	ING_TAG = 'A2' "
 			+	",		EST_OPEN_DATE = sysdate() "
+			+	",		BI_OPEN = 'Y' "
 			+	",		UPDATE_DATE = sysdate() "
 			+	",		UPDATE_USER = :userId "
 			+	"WHERE bi_no = :biNo "
@@ -941,6 +947,7 @@ public class BidStatusService {
 				+ ",		UPDATE_DATE = sysdate() "
 				+ ",		UPDATE_USER = :userId "
 				+ ",		BI_MODE = 'A' "
+				+ ",		BI_OPEN = 'N' "
 				+ "WHERE	bi_no = :biNo");
 
 		Query queryMain = entityManager.createNativeQuery(sbMain.toString());

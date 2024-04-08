@@ -107,7 +107,7 @@ public class CustService {
     }
 
     public Page otherCustList(Map<String, Object> params) {
-        StringBuilder sbCount = new StringBuilder(" SELECT count(1) FROM t_co_cust_master a WHERE interrelated_cust_code != :custCode");
+        StringBuilder sbCount = new StringBuilder(" SELECT count(1) FROM t_co_cust_master a WHERE interrelated_cust_code != :custCode and cert_yn = 'Y' ");
         StringBuilder sbList = new StringBuilder(" SELECT cust_code \n" +
                 "     , cust_name \n" +
                 "     , CONCAT((SELECT CONCAT('1. ', item_name, '<br/>') FROM t_co_item x WHERE x.item_code = a.cust_type1)\n" +
@@ -116,7 +116,7 @@ public class CustService {
                 "     , pres_name \n" +
                 "     , (SELECT GROUP_CONCAT(interrelated_nm SEPARATOR '<br/>') FROM t_co_cust_ir x, t_co_interrelated y WHERE x.cust_code = a.cust_code AND x.interrelated_cust_code = y.interrelated_cust_code) AS interrelated_nm\n" +
                 "  FROM t_co_cust_master a\n" +
-                " WHERE interrelated_cust_code != :custCode");
+                " WHERE interrelated_cust_code != :custCode and cert_yn = 'Y' ");
         StringBuilder sbWhere = new StringBuilder();
 
         if (!StringUtils.isEmpty(params.get("custType"))) {
@@ -483,7 +483,7 @@ public class CustService {
                     "\n" +
                     "감사합니다.";
 
-            sbQuery = new StringBuilder(" SELECT user_email FROM t_co_user WHERE user_auth = '2' AND use_yn = 'Y' AND interrelated_cust_code = :interrelatedCustCode)");
+            sbQuery = new StringBuilder(" SELECT user_email FROM t_co_user WHERE user_auth = '2' AND use_yn = 'Y' AND interrelated_cust_code = :interrelatedCustCode");
             query = entityManager.createNativeQuery(sbQuery.toString());
             query.setParameter("interrelatedCustCode", params.get("interrelatedCustCode"));
             List<String> list = (List<String>) query.getResultList();

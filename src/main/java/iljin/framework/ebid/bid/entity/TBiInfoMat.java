@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @Data
 @Entity
 @NoArgsConstructor
-@IdClass(TBiInfoMatID.class)
+//@IdClass(TBiInfoMatID.class)
 @Table(name = "t_bi_info_mat")
 public class TBiInfoMat {
 
