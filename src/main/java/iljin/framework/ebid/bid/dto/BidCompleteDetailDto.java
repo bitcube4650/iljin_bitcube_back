@@ -24,6 +24,7 @@ public class BidCompleteDetailDto {
 	String damdangName;							//입찰담당자
 	String estStartDate;						//제출시작일시
 	String estCloseDate;						//제출마감일시
+	String estOpenDate;						//개찰일시
 	String estOpener;							//개찰자
 	String estBidder;							//낙찰자
 	String gongoName;							//입찰공고자
@@ -55,7 +56,7 @@ public class BidCompleteDetailDto {
 			String biNo, String biName, String itemName, String biMode, String bidJoinSpec, 
 			String specialCond, String spotDate, String spotArea, String succDeciMeth, 
 			String amtBasis, String payCond, BigDecimal bdAmt, String damdangName, 	String estStartDate, 
-			String estCloseDate, String estOpener, String estBidder, String gongoName, String openAtt1, String openAtt2, 
+			String estCloseDate, String estOpenDate, String estOpener, String estBidder, String gongoName, String openAtt1, String openAtt2, 
 			String insMode, String supplyCond, String whyA3, String whyA7, String addAccept, String ingTag, String interrelatedCustCode,
 			String matDept, String matProc, String matCls, String matFactory, String matFactoryLine, String matFactoryCnt
 	) {
@@ -74,6 +75,7 @@ public class BidCompleteDetailDto {
 		this.damdangName = damdangName;
 		this.estStartDate = estStartDate;
 		this.estCloseDate = estCloseDate;
+		this.estOpenDate = estOpenDate;
 		this.estOpener = estOpener;
 		this.estBidder = estBidder;
 		this.gongoName = gongoName;
