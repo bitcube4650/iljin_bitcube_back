@@ -482,7 +482,7 @@ public class BidPartnerStatusService {
 		LocalDateTime currentDate = LocalDateTime.now();//update 또는 insert 되는 현재시점
 		
 		//직접입력
-		StringBuilder sbItemList = new StringBuilder("");//직접입력 품목당 가격을 "‡" 구분자와 같이 넣은 문자열
+		StringBuilder sbItemList = new StringBuilder("");//직접입력 품목당 가격을 "$" 구분자와 같이 넣은 문자열
 		String strItemList = "";
 		
 		//파일입력
@@ -511,7 +511,7 @@ public class BidPartnerStatusService {
 					totalAmt += esmtUc;
 					
 					if(i > 0) {//구분자
-						sbItemList.append("‡");
+						sbItemList.append("$");
 					}
 					//품목순번 = 가격
 					sbItemList.append(seq + "=" + esmtUc);

@@ -622,8 +622,17 @@ public class BidStatusService {
 		for(BidCustDto custDto : custList) {
 			
 			//총 견적금액 복호화 (encQutn -> encQutn)
-			String encQutn = custDto.getEncQutn();
+			String encQutn = null;
 			
+			if(custDto.getEncQutn() != null) {
+				encQutn = custDto.getEncQutn();
+			};
+			
+			//제출한 총 견적금액이 없으면 continue
+			 if (encQutn == null || encQutn.equals("")) {
+		        continue;
+		    }
+			 
 			//envelope 복호화
 			ResultBody decryptResult = certificateService.decryptData(encQutn, interrelatedCustCode, certPwd);
 			
@@ -676,8 +685,17 @@ public class BidStatusService {
 			//직접입력일 경우 협력사 직접입력 테이블 insert
 			if(custDto.getInsMode().equals("2")) {
 				//직접입력 정보 복호화(encEsmtSpec -> encEsmtSpec)
-				String encEsmtSpec = custDto.getEncEsmtSpec();
+				String encEsmtSpec = null;
 				
+				if(custDto.getEncEsmtSpec() != null) {
+					encEsmtSpec = custDto.getEncEsmtSpec();
+				};
+				
+				//제출한 총 견적금액이 없으면 continue
+				 if (encEsmtSpec == null || encEsmtSpec.equals("")) {
+			        continue;
+			    }
+		
 				//envelope 복호화
 				ResultBody decryptResult3 = certificateService.decryptData(encEsmtSpec, interrelatedCustCode, certPwd);
 				
@@ -709,7 +727,7 @@ public class BidStatusService {
 				
 				if(!encEsmtSpec.equals("")) {
 					//직접입력 복호화
-					String[] esmtSpecArr = encEsmtSpec.split("‡");
+					String[] esmtSpecArr = encEsmtSpec.split("$");
 					
 					for(String esmtSpec : esmtSpecArr) {
 						
