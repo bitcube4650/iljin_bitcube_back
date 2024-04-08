@@ -191,6 +191,14 @@ public class CertificateService {
 	//인증서 pem 형태에서 파일 형태로 변환
 	public void pemToFile(String filePath) {
 		try{
+			//pem 데이터의 -----BEGIN CERTIFICATE----- 와 -----END CERTIFICATE----- 사이에 있는 데이터를
+			//메모장에 붙여넣기 한 이후에 파일이름.b64 형태로 저장
+			//파일이름은 
+			//암호용 인증서의 경우 kmCert.b64
+			//서명용 인정서의 경우 signCert.b64
+			//암호용 키의 경우 kmPri.b64
+			//서명용 키의 경우 signPri.b64
+			//위와같이 만든 파일의 전체 경로를 파라미터(filePath)로 받음
 			
 			String filename = filePath;
 			FileInputStream fis = new FileInputStream(filename);
@@ -201,7 +209,11 @@ public class CertificateService {
 			
 			FileOutputStream fos = new FileOutputStream(filename + "_bin");
 			fos.write(loginData); fos.close();
-
+			//결과물로 파일이름.b64_bin 파일이 생성됨
+			
+			//생성된 파일의 이름바꾸기로 확장자 변경
+			//인증서는 확장자를 .b64_bin에서 .der로 변경
+			//키는 확장자를 .b64_bin에서 .key로 변경
 		} catch(Exception e){
 			e.printStackTrace();
 		}

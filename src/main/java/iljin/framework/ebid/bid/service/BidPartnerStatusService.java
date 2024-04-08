@@ -502,14 +502,13 @@ public class BidPartnerStatusService {
 			List<Map<String, Object>> itemList = (List<Map<String, Object>>) params.get("submitData");//직접입력 품목
 			
 			if(itemList.size() != 0) {
-				int totalAmt = 0;
+
 				for(int i = 0; i < itemList.size(); i++) {
 					Map<String,Object> item = itemList.get(i);
 					
 					int seq = CommonUtils.getInt(item.get("seq"));
 					int esmtUc = CommonUtils.getInt(item.get("esmtUc"));
-					totalAmt += esmtUc;
-					
+
 					if(i > 0) {//구분자
 						sbItemList.append("$");
 					}
@@ -519,9 +518,7 @@ public class BidPartnerStatusService {
 				
 				//직접입력 str
 				strItemList = sbItemList.toString();
-				
-				//총 견적금액
-				amt = CommonUtils.getString(totalAmt);
+
 			}
 		}
 		
