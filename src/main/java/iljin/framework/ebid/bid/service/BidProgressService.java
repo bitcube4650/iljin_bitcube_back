@@ -560,7 +560,7 @@ public class BidProgressService {
         }
            
         StringBuilder sbMail = new StringBuilder();
-        Map<String, Object> emailMap = new HashMap<String, Object>();
+
         if( "A".equals(CommonUtils.getString(params.get("biModeCode"))) ) {
                 //지명경쟁입찰
                 sbMail.append(
@@ -605,7 +605,7 @@ public class BidProgressService {
     		queryMail.setParameter("userId", userId);
     		List<SendDto> sendList = new JpaResultMapper().list(queryMail, SendDto.class);
 			
-			if(sendList.size() != 0) {
+			if(sendList.size() > 0) {
 				Map<String, Object> emailParam = new HashMap<String, Object>();
 
 				emailParam.put("type", "notice");
@@ -613,7 +613,7 @@ public class BidProgressService {
 				emailParam.put("interNm", params.get("interNm"));
 				emailParam.put("reason", "");
 				emailParam.put("sendList", sendList);
-				
+				emailParam.put("biNo", biNo);
 				this.updateEmail(emailParam);
 			}
 
@@ -806,26 +806,30 @@ public class BidProgressService {
     		//조건 대입
     		queryMail.setParameter("userId", userId);
     		List<SendDto> sendList = new JpaResultMapper().list(queryMail, SendDto.class);
-                    
-            // 계열사명 가져오기
-            StringBuilder sbInterNm = new StringBuilder(
-            		"select tci.INTERRELATED_NM "
-            		+ "from t_co_interrelated tci "
-            		+ "inner join t_co_user tcu "
-            		+ "	on tci.INTERRELATED_CUST_CODE = tcu.INTERRELATED_CUST_CODE "
-            		+ "where tcu.USER_ID = :userId");
             
-            Query queryInterNm = entityManager.createNativeQuery(sbInterNm.toString());
-    		queryInterNm.setParameter("userId", userId);
-    		List<String> interNm = new JpaResultMapper().list(queryInterNm, String.class);
-    		
-            emailMap.put("type", "insert");
-            emailMap.put("biName", (String) bidContent.get("biName"));
-            emailMap.put("interNm", interNm.get(0)); // 계열사명
-            emailMap.put("reason", "");	// 입찰계획은 사유 없음
-            emailMap.put("sendList", sendList);	// 수신자 리스트
-        
-            this.updateEmail(emailMap);
+			if(sendList.size() > 0) {
+	            // 계열사명 가져오기
+	            StringBuilder sbInterNm = new StringBuilder(
+	            		"select tci.INTERRELATED_NM "
+	            		+ "from t_co_interrelated tci "
+	            		+ "inner join t_co_user tcu "
+	            		+ "	on tci.INTERRELATED_CUST_CODE = tcu.INTERRELATED_CUST_CODE "
+	            		+ "where tcu.USER_ID = :userId");
+	            
+	            Query queryInterNm = entityManager.createNativeQuery(sbInterNm.toString());
+	    		queryInterNm.setParameter("userId", userId);
+	    		List<String> interNm = new JpaResultMapper().list(queryInterNm, String.class);
+	    		
+	            emailMap.put("type", "insert");
+	            emailMap.put("biName", (String) bidContent.get("biName"));
+	            emailMap.put("interNm", interNm.get(0)); // 계열사명
+	            emailMap.put("reason", "");	// 입찰계획은 사유 없음
+	            emailMap.put("sendList", sendList);	// 수신자 리스트
+	            emailMap.put("biNo", biNo);	// 수신자 리스트
+	            
+	            this.updateEmail(emailMap);				
+			}
+
         
         Map<String,Object> changeFileCheck = (Map<String, Object>) bidContent.get("changeFileCheck");
         // 첨부파일 대내용
@@ -1203,25 +1207,29 @@ public class BidProgressService {
 		queryMail.setParameter("userId", userId);
 		List<SendDto> sendList = new JpaResultMapper().list(queryMail, SendDto.class);
         
+		if(sendList.size() > 0) {
+	        // 계열사명 가져오기
+	        StringBuilder sbInterNm = new StringBuilder(
+	        		"select tci.INTERRELATED_NM "
+	        		+ "from t_co_interrelated tci "
+	        		+ "inner join t_co_user tcu "
+	        		+ "	on tci.INTERRELATED_CUST_CODE = tcu.INTERRELATED_CUST_CODE "
+	        		+ "where tcu.USER_ID = :userId");
+	        
+	        Query queryInterNm = entityManager.createNativeQuery(sbInterNm.toString());
+			queryInterNm.setParameter("userId", userId);
+			List<String> interNm = new JpaResultMapper().list(queryInterNm, String.class);
+			
+	        emailMap.put("type", "insert");
+	        emailMap.put("biName", (String) bidContent.get("biName"));
+	        emailMap.put("interNm", interNm.get(0)); // 계열사명
+	        emailMap.put("reason", "");	// 입찰계획은 사유 없음
+	        emailMap.put("sendList", sendList);	// 수신자 리스트
+	        emailMap.put("biNo", biNo);	// 수신자 리스트
+	        
+	        this.updateEmail(emailMap);
+		}
 
-        // 계열사명 가져오기
-        StringBuilder sbInterNm = new StringBuilder(
-        		"select tci.INTERRELATED_NM "
-        		+ "from t_co_interrelated tci "
-        		+ "inner join t_co_user tcu "
-        		+ "	on tci.INTERRELATED_CUST_CODE = tcu.INTERRELATED_CUST_CODE "
-        		+ "where tcu.USER_ID = :userId");
-        
-        Query queryInterNm = entityManager.createNativeQuery(sbInterNm.toString());
-		queryInterNm.setParameter("userId", userId);
-		List<String> interNm = new JpaResultMapper().list(queryInterNm, String.class);
-		
-        emailMap.put("type", "insert");
-        emailMap.put("biName", (String) bidContent.get("biName"));
-        emailMap.put("interNm", interNm.get(0)); // 계열사명
-        emailMap.put("reason", "");	// 입찰계획은 사유 없음
-        emailMap.put("sendList", sendList);	// 수신자 리스트
-        this.updateEmail(emailMap);
 
         // 첨부파일 대내용
         if( innerFile != null ) {
@@ -1360,35 +1368,66 @@ public class BidProgressService {
         queryList.executeUpdate();
         
         // 발송대상 가져오기
-        Map<String, Object> emailMap = new HashMap<String, Object>();
-        StringBuilder sbMail = new StringBuilder(
-				"select	tccu.user_email "
-				+ ",	tcu.user_email as from_email "
-				+ "from t_bi_info_mat_cust tbimc "
-				+ "inner join t_co_cust_master tccm "
-				+ "	on tbimc.cust_code = tccm.cust_code "
-				+ "inner join t_co_cust_user tccu "
-				+ "	on tccm.cust_code = tccu.cust_code "
-				+ "inner join t_bi_info_mat tbim "
-				+ "	on tbimc.bi_no = tbim.bi_no "
-				+ "left outer join t_co_user tcu "
-				+ "	on tbim.create_user = tcu.user_id "
-				+ "where tbimc.bi_no = :biNo "
-				//+ "and tbimc.esmt_yn = '2' " // 왜 2 했는지 물어봐야함
-		);
-		
-		//쿼리 실행
-		Query queryMail = entityManager.createNativeQuery(sbMail.toString());
-		//조건 대입
-		queryMail.setParameter("biNo", biNo);
+        
+        
+        StringBuilder sbMail = new StringBuilder();
+
+        if( "A".equals(CommonUtils.getString(params.get("biModeCode"))) ) {
+                //지명경쟁입찰
+                sbMail.append(
+        				"select 	tcu.user_email\r\n"
+        				+ "				,		tccu.USER_EMAIL as from_email \r\n"
+        				+ "				from t_co_user tcu \r\n"
+        				+ "				inner join t_co_interrelated tci\r\n"
+        				+ "				on tcu.INTERRELATED_CUST_CODE = tci.INTERRELATED_CUST_CODE\r\n"
+        				+ "				inner join t_co_cust_ir tcci \r\n"
+        				+ "				on tci.INTERRELATED_CUST_CODE = tcci.INTERRELATED_CUST_CODE \r\n"
+        				+ "				inner join t_co_cust_master tccm \r\n"
+        				+ "				on tcci.CUST_CODE = tccm.CUST_CODE 		\r\n"
+        				+ "				left outer join t_co_cust_user tccu \r\n"
+        				+ "				on tccm.CUST_CODE = tccu.CUST_CODE \r\n"
+        				+ "				where tcu.USER_ID = :userId\r\n"
+        				+ "				and tccu.USER_EMAIL is not null\r\n"
+        				+ "				and tccm.CUST_CODE in(" +  params.get("custCode") + ")"
+        		);
+        		
+            }else {
+            	// 일반경쟁입찰
+            	sbMail.append("select tcu.user_email\r\n"
+                		+ ",		tccu.USER_EMAIL as from_email \r\n"
+                		+ "from t_co_user tcu \r\n"
+                		+ "inner join t_co_interrelated tci\r\n"
+                		+ "on tcu.INTERRELATED_CUST_CODE = tci.INTERRELATED_CUST_CODE\r\n"
+                		+ "inner join t_co_cust_ir tcci \r\n"
+                		+ "on tci.INTERRELATED_CUST_CODE = tcci.INTERRELATED_CUST_CODE \r\n"
+                		+ "inner join t_co_cust_master tccm \r\n"
+                		+ "on tcci.CUST_CODE = tccm.CUST_CODE 		\r\n"
+                		+ "left outer join t_co_cust_user tccu \r\n"
+                		+ "on tccm.CUST_CODE = tccu.CUST_CODE \r\n"
+                		+ "where tcu.USER_ID = :userId\r\n"
+                		+ "and tccu.USER_EMAIL is not null\r\n"
+                		+ "group by tccu.USER_EMAIL "
+        		);
+            }
+    		
+    		//쿼리 실행
+    		Query queryMail = entityManager.createNativeQuery(sbMail.toString());
+    		//조건 대입
+    		queryMail.setParameter("userId", userId);
+        
 		List<SendDto> sendList = new JpaResultMapper().list(queryMail, SendDto.class);
-        
-        emailMap.put("type", "del");
-        emailMap.put("biName", (String) params.get("biName"));
-        emailMap.put("reason", (String) params.get("reason")); // 삭제사유
-        emailMap.put("sendList", sendList);	// 수신자 리스트
-        
-        this.updateEmail(emailMap);
+		if(sendList.size() > 0) {
+	        Map<String, Object> emailMap = new HashMap<String, Object>();
+	        emailMap.put("type", "del");
+	        emailMap.put("biName", (String) params.get("biName"));
+	        emailMap.put("reason", (String) params.get("reason")); // 삭제사유
+	        emailMap.put("interNm", params.get("interNm"));
+	        emailMap.put("sendList", sendList);	// 수신자 리스트
+	        emailMap.put("biNo", biNo);	// 수신자 리스트
+	        
+	        this.updateEmail(emailMap);
+		}
+
         return resultBody;
     }
 
@@ -1485,7 +1524,7 @@ public class BidProgressService {
 	 */
 	public void updateEmail(Map<String, Object> params) {
 		List<SendDto> sendList = (List<SendDto>) params.get("sendList");		//수신인/발송인 메일 리스트
-		
+
 		//메일 내용 셋팅
 		Map<String, String> emailContent = this.emailContent(params);
 		
@@ -1500,7 +1539,7 @@ public class BidProgressService {
 				queryList.setParameter("content", emailContent.get("content"));
 				queryList.setParameter("userEmail", recvInfo.getUserEmail());
 				queryList.setParameter("fromMail", recvInfo.getFromEmail());
-				queryList.setParameter("biNo", emailContent.get("biNo"));
+				queryList.setParameter("biNo", params.get("biNo").toString());
 				queryList.executeUpdate();
 			}
 		}
