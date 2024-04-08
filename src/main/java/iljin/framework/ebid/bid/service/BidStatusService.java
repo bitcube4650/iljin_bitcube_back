@@ -29,6 +29,8 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -69,6 +71,9 @@ public class BidStatusService {
 
     @Autowired
     private MessageService messageService;
+    
+    @Autowired
+    private PasswordEncoder passwordEncoder;
     
     @Value("${file.upload.directory}")
     private String uploadDirectory;
@@ -1151,8 +1156,13 @@ public class BidStatusService {
 		
 		String userId = CommonUtils.getString(params.get("attSignId"));
 		String password = CommonUtils.getString(params.get("attPw"));
-		
-		Boolean pwCheck = userService.checkPassword(userId, password);
+		String dbPassword = "";
+		Optional<TCoUser> userOptional = tCoUserRepository.findById(userId);
+		if (userOptional.isPresent()) {
+			dbPassword = userOptional.get().getUserPwd();
+		}
+
+		Boolean pwCheck = ((BCryptPasswordEncoder) passwordEncoder).matches(password, dbPassword);
 		
 		if(pwCheck) {
 			String whoAtt = CommonUtils.getString(params.get("whoAtt"));

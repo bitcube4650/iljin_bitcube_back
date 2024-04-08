@@ -26,10 +26,12 @@ import iljin.framework.ebid.etc.main.dto.PartnerBidCntDto;
 import iljin.framework.ebid.etc.main.dto.PartnerCntDto;
 import iljin.framework.ebid.etc.main.dto.PartnerCompletedBidCntDto;
 import iljin.framework.ebid.etc.main.service.MainService;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/api/v1/main")
 @CrossOrigin
+@Slf4j
 public class MainController {
 	
 	@Autowired 
@@ -100,6 +102,22 @@ public class MainController {
 	public ResultBody selectCompInfo(@RequestBody Map<String, Object> params) {
 		
 		return mainService.selectCompInfo(params);
+				
+	}
+
+	//비밀번호 변경 권장 플래그
+	@PostMapping("/chkPwChangeEncourage")
+	public ResultBody chkPwChangeEncourage(@RequestBody Map<String, Object> params) {
+		ResultBody resultBody = new ResultBody();
+		
+		try {
+			resultBody = mainService.chkPwChangeEncourage(params);
+		}catch(Exception e) {
+			log.error("chkPwChangeEncourage error : {}", e);
+			resultBody.setCode("fail");
+		}
+		
+		return resultBody;
 				
 	}
 	

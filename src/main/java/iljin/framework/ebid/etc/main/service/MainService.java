@@ -36,6 +36,7 @@ import iljin.framework.ebid.etc.main.dto.BidCntDto;
 import iljin.framework.ebid.etc.main.dto.PartnerBidCntDto;
 import iljin.framework.ebid.etc.main.dto.PartnerCntDto;
 import iljin.framework.ebid.etc.main.dto.PartnerCompletedBidCntDto;
+import iljin.framework.ebid.etc.util.CommonUtils;
 
 @Service
 public class MainService {
@@ -563,6 +564,41 @@ public class MainService {
 		return resultBody;
 	}
 	
+	//비밀번호 변경 권장 플래그
+	public ResultBody chkPwChangeEncourage(Map<String, Object> params) {
+		ResultBody resultBody = new ResultBody();
+		resultBody.setData(false);
+		
+		LocalDateTime currentDate = LocalDateTime.now();	//현재시간
+		LocalDateTime pwChangeDate = null;					//비밀번호 변경일
+		
+		String userId = CommonUtils.getString(params.get("userId"));
+		Boolean isGroup = (Boolean) params.get("isGroup");
+		
+		if(isGroup) {
+			Optional<TCoUser> userOptional = tCoUserRepository.findById(userId);
+	
+			if (userOptional.isPresent()) {//계열사인 경우
+				pwChangeDate = userOptional.get().getPwdEditDate();
+			}
+		}else {
+			Optional<TCoCustUser> userOptional = tCoUserCustRepository.findById(userId);
+			
+			if (userOptional.isPresent()) {//계열사인 경우
+				pwChangeDate = userOptional.get().getPwdChgDate();
+			}
+		}
+		
+		//비밀번호 변경일이 null이거나 1년이상 지난경우
+		if(pwChangeDate != null) {
+			LocalDateTime pwChangeDatePlusYear = pwChangeDate.plusYears(1);
+			resultBody.setData(currentDate.isAfter(pwChangeDatePlusYear));
+		}else {
+			resultBody.setData(true);
+		}
+		
+		return resultBody;
+	}
 	
 
 }
