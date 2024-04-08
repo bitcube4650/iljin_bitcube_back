@@ -77,12 +77,15 @@ public class BidProgressDetailDto {
 	String openAtt1Id;			//입회자1 id
 	String openAtt2Id;			//입회자2 id
 
+	String estOpenerId;			//개찰자 id
+	String estBidderId;			//낙찰자 id
+
 	public BidProgressDetailDto(
 			String biNo, String biName, String itemName, String biMode, String bidJoinSpec, String specialCond, String spotDate, String spotArea,
 			String succDeciMeth, String amtBasis, String payCond, BigDecimal bdAmt, String createUser, String damdangName, String estStartDate, String estCloseDate, Integer estCloseCheck,
 			String estOpener, String estBidder, String gongoName, String openAtt1, String openAtt2, String insMode, String supplyCond, String whyA3,
 			String ingTag, String interrelatedCustCode, String matDept, String matProc, String matCls, String matFactory, String matFactoryLine, String matFactoryCnt,
-			String openAtt1Id, String openAtt2Id, String openAtt1Sign, String openAtt2Sign
+			String openAtt1Id, String openAtt2Id, String openAtt1Sign, String openAtt2Sign, String estOpenerId, String estBidderId
 	){
 			this.biNo = biNo;
 			this.biName = biName;
@@ -121,5 +124,7 @@ public class BidProgressDetailDto {
 			this.openAtt2Id = openAtt2Id;
 			this.openAtt1Sign = openAtt1Sign;
 			this.openAtt2Sign = openAtt2Sign;
+			this.estOpenerId = estOpenerId;
+			this.estBidderId = estBidderId;
 	}
 }
