@@ -297,7 +297,13 @@ public class UserServiceImpl implements UserService {
                     "\n" +
                     "감사합니다.\n", (String) params.get("userEmail"));
 
-            messageService.send("일진그룹", user.getUserHp(), user.getUserName(), "[일진그룹 전자입찰시스템] 찾고자 하는 아이디는 " + user.getLoginId() + " 입니다.");
+            try {
+            	 messageService.send("일진그룹", user.getUserHp(), user.getUserName(), "[일진그룹 전자입찰시스템] 찾고자 하는 아이디는 " + user.getLoginId() + " 입니다.");
+            }catch(Exception e) {
+				log.error("idSearch send message error : {}", e);
+			}
+           
+            
         } else {
             resultBody.setCode("notFound");
         }
@@ -352,7 +358,13 @@ public class UserServiceImpl implements UserService {
             Optional<String> userHp = query.getResultList().stream().findFirst();
 
             if (userHp.isPresent()) {
-                messageService.send("일진그룹", userHp.get(), params.get("userName"), "[일진그룹 전자입찰시스템] 초기화 된 비밀번호는 " + userPwd + " 입니다.");
+            	
+                try {
+                	 messageService.send("일진그룹", userHp.get(), params.get("userName"), "[일진그룹 전자입찰시스템] 초기화 된 비밀번호는 " + userPwd + " 입니다.");
+               }catch(Exception e) {
+   					log.error("pwSearch send message error : {}", e);
+   				}
+  
             }
         } else {
             resultBody.setCode("notFound");

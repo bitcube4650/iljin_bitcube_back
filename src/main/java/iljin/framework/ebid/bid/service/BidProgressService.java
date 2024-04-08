@@ -22,6 +22,7 @@ import iljin.framework.ebid.custom.repository.TCoUserRepository;
 import iljin.framework.ebid.etc.util.CommonUtils;
 import iljin.framework.ebid.etc.util.PagaUtils;
 import iljin.framework.ebid.etc.util.common.file.FileService;
+import iljin.framework.ebid.etc.util.common.message.MessageService;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -72,6 +73,9 @@ public class BidProgressService {
 
     @Autowired
     private FileService fileService;
+    
+    @Autowired
+    private MessageService messageService;
 
     @Value("${file.upload.directory}")
     private String uploadDirectory;
@@ -566,6 +570,8 @@ public class BidProgressService {
                 sbMail.append(
         				"select 	tcu.user_email\r\n"
         				+ "				,		tccu.USER_EMAIL as from_email \r\n"
+        				+ ",	tccu.USER_HP "
+        				+ ",	tccu.USER_NAME "
         				+ "				from t_co_user tcu \r\n"
         				+ "				inner join t_co_interrelated tci\r\n"
         				+ "				on tcu.INTERRELATED_CUST_CODE = tci.INTERRELATED_CUST_CODE\r\n"
@@ -606,6 +612,19 @@ public class BidProgressService {
     		List<SendDto> sendList = new JpaResultMapper().list(queryMail, SendDto.class);
 			
 			if(sendList.size() > 0) {
+
+				//문자 : 지명경쟁입찰일 때만
+				if( "A".equals(CommonUtils.getString(params.get("biModeCode")))) {			
+					
+					try{
+						for(SendDto dto : sendList) {
+							messageService.send("일진그룹", dto.getUserHp(), dto.getUserName(), "[일진그룹 전자입찰시스템] 참여하신 입찰("+biNo+")이 공고되었습니다.\r\n확인바랍니다.", biNo);
+						}
+					}catch(Exception e) {
+						log.error("noticeBid send message error : {}", e);
+					}
+				 }
+				
 				Map<String, Object> emailParam = new HashMap<String, Object>();
 
 				emailParam.put("type", "notice");
@@ -768,6 +787,8 @@ public class BidProgressService {
                 sbMail.append(
         				"select 	tcu.user_email\r\n"
         				+ "				,		tccu.USER_EMAIL as from_email \r\n"
+        				+ ",	tccu.USER_HP "
+        				+ ",	tccu.USER_NAME "
         				+ "				from t_co_user tcu \r\n"
         				+ "				inner join t_co_interrelated tci\r\n"
         				+ "				on tcu.INTERRELATED_CUST_CODE = tci.INTERRELATED_CUST_CODE\r\n"
@@ -808,6 +829,18 @@ public class BidProgressService {
     		List<SendDto> sendList = new JpaResultMapper().list(queryMail, SendDto.class);
             
 			if(sendList.size() > 0) {
+				
+				if( "A".equals(CommonUtils.getString(bidContent.get("biModeCode"))) ) {
+					try{
+						for(SendDto dto : sendList) {
+							messageService.send("일진그룹", dto.getUserHp(), dto.getUserName(), "[일진그룹 전자입찰시스템] 참여하신 입찰 "+biNo+")이 수정되었습니다.\r\n확인바랍니다.", biNo);
+						}
+					}catch(Exception e) {
+						log.error("updateBid send message error : {}", e);
+					}
+					
+				 }
+				 
 	            // 계열사명 가져오기
 	            StringBuilder sbInterNm = new StringBuilder(
 	            		"select tci.INTERRELATED_NM "
@@ -1168,6 +1201,8 @@ public class BidProgressService {
             sbMail.append(
     				"select 	tcu.user_email\r\n"
     				+ "				,		tccu.USER_EMAIL as from_email \r\n"
+    				+ ",	tccu.USER_HP "
+    				+ ",	tccu.USER_NAME "
     				+ "				from t_co_user tcu \r\n"
     				+ "				inner join t_co_interrelated tci\r\n"
     				+ "				on tcu.INTERRELATED_CUST_CODE = tci.INTERRELATED_CUST_CODE\r\n"
@@ -1208,6 +1243,17 @@ public class BidProgressService {
 		List<SendDto> sendList = new JpaResultMapper().list(queryMail, SendDto.class);
         
 		if(sendList.size() > 0) {
+			 if( "A".equals(CommonUtils.getString(bidContent.get("biModeCode"))) ) {
+				
+				try{
+					for(SendDto dto : sendList) {
+						messageService.send("일진그룹", dto.getUserHp(), dto.getUserName(), "[일진그룹 전자입찰시스템] 참여하신 입찰 ("+biNo+")이 등록되었습니다.", biNo);
+					}
+				}catch(Exception e) {
+					log.error("insertBid send message error : {}", e);
+				}
+				
+			 }
 	        // 계열사명 가져오기
 	        StringBuilder sbInterNm = new StringBuilder(
 	        		"select tci.INTERRELATED_NM "

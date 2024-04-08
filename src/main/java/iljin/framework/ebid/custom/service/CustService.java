@@ -2,6 +2,7 @@ package iljin.framework.ebid.custom.service;
 
 import iljin.framework.core.dto.ResultBody;
 import iljin.framework.core.security.user.CustomUserDetails;
+import iljin.framework.ebid.bid.dto.SendDto;
 import iljin.framework.ebid.custom.dto.TCoCustMasterDto;
 import iljin.framework.ebid.custom.dto.TCoUserDto;
 import iljin.framework.ebid.etc.util.PagaUtils;
@@ -319,8 +320,11 @@ public class CustService {
                 "\n" +
                 "감사합니다.\n", (String) params.get("userEmail"));
 
-        messageService.send("일진그룹", (String) params.get("userHp"), (String) params.get("userName"), "[일진그룹 전자입찰시스템] 요청하신 일진그룹 전자입찰 시스템 회원가입이 승인되었습니다.");
-
+		try{
+			messageService.send("일진그룹", (String) params.get("userHp"), (String) params.get("userName"), "[일진그룹 전자입찰시스템] 요청하신 일진그룹 전자입찰 시스템 회원가입이 승인되었습니다.");
+		}catch(Exception e) {
+			log.error("approval send message error : {}", e);
+		}
         return resultBody;
     }
     @Transactional
@@ -498,8 +502,14 @@ public class CustService {
                     "입찰 업무는 로그인 후 하단에 입찰업무 안내를 참고하시거나 공지메뉴의 매뉴얼을 참조해 주십시오\n" +
                     "\n" +
                     "감사합니다.\n", (String) params.get("userEmail"));
-
-            messageService.send("일진그룹", (String) params.get("userHp"), (String) params.get("userName"), "[일진그룹 전자입찰시스템] 요청하신 일진그룹 전자입찰 시스템 회원가입이 승인되었습니다.");
+            
+            
+			try{
+				messageService.send("일진그룹", (String) params.get("userHp"), (String) params.get("userName"), "[일진그룹 전자입찰시스템] 요청하신 일진그룹 전자입찰 시스템 회원가입이 승인되었습니다.");
+			}catch(Exception e) {
+				log.error("insert send message error : {}", e);
+			}
+           
         }
         return resultBody;
     }
