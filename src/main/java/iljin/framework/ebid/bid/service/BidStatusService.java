@@ -18,6 +18,7 @@ import iljin.framework.ebid.custom.repository.TCoUserRepository;
 import iljin.framework.ebid.etc.util.CommonUtils;
 import iljin.framework.ebid.etc.util.PagaUtils;
 import iljin.framework.ebid.etc.util.common.certificate.service.CertificateService;
+import iljin.framework.ebid.etc.util.common.message.MessageService;
 import lombok.extern.slf4j.Slf4j;
 
 import org.qlrm.mapper.JpaResultMapper;
@@ -66,6 +67,9 @@ public class BidStatusService {
     @Autowired
     private CertificateService certificateService;
 
+    @Autowired
+    private MessageService messageService;
+    
     @Value("${file.upload.directory}")
     private String uploadDirectory;
 
@@ -564,6 +568,7 @@ public class BidStatusService {
 				emailParam.put("biName", params.get("biName"));
 				emailParam.put("reason", params.get("reason"));
 				emailParam.put("sendList", sendList);
+				emailParam.put("biNo", biNo);
 				
 				bidProgressService.updateEmail(emailParam);
 			}
@@ -620,11 +625,33 @@ public class BidStatusService {
 			String encQutn = custDto.getEncQutn();
 			
 			//envelope 복호화
-			encQutn = certificateService.decryptData(encQutn, interrelatedCustCode, certPwd);
+			ResultBody decryptResult = certificateService.decryptData(encQutn, interrelatedCustCode, certPwd);
 			
+			if(decryptResult.getCode().equals("ERROR")) {//복호화 실패
+				
+				//이전 인증서로 다시 복호화 시도
+				String preCertPath = "pre/" + interrelatedCustCode;
+				ResultBody decryptResult2 = certificateService.decryptData(encQutn, preCertPath, certPwd);
+				
+				if(decryptResult.getCode().equals("ERROR")) {//2차 시도 복호화 실패
+					return decryptResult2;
+				}else{//2차 시도 복호화 성공
+					encQutn = (String) decryptResult2.getData();
+				}
+			}else {//복호화 성공
+				encQutn = (String) decryptResult.getData();
+			}
+
 			//서명된 데이터 검증
-			encQutn = certificateService.signDataFix(encQutn);
+			ResultBody fixedResult = certificateService.signDataFix(encQutn);
+			
+			if(fixedResult.getCode().equals("ERROR")) {//복호화 한 데이터 검증 실패
+				return fixedResult;
+			}else {//검증 성공
+				encQutn = (String) fixedResult.getData();
+			}
 			System.out.println("최종 복호화된 금액 >> " + encQutn);
+			
 			//복호화 후 업데이트
 			StringBuilder sbCust = new StringBuilder(
 					"UPDATE	t_bi_info_mat_cust " 
@@ -652,12 +679,33 @@ public class BidStatusService {
 				String encEsmtSpec = custDto.getEncEsmtSpec();
 				
 				//envelope 복호화
-				encEsmtSpec = certificateService.decryptData(encEsmtSpec, interrelatedCustCode, certPwd);
+				ResultBody decryptResult3 = certificateService.decryptData(encEsmtSpec, interrelatedCustCode, certPwd);
 				
+				if(decryptResult3.getCode().equals("ERROR")) {//복호화 실패
+					
+					//이전 인증서로 다시 복호화 시도
+					String preCertPath = "pre/" + interrelatedCustCode;
+					ResultBody decryptResult4 = certificateService.decryptData(encEsmtSpec, preCertPath, certPwd);
+					
+					if(decryptResult4.getCode().equals("ERROR")) {//2차 시도 복호화 실패
+						return decryptResult4;
+					}else{//2차 시도 복호화 성공
+						encEsmtSpec = (String) decryptResult4.getData();
+					}
+				}else {//복호화 성공
+					encEsmtSpec = (String) decryptResult3.getData();
+				}
+
 				//서명된 데이터 검증
-				encEsmtSpec = certificateService.signDataFix(encEsmtSpec);
+				ResultBody fixedResult2 = certificateService.signDataFix(encEsmtSpec);
 				
-				System.out.println("최종 복호화된 직접입력 >> " + encQutn);
+				if(fixedResult2.getCode().equals("ERROR")) {//복호화 한 데이터 검증 실패
+					return fixedResult2;
+				}else {//검증 성공
+					encEsmtSpec = (String) fixedResult2.getData();
+				}
+				System.out.println("최종 복호화된 금액 >> " + encEsmtSpec);
+
 				
 				if(!encEsmtSpec.equals("")) {
 					//직접입력 복호화
@@ -788,11 +836,13 @@ public class BidStatusService {
 		logParams.put("userId", userId);
 		bidProgressService.updateLog(logParams);
 		
-		//메일 전송
+		//메일, 문자 전송
 		try {
 			StringBuilder sbMail = new StringBuilder(
 				"select	tccu.user_email "
 				+ ",	tcu.user_email as from_email "
+				+ ",	tccu.USER_HP "
+				+ ",	tccu.USER_NAME "
 				+ "from t_bi_info_mat_cust tbimc "
 				+ "inner join t_co_cust_master tccm "
 				+ "	on tbimc.cust_code = tccm.cust_code "
@@ -803,13 +853,14 @@ public class BidStatusService {
 				+ "left outer join t_co_user tcu "
 				+ "	on tbim.create_user = tcu.user_id "
 				+ "where tbimc.bi_no = :biNo "
-				+ "and tbimc.esmt_yn = '3' "
+				+ "and tbimc.cust_code = :succCust "
 			);
 			
 			//쿼리 실행
 			Query queryMail = entityManager.createNativeQuery(sbMail.toString());
 			//조건 대입
 			queryMail.setParameter("biNo", biNo);
+			queryMail.setParameter("succCust", CommonUtils.getString(params.get("succCust")));
 			List<SendDto> sendList = new JpaResultMapper().list(queryMail, SendDto.class);
 			
 			if(sendList.size() != 0) {
@@ -818,11 +869,19 @@ public class BidStatusService {
 				emailParam.put("biName", params.get("biName"));
 				emailParam.put("reason", params.get("succDetail"));
 				emailParam.put("sendList", sendList);
+				emailParam.put("biNo", biNo);
 				
 				bidProgressService.updateEmail(emailParam);
+				
+				//문자
+				for(SendDto dto : sendList) {
+					messageService.send("일진그룹", dto.getUserHp(), dto.getUserName(), "[일진그룹 전자입찰시스템] 참여하신 입찰에("+biNo+") 낙찰되었습니다.\r\n확인바랍니다.", biNo);
+				}
+				
 			}
+			
 		}catch(Exception e) {
-			log.error("bidSucc sendMail error : {}", e);
+			log.error("bidSucc sendMsg error : {}", e);
 		}
 
 		return resultBody;
@@ -948,11 +1007,13 @@ public class BidStatusService {
 		logParams.put("biNo", biNo);
 		bidProgressService.updateLog(logParams);
 		
-		//메일 전송
+		//메일, 문자 전송
 		try {
 			StringBuilder sbMail = new StringBuilder(
 				"select	tccu.user_email "
 				+ ",	tcu.user_email as from_email "
+				+ ",	tccu.USER_HP "
+				+ ",	tccu.USER_NAME "
 				+ "from t_bi_info_mat_cust tbimc "
 				+ "inner join t_co_cust_master tccm "
 				+ "	on tbimc.cust_code = tccm.cust_code "
@@ -979,8 +1040,14 @@ public class BidStatusService {
 				emailParam.put("biName", params.get("biName"));
 				emailParam.put("reason", params.get("whyA3"));
 				emailParam.put("sendList", sendList);
+				emailParam.put("biNo", biNo);
 				
 				bidProgressService.updateEmail(emailParam);
+				
+				//문자
+				for(SendDto dto : sendList) {
+					messageService.send("일진그룹", dto.getUserHp(), dto.getUserName(), "[일진그룹 전자입찰시스템] 일진씨앤에스에서 재입찰을 공고하였습니다.\r\n확인바랍니다.", biNo);
+				}
 			}
 		}catch(Exception e) {
 			log.error("rebid sendMail error : {}", e);

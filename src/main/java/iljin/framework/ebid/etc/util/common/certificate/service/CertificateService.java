@@ -1,9 +1,11 @@
 package iljin.framework.ebid.etc.util.common.certificate.service;
 
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 
 import org.springframework.stereotype.Service;
 
+import iljin.framework.core.dto.ResultBody;
 import tradesign.crypto.provider.JeTS;
 import tradesign.pki.pkix.EnvelopedData;
 import tradesign.pki.pkix.SignedData;
@@ -13,7 +15,8 @@ import tradesign.pki.util.JetsUtil;
 public class CertificateService {
 	
 	//envelope 암호화
-	public String encryptData(String data, String interrelatedCustCode) {
+	public ResultBody encryptData(String data, String interrelatedCustCode) {
+		ResultBody resultBody = new ResultBody();
 		String encrypted = "";
 		
 		try {
@@ -43,15 +46,23 @@ public class CertificateService {
 			//DB에 저장할 envelope 데이타(base64 형식)
 			encrypted = new String(JetsUtil.encodeBase64(env_msg));
 			
+			resultBody.setData(encrypted);
+			
 		} catch (Exception e1) {
 			e1.printStackTrace();
+			resultBody.setCode("ERROR");
+			resultBody.setStatus(999);
+			resultBody.setMsg(e1.getMessage());
+			
+			return resultBody;
 		}
 		
-		return encrypted;
+		return resultBody;
 	}
 	
 	//envelope 복호화
-	public String decryptData(String data, String interrelatedCustCode, String certPwd) {
+	public ResultBody decryptData(String data, String interrelatedCustCode, String certPwd) {
+		ResultBody resultBody = new ResultBody();
 		String decrypted = "";
 		
 		try {
@@ -93,15 +104,21 @@ public class CertificateService {
 			//화면에 표시할 devlope 데이타
 			decrypted = new String(JetsUtil.encodeBase64(dev_msg));
 			
+			resultBody.setData(decrypted);
+			
 		} catch (Exception e1) {
 			e1.printStackTrace();
+			resultBody.setCode("ERROR");
+			resultBody.setStatus(999);
+			resultBody.setMsg(e1.getMessage());
 		}
 		
-		return decrypted;
+		return resultBody;
 	}
 	
 	//서버인증서로 signData 생성
-	public String signData(String data) {
+	public ResultBody signData(String data) {
+		ResultBody resultBody = new ResultBody();
 		String signed = "";
 		try {
 			// 설정파일 위치를 ebid.jar 경로를 기준으로 상대 경로 지정
@@ -128,16 +145,24 @@ public class CertificateService {
 			
 			byte[] signed_msg = sd.sign();
 			signed = new String(JetsUtil.encodeBase64(signed_msg));
+			
+			resultBody.setData(signed);
 						
 		} catch (Exception e1) {
 			e1.printStackTrace();
+			resultBody.setCode("ERROR");
+			resultBody.setStatus(999);
+			resultBody.setMsg(e1.getMessage());
+			
+			return resultBody;
 		}			
 		
-		return signed;
+		return resultBody;
 	}
 	
 	//signData 복구(검증)
-	public String signDataFix(String data) {
+	public ResultBody signDataFix(String data) {
+		ResultBody resultBody = new ResultBody();
 		String fixed = "";
 		try {
 			// 설정파일 위치를 ebid.jar 경로를 기준으로 상대 경로 지정
@@ -150,12 +175,56 @@ public class CertificateService {
 			
 			byte[] veryfi_msg = sd.getContent();
 			fixed = new String(veryfi_msg);
+			
+			resultBody.setData(fixed);
 						
 		} catch (Exception e1) {
 			e1.printStackTrace();
+			resultBody.setCode("ERROR");
+			resultBody.setStatus(999);
+			resultBody.setMsg(e1.getMessage());
 		}			
 		
-		return fixed;
+		return resultBody;
+	}
+	
+	//인증서 pem 형태에서 파일 형태로 변환
+	public void pemToFile(String filePath) {
+		try{
+			
+			String filename = filePath;
+			FileInputStream fis = new FileInputStream(filename);
+			byte[] b64 = new byte[fis.available()];
+			fis.read(b64); fis.close();
+					
+			byte[] loginData = JetsUtil.decodeBase64(b64);
+			
+			FileOutputStream fos = new FileOutputStream(filename + "_bin");
+			fos.write(loginData); fos.close();
+
+		} catch(Exception e){
+			e.printStackTrace();
+		}
+	}
+	
+	//인증서 파일 형태에서 pem 형태로 변환
+	public void fileToPem(String filePath) {
+		
+		try {
+			String filename = filePath;
+			
+			FileInputStream fis = new FileInputStream(filename);
+			byte[] bin = new byte[fis.available()];
+			fis.read(bin); fis.close();			
+			
+			byte[] b64d = JetsUtil.encodeBase64(bin) ;
+			
+			FileOutputStream fos = new FileOutputStream(filename + "_1");
+			fos.write(b64d); fos.close();
+			
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 }
