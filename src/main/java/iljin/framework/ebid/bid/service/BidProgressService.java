@@ -1434,14 +1434,15 @@ public class BidProgressService {
 		if (sendList != null) {
 			for (SendDto recvInfo : sendList) {
 				StringBuilder sbList = new StringBuilder(
-						"INSERT INTO t_email (title, conts, send_flag, create_date, receives, from_mail) VALUES " +
-								"(:title, :content, 'N', CURRENT_TIMESTAMP, :userEmail, :fromMail)");
+						"INSERT INTO t_email (title, conts, send_flag, create_date, receives, from_mail, bi_no) VALUES " +
+								"(:title, :content, 'N', CURRENT_TIMESTAMP, :userEmail, :fromMail, :biNo)");
 
 				Query queryList = entityManager.createNativeQuery(sbList.toString());
 				queryList.setParameter("title", emailContent.get("title"));
 				queryList.setParameter("content", emailContent.get("content"));
 				queryList.setParameter("userEmail", recvInfo.getUserEmail());
 				queryList.setParameter("fromMail", recvInfo.getFromEmail());
+				queryList.setParameter("biNo", emailContent.get("biNo"));
 				queryList.executeUpdate();
 			}
 		}
@@ -1487,17 +1488,15 @@ public class BidProgressService {
 		//재입찰
 		}else if(type.equals("rebid")) {
 			title = "[일진그룹 e-bidding] 재입찰(" + biName + ")";
-			content = "입찰명 [" + biName + "]이 재입찰\n되었습니다.\n" +
-					"아래 재입찰사유를 확인해 주시고 e-bidding 시스템에\n" +
-					"로그인하여 다시 한번 투찰해 주십시오\n\n"+
+			content = "입찰명 [" + biName + "]이 재입찰되었습니다.\n" +
+					"아래 재입찰사유를 확인해 주시고 e-bidding 시스템에 로그인하여 다시 한번 투찰해 주십시오\n\n"+
 					"-재입찰사유\n" + reason;
 			
 		//낙찰
 		}else if(type.equals("succ")) {
 			title = "[일진그룹 e-bidding] 낙찰(" + biName + ")";
-			content = "입찰명 [" + biName + "]에 업체선정\n되었습니다.\n" +
-					"자세한 사항은 e-bidding 시스템에  로그인하여 입찰내용 확인 및\n" +
-					"낙찰확인을 하시기 바랍니다.\n(낙찰확인은 계약과 관련없는 내부절차 입니다.)\n\n"+
+			content = "입찰명 [" + biName + "]에 업체선정 되었습니다.\n" +
+					"자세한 사항은 e-bidding 시스템에  로그인하여 입찰내용 확인 및 낙찰확인을 하시기 바랍니다.\n(낙찰확인은 계약과 관련없는 내부절차 입니다.)\n\n"+
 					"-추가합의사항\n" + reason;
 		}
 		
