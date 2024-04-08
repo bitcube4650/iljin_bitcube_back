@@ -548,8 +548,6 @@ public class BidPartnerStatusService {
 			return resultBody;
 		}
 			
-		
-		
 		//암호화
 		try {
 			//입찰정보를 조회하여 입찰을 한 계열사 조회
@@ -563,14 +561,36 @@ public class BidPartnerStatusService {
 			}
 			System.out.println("들어온 견적액 >> " +amt);
 			//입찰한 계열사의 인증서로 암호화
-			amt = certificateService.encryptData(amt, interrelatedCustCode);//견적액 envelope 암호화
-			System.out.println("암호화된 견적액 >> " +amt);
+			ResultBody encryptResult = certificateService.encryptData(amt, interrelatedCustCode);//견적액 envelope 암호화
+			if(encryptResult.getCode().equals("ERROR")) {//암호화 실패
+
+				return encryptResult;
+				
+			}else {//암호화 성공
+				amt = (String) encryptResult.getData();
+				System.out.println("암호화된 견적액 >> " +amt);
+			}
+
 			System.out.println("들어온 아이템리스트 >> " +strItemList);
 			if(insModeCode.equals("2")) {//직접내역 방식
-				strItemList = certificateService.signData(strItemList);//데이터 서명
-				System.out.println("서명된 아이템리스트 >> " +strItemList);
-				strItemList = certificateService.encryptData(strItemList, interrelatedCustCode);//직접내역 envelope 암호화
-				System.out.println("암호화된 아이템리스트 >> " +strItemList);
+				ResultBody signResult = certificateService.signData(strItemList);//데이터 서명
+				
+				if(signResult.getCode().equals("ERROR")) {//서명 실패
+					return signResult;
+				}else {//서명 성공
+					strItemList = (String) signResult.getData();
+					System.out.println("서명된 아이템리스트 >> " +strItemList);
+					
+					ResultBody encryptResult2 = certificateService.encryptData(strItemList, interrelatedCustCode);//직접내역 envelope 암호화
+					
+					if(encryptResult2.getCode().equals("ERROR")) {//암호화 실패
+						return encryptResult2;
+					}else{//암호화 성공
+						strItemList = (String) encryptResult2.getData();
+						System.out.println("암호화된 아이템리스트 >> " +strItemList);
+					}
+				}
+				
 			}
 
 		}catch(Exception e){

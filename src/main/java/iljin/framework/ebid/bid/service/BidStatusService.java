@@ -620,11 +620,33 @@ public class BidStatusService {
 			String encQutn = custDto.getEncQutn();
 			
 			//envelope 복호화
-			encQutn = certificateService.decryptData(encQutn, interrelatedCustCode, certPwd);
+			ResultBody decryptResult = certificateService.decryptData(encQutn, interrelatedCustCode, certPwd);
 			
+			if(decryptResult.getCode().equals("ERROR")) {//복호화 실패
+				
+				//이전 인증서로 다시 복호화 시도
+				String preCertPath = "pre/" + interrelatedCustCode;
+				ResultBody decryptResult2 = certificateService.decryptData(encQutn, preCertPath, certPwd);
+				
+				if(decryptResult.getCode().equals("ERROR")) {//2차 시도 복호화 실패
+					return decryptResult2;
+				}else{//2차 시도 복호화 성공
+					encQutn = (String) decryptResult2.getData();
+				}
+			}else {//복호화 성공
+				encQutn = (String) decryptResult.getData();
+			}
+
 			//서명된 데이터 검증
-			encQutn = certificateService.signDataFix(encQutn);
+			ResultBody fixedResult = certificateService.signDataFix(encQutn);
+			
+			if(fixedResult.getCode().equals("ERROR")) {//복호화 한 데이터 검증 실패
+				return fixedResult;
+			}else {//검증 성공
+				encQutn = (String) fixedResult.getData();
+			}
 			System.out.println("최종 복호화된 금액 >> " + encQutn);
+			
 			//복호화 후 업데이트
 			StringBuilder sbCust = new StringBuilder(
 					"UPDATE	t_bi_info_mat_cust " 
@@ -652,12 +674,33 @@ public class BidStatusService {
 				String encEsmtSpec = custDto.getEncEsmtSpec();
 				
 				//envelope 복호화
-				encEsmtSpec = certificateService.decryptData(encEsmtSpec, interrelatedCustCode, certPwd);
+				ResultBody decryptResult3 = certificateService.decryptData(encEsmtSpec, interrelatedCustCode, certPwd);
 				
+				if(decryptResult3.getCode().equals("ERROR")) {//복호화 실패
+					
+					//이전 인증서로 다시 복호화 시도
+					String preCertPath = "pre/" + interrelatedCustCode;
+					ResultBody decryptResult4 = certificateService.decryptData(encEsmtSpec, preCertPath, certPwd);
+					
+					if(decryptResult4.getCode().equals("ERROR")) {//2차 시도 복호화 실패
+						return decryptResult4;
+					}else{//2차 시도 복호화 성공
+						encEsmtSpec = (String) decryptResult4.getData();
+					}
+				}else {//복호화 성공
+					encEsmtSpec = (String) decryptResult3.getData();
+				}
+
 				//서명된 데이터 검증
-				encEsmtSpec = certificateService.signDataFix(encEsmtSpec);
+				ResultBody fixedResult2 = certificateService.signDataFix(encEsmtSpec);
 				
-				System.out.println("최종 복호화된 직접입력 >> " + encQutn);
+				if(fixedResult2.getCode().equals("ERROR")) {//복호화 한 데이터 검증 실패
+					return fixedResult2;
+				}else {//검증 성공
+					encEsmtSpec = (String) fixedResult2.getData();
+				}
+				System.out.println("최종 복호화된 금액 >> " + encEsmtSpec);
+
 				
 				if(!encEsmtSpec.equals("")) {
 					//직접입력 복호화
