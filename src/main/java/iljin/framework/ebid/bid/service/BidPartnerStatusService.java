@@ -148,40 +148,21 @@ public class BidPartnerStatusService {
 				sbWhere.append("and tbim.BI_MODE IN ('A', 'B') ");
 			}
 			
-			Boolean noticeYn = (Boolean) params.get("noticeYn");
-			Boolean participateYn = (Boolean) params.get("participateYn");
-			Boolean rebidYn = (Boolean) params.get("rebidYn");
+			Boolean esmtYnN = (Boolean) params.get("esmtYnN");
+			Boolean esmtYnY = (Boolean) params.get("esmtYnY");
 			
-			if (noticeYn && !participateYn && !rebidYn) {
+			if (esmtYnN && !esmtYnY) {
 				sbWhere.append(
-					  "and tbim.ING_TAG = 'A1' "
+					  "and tbim.ING_TAG IN ('A1', 'A2', 'A3') "
 					+ "and (tbimc.ESMT_YN IS NULL or tbimc.ESMT_YN IN ('0', '1')) "
 				);
-			}else if(!noticeYn && participateYn && !rebidYn) {
+			}else if(!esmtYnN && esmtYnY) {
 				sbWhere.append(
-					  "and tbim.ING_TAG IN ( 'A1', 'A3' ) "
+					  "and tbim.ING_TAG IN ('A1', 'A2', 'A3') "
 					+ "and tbimc.ESMT_YN IN ('2') "
 				);
-			}else if(!noticeYn && !participateYn && rebidYn) {
-				sbWhere.append(
-					  "and tbim.ING_TAG = 'A3' "
-					+ "and (tbimc.ESMT_YN IS NULL or tbimc.ESMT_YN IN ('0', '1')) "
-				);
-			}else if(noticeYn && participateYn && !rebidYn) {
-				sbWhere.append(
-					  "and tbim.ING_TAG = 'A1' "
-				);
-			}else if(noticeYn && !participateYn && rebidYn) {
-				sbWhere.append(
-					  "and tbim.ING_TAG IN ( 'A1', 'A3' ) "
-					+ "and (tbimc.ESMT_YN IS NULL or tbimc.ESMT_YN IN ('0', '1')) "
-				);
-			}else if(!noticeYn && participateYn && rebidYn) {
-				sbWhere.append(
-					  "and ((tbim.ING_TAG = 'A1' and tbimc.ESMT_YN = '2') OR (tbim.ING_TAG = 'A3' and (tbimc.ESMT_YN IS NULL or tbimc.ESMT_YN IN ('0', '1'))) ) "
-				);
 			}else {
-				sbWhere.append("and tbim.ING_TAG IN ('A1', 'A3') ");
+				sbWhere.append("and tbim.ING_TAG IN ('A1', 'A2', 'A3') ");
 			}
 	
 			sbList.append(sbWhere);
