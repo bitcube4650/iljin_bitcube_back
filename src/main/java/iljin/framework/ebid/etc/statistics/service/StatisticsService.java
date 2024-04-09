@@ -483,7 +483,7 @@ public class StatisticsService {
 		String userAuth = userOptional.get().getUserAuth();// userAuth(1 = 시스템관리자, 4 = 감사사용자)
 		
 		StringBuilder sbList = new StringBuilder(
-			"select		IF(INTERRELATED_CUST_CODE IS NULL, '계', BID_LIST.INTERRELATED_NM) AS INTERRELATED_NM\r\n"
+			"select		IF(INTERRELATED_CUST_CODE IS NULL, '계', (SELECT INTERRELATED_NM FROM T_CO_INTERRELATED AAA WHERE AAA.INTERRELATED_CUST_CODE = BID_LIST.INTERRELATED_CUST_CODE)) AS INTERRELATED_NM\r\n"
 			+ ",		sum(BID_LIST.PLAN_CNT) as PLAN_CNT\r\n"
 			+ ",		sum(BID_LIST.PLAN_AMT) as PLAN_AMT\r\n"
 			+ ",		sum(BID_LIST.ING_CNT) as ING_CNT\r\n"
