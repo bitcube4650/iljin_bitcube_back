@@ -3,6 +3,7 @@ package iljin.framework.ebid.custom.service;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -15,6 +16,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +26,8 @@ import iljin.framework.core.dto.ResultBody;
 import iljin.framework.core.security.user.UserServiceImpl;
 import iljin.framework.core.util.Pair;
 import iljin.framework.ebid.custom.dto.TCoUserDto;
+import iljin.framework.ebid.custom.entity.TCoUser;
+import iljin.framework.ebid.custom.repository.TCoUserRepository;
 import iljin.framework.ebid.etc.util.CommonUtils;
 import iljin.framework.ebid.etc.util.PagaUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +44,9 @@ public class UserService {
     
 	@Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private TCoUserRepository tCoUserRepository;
 
     public List interrelatedList() {
         StringBuilder sb = new StringBuilder(" select interrelated_cust_code, interrelated_nm from t_co_interrelated where use_yn = 'Y' order by interrelated_nm");
@@ -209,8 +216,16 @@ public class UserService {
 		String userId = ((UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUsername();
 		String pwd = CommonUtils.getString(params.get("pwd"), "");
 		
+		// db 비밀번호
+		String dbPassword = "";
+		Optional<TCoUser> userOptional = tCoUserRepository.findById(userId);
+		if (userOptional.isPresent()) {
+			dbPassword = userOptional.get().getUserPwd();
+		}
+		
 		// 비밀번호 체크
-		boolean pwdCheck = userServiceImpl.checkPassword(userId, pwd);
+		//boolean pwdCheck = userServiceImpl.checkPassword(userId, pwd);
+		boolean pwdCheck = ((BCryptPasswordEncoder) passwordEncoder).matches(pwd, dbPassword);
 		//
 		if(!pwdCheck ) {
             resultBody.setCode("NO"); // 비밀번호 실패
