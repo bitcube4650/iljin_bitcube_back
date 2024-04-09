@@ -482,10 +482,6 @@ public class BidPartnerStatusService {
 		String amt = "";//총 견적금액
 		LocalDateTime currentDate = LocalDateTime.now();//update 또는 insert 되는 현재시점
 		
-		//직접입력
-		StringBuilder sbItemList = new StringBuilder("");//직접입력 품목당 가격을 "$" 구분자와 같이 넣은 문자열
-		String strItemList = "";
-		
 		//파일입력
 		String fileHashValue = "";//파일입력의 경우 복호화때 필요한 key값
 		String fileName = "";//견적내역파일 이름
@@ -498,30 +494,7 @@ public class BidPartnerStatusService {
 		if (!StringUtils.isEmpty(params.get("amt"))) {
 			amt = CommonUtils.getString(params.get("amt"));//총 견적금액
 		}
-		
-		if (!StringUtils.isEmpty(params.get("submitData"))) {
-			List<Map<String, Object>> itemList = (List<Map<String, Object>>) params.get("submitData");//직접입력 품목
-			
-			if(itemList.size() != 0) {
 
-				for(int i = 0; i < itemList.size(); i++) {
-					Map<String,Object> item = itemList.get(i);
-					
-					int seq = CommonUtils.getInt(item.get("seq"));
-					int esmtUc = CommonUtils.getInt(item.get("esmtUc"));
-
-					if(i > 0) {//구분자
-						sbItemList.append("$");
-					}
-					//품목순번 = 가격
-					sbItemList.append(seq + "=" + esmtUc);
-				}
-				
-				//직접입력 str
-				strItemList = sbItemList.toString();
-
-			}
-		}
 		
 		try {
 			
@@ -557,39 +530,22 @@ public class BidPartnerStatusService {
 				interrelatedCustCode = tBiInfoMat.getInterrelatedCustCode();//계열사 코드
 				
 			}
-			System.out.println("들어온 견적액 >> " +amt);
-			//입찰한 계열사의 인증서로 암호화
-			ResultBody encryptResult = certificateService.encryptData(amt, interrelatedCustCode);//견적액 envelope 암호화
-			if(encryptResult.getCode().equals("ERROR")) {//암호화 실패
+			System.out.println("들어온 데이터 >> " +amt);
+			
+			if(amt != null && amt.equals("")) {
+			
+				//입찰한 계열사의 인증서로 암호화
+				ResultBody encryptResult = certificateService.encryptData(amt, interrelatedCustCode);//견적액 envelope 암호화
+				if(encryptResult.getCode().equals("ERROR")) {//암호화 실패
 
-				return encryptResult;
-				
-			}else {//암호화 성공
-				amt = (String) encryptResult.getData();
-				System.out.println("암호화된 견적액 >> " +amt);
-			}
-
-			System.out.println("들어온 아이템리스트 >> " +strItemList);
-			if(insModeCode.equals("2")) {//직접내역 방식
-				ResultBody signResult = certificateService.signData(strItemList);//데이터 서명
-				
-				if(signResult.getCode().equals("ERROR")) {//서명 실패
-					return signResult;
-				}else {//서명 성공
-					strItemList = (String) signResult.getData();
-					System.out.println("서명된 아이템리스트 >> " +strItemList);
+					return encryptResult;
 					
-					ResultBody encryptResult2 = certificateService.encryptData(strItemList, interrelatedCustCode);//직접내역 envelope 암호화
-					
-					if(encryptResult2.getCode().equals("ERROR")) {//암호화 실패
-						return encryptResult2;
-					}else{//암호화 성공
-						strItemList = (String) encryptResult2.getData();
-						System.out.println("암호화된 아이템리스트 >> " +strItemList);
-					}
+				}else {//암호화 성공
+					amt = (String) encryptResult.getData();
+					System.out.println("암호화된 결과 >> " +amt);
 				}
-				
 			}
+			
 
 		}catch(Exception e){
 			log.error("encrypting error : {} ", e);
@@ -608,7 +564,7 @@ public class BidPartnerStatusService {
 		Optional<TBiInfoMatCust> optional = tBiInfoMatCustRepository.findById(tBiInfoMatCustId);
 		TBiInfoMatCust tBiInfoMatCust = null;
 		
-		//기 등록된 입찰이 없을 경우 신규입찰생성
+		//기존에 등록된 입찰이 없을 경우 신규입찰생성
 		if(!optional.isPresent()) {
 			tBiInfoMatCust = new TBiInfoMatCust();
 			
@@ -620,7 +576,13 @@ public class BidPartnerStatusService {
 			tBiInfoMatCust.setCreateDate(currentDate);
 			tBiInfoMatCust.setUpdateUser(userId);
 			tBiInfoMatCust.setUpdateDate(currentDate);
-			tBiInfoMatCust.setEncQutn(amt);
+			
+			if(insModeCode.equals("1")) {//파일등록 방식
+				tBiInfoMatCust.setEncQutn(amt);
+			}else {//직접내역방식
+				tBiInfoMatCust.setEncQutn("");
+			}
+			
 			tBiInfoMatCust.setRebidAtt("N");
 			tBiInfoMatCust.setBiOrder(1);
 			tBiInfoMatCust.setEsmtCurr(CommonUtils.getString(params.get("esmtCurr")));
@@ -631,7 +593,13 @@ public class BidPartnerStatusService {
 			tBiInfoMatCust.setSubmitDate(currentDate);
 			tBiInfoMatCust.setUpdateUser(userId);
 			tBiInfoMatCust.setUpdateDate(currentDate);
-			tBiInfoMatCust.setEncQutn(amt);
+			
+			if(insModeCode.equals("1")) {//파일등록 방식
+				tBiInfoMatCust.setEncQutn(amt);
+			}else {//직접내역방식
+				tBiInfoMatCust.setEncQutn("");
+			}
+			
 			tBiInfoMatCust.setRebidAtt(optional.get().getRebidAtt());
 			tBiInfoMatCust.setBiOrder(CommonUtils.getInt(optional.get().getBiOrder()) + 1);
 			tBiInfoMatCust.setEsmtCurr(CommonUtils.getString(params.get("esmtCurr")));
@@ -658,7 +626,7 @@ public class BidPartnerStatusService {
 			tBiInfoMatCust.setFileHashValue(fileHashValue);
 		//내역직접 방식
 		}else {
-			tBiInfoMatCust.setEncEsmtSpec(strItemList);
+			tBiInfoMatCust.setEncEsmtSpec(amt);
 		}
 		
 		//기타파일

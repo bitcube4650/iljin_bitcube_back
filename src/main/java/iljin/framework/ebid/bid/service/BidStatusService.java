@@ -613,116 +613,60 @@ public class BidStatusService {
 		List<BidCustDto> custList = new JpaResultMapper().list(queryCustList, BidCustDto.class);
 		
 		for(BidCustDto custDto : custList) {
-			
-			//총 견적금액 복호화 (encQutn -> encQutn)
-			String encQutn = null;
+			//복호화
+			String encQutn = null;//파일입력
+			String encEsmtSpec = null;//직접입력
+			String decryptData = null;//복호화 할 데이터(파일입력 방식은 encQutn, 직접입력 방식은 encEsmtSpec)
 			
 			if(custDto.getEncQutn() != null) {
 				encQutn = custDto.getEncQutn();
 			};
 			
-			//제출한 총 견적금액이 없으면 continue
-			 if (encQutn == null || encQutn.equals("")) {
-		        continue;
-		    }
-			 
-			//envelope 복호화
-			ResultBody decryptResult = certificateService.decryptData(encQutn, interrelatedCustCode, certPwd);
+			if(custDto.getEncEsmtSpec() != null) {
+				encEsmtSpec = custDto.getEncEsmtSpec();
+			};
+			
+			//파일입력 방식은 encQutn, 직접입력 방식은 encEsmtSpec 복호화
+			if(custDto.getInsMode().equals("1")) {//파일등록 방식
+				decryptData = encQutn;
+			}else{//직접입력 방식
+				decryptData = encEsmtSpec;
+			}
+			
+			//복호화 시작
+			ResultBody decryptResult = certificateService.decryptData(decryptData, interrelatedCustCode, certPwd);
 			
 			if(decryptResult.getCode().equals("ERROR")) {//복호화 실패
-				
 				//이전 인증서로 다시 복호화 시도
 				String preCertPath = "pre/" + interrelatedCustCode;
-				ResultBody decryptResult2 = certificateService.decryptData(encQutn, preCertPath, certPwd);
+				ResultBody decryptResult2 = certificateService.decryptData(decryptData, preCertPath, certPwd);
 				
 				if(decryptResult.getCode().equals("ERROR")) {//2차 시도 복호화 실패
 					return decryptResult2;
 				}else{//2차 시도 복호화 성공
-					encQutn = (String) decryptResult2.getData();
+					decryptData = (String) decryptResult2.getData();
 				}
 			}else {//복호화 성공
-				encQutn = (String) decryptResult.getData();
+				decryptData = (String) decryptResult.getData();
 			}
-
-			//서명된 데이터 검증
-			ResultBody fixedResult = certificateService.signDataFix(encQutn);
+			//복호화 끝
+			
+			
+			//데이터 검증
+			ResultBody fixedResult = certificateService.signDataFix(decryptData);
 			
 			if(fixedResult.getCode().equals("ERROR")) {//복호화 한 데이터 검증 실패
 				return fixedResult;
 			}else {//검증 성공
-				encQutn = (String) fixedResult.getData();
-			}
-			System.out.println("최종 복호화된 금액 >> " + encQutn);
-			
-			//복호화 후 업데이트
-			StringBuilder sbCust = new StringBuilder(
-					"UPDATE	t_bi_info_mat_cust " 
-			+		"set	ESMT_AMT = :esmtAmt "
-			+		",		UPDATE_DATE = sysdate() "
-			+		",		UPDATE_USER = :userId "
-			+		"WHERE bi_no = :biNo "
-			+		"AND CUST_CODE = :custCode "
-			);
-			
-			Query queryCust = entityManager.createNativeQuery(sbCust.toString());
-			queryCust.setParameter("esmtAmt", encQutn);
-			queryCust.setParameter("userId", userId);
-			queryCust.setParameter("biNo", custDto.getBiNo());
-			queryCust.setParameter("custCode", custDto.getCustCode());
-			queryCust.executeUpdate();
-			
-			//협력사 입찰 temp 테이블 insert
-			this.insertBiInfoMatCustTemp(custDto.getBiNo(), custDto.getCustCode());
-			
-			//직접입력일 경우 협력사 직접입력 테이블 insert
-			if(custDto.getInsMode().equals("2")) {
-				//직접입력 정보 복호화(encEsmtSpec -> encEsmtSpec)
-				String encEsmtSpec = null;
+				decryptData = (String) fixedResult.getData();
 				
-				if(custDto.getEncEsmtSpec() != null) {
-					encEsmtSpec = custDto.getEncEsmtSpec();
-				};
-				
-				//제출한 총 견적금액이 없으면 continue
-				 if (encEsmtSpec == null || encEsmtSpec.equals("")) {
-			        continue;
-			    }
-		
-				//envelope 복호화
-				ResultBody decryptResult3 = certificateService.decryptData(encEsmtSpec, interrelatedCustCode, certPwd);
-				
-				if(decryptResult3.getCode().equals("ERROR")) {//복호화 실패
+				if(custDto.getInsMode().equals("2")) {//직접입력 방식인 경우
+					//직접입력 총 견적액 구하기
+					String[] esmtSpecArr = decryptData.split("$");
 					
-					//이전 인증서로 다시 복호화 시도
-					String preCertPath = "pre/" + interrelatedCustCode;
-					ResultBody decryptResult4 = certificateService.decryptData(encEsmtSpec, preCertPath, certPwd);
-					
-					if(decryptResult4.getCode().equals("ERROR")) {//2차 시도 복호화 실패
-						return decryptResult4;
-					}else{//2차 시도 복호화 성공
-						encEsmtSpec = (String) decryptResult4.getData();
-					}
-				}else {//복호화 성공
-					encEsmtSpec = (String) decryptResult3.getData();
-				}
-
-				//서명된 데이터 검증
-				ResultBody fixedResult2 = certificateService.signDataFix(encEsmtSpec);
-				
-				if(fixedResult2.getCode().equals("ERROR")) {//복호화 한 데이터 검증 실패
-					return fixedResult2;
-				}else {//검증 성공
-					encEsmtSpec = (String) fixedResult2.getData();
-				}
-				System.out.println("최종 복호화된 금액 >> " + encEsmtSpec);
-
-				
-				if(!encEsmtSpec.equals("")) {
-					//직접입력 복호화
-					String[] esmtSpecArr = encEsmtSpec.split("$");
-					
+					//각 항목의 가격을 더해서 총 견적액 계산
+					int specTotal = 0;
 					for(String esmtSpec : esmtSpecArr) {
-						
 						String[] info = esmtSpec.split("=");
 						
 						//입찰 직접입력 테이블(t_bi_detail_mat_cust)에 insert
@@ -744,9 +688,39 @@ public class BidStatusService {
 						
 						entityManager.persist(tBiDetailMatCustTemp);
 						
+						
+						int itemPrice = Integer.parseInt(info[1]);
+						specTotal += itemPrice;
+						
+						
 					}
+					
+					decryptData = String.valueOf(specTotal);
 				}
+				
 			}
+			//데이터 검증 끝
+			
+			//총견적액 업데이트
+			StringBuilder sbCust = new StringBuilder(
+					"UPDATE	t_bi_info_mat_cust " 
+			+		"set	ESMT_AMT = :esmtAmt "
+			+		",		UPDATE_DATE = sysdate() "
+			+		",		UPDATE_USER = :userId "
+			+		"WHERE bi_no = :biNo "
+			+		"AND CUST_CODE = :custCode "
+			);
+			
+			Query queryCust = entityManager.createNativeQuery(sbCust.toString());
+			queryCust.setParameter("esmtAmt", decryptData);
+			queryCust.setParameter("userId", userId);
+			queryCust.setParameter("biNo", custDto.getBiNo());
+			queryCust.setParameter("custCode", custDto.getCustCode());
+			queryCust.executeUpdate();
+			
+			//협력사 입찰 temp 테이블 insert
+			this.insertBiInfoMatCustTemp(custDto.getBiNo(), custDto.getCustCode());
+		
 		}
 		
 		//입찰 메인 업데이트
