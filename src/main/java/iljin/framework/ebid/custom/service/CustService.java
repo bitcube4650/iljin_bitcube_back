@@ -399,7 +399,7 @@ public class CustService {
                 params.put("regnumFile", regnumFile.getOriginalFilename());
             }
             if (bFile != null) {
-                params.put("bFilePath", fileService.uploadFile(bFile));
+                params.put("bFilePath", fileService.uploadFile(bFile, "N"));
                 params.put("bFile", bFile.getOriginalFilename());
             }
         } catch (IOException e) {
@@ -522,7 +522,7 @@ public class CustService {
                 params.put("regnumFile", regnumFile.getOriginalFilename());
             }
             if (bFile != null) {
-                params.put("bfilePath", fileService.uploadFile(bFile));
+                params.put("bfilePath", fileService.uploadFile(bFile, "N"));
                 params.put("bfile", bFile.getOriginalFilename());
             }
         } catch (IOException e) {

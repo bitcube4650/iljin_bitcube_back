@@ -8,6 +8,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.UUID;
 
+import iljin.framework.ebid.etc.util.CommonUtils;
 import iljin.framework.ebid.etc.util.Constances;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
@@ -16,38 +17,47 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class FileService {
+	public String uploadFile(MultipartFile file) throws IOException {
+		return uploadFile(file, "Y");
+	}
     // 파일 업로드 메서드
-    public String uploadFile(MultipartFile file) throws IOException {
+    public String uploadFile(MultipartFile file, String ymdDirYn) throws IOException {
 
         if (file.isEmpty()) {
             throw new IllegalArgumentException("파일이 비어 있습니다.");
         }
 
-        // 현재 날짜를 기준으로 연도와 월 폴더 생성
-        SimpleDateFormat yearFormat = new SimpleDateFormat("yyyy");
-        SimpleDateFormat monthFormat = new SimpleDateFormat("MM");
-        Date currentDate = new Date();
-        String year = yearFormat.format(currentDate);
-        String month = monthFormat.format(currentDate);
-
-        // 현재 연도 폴더 생성
-        Path yearPath = Paths.get(Constances.FILE_UPLOAD_DIRECTORY, year);
-        if (!Files.exists(yearPath)) {
-            Files.createDirectories(yearPath);
-        }
-
-        // 현재 월 폴더 생성
-        Path monthPath = Paths.get(yearPath.toString(), month);
-        if (!Files.exists(monthPath)) {
-            Files.createDirectories(monthPath);
-        }
-
         // 파일명에 UUID를 사용하여 고유성 확보
         String originalFileName = file.getOriginalFilename();
         String uniqueFileName = UUID.randomUUID().toString() + "_" + originalFileName;
+        
+        Path filePath = null;
+        if("Y".equals(CommonUtils.getString(ymdDirYn))) {
+	        // 현재 날짜를 기준으로 연도와 월 폴더 생성
+	        SimpleDateFormat yearFormat = new SimpleDateFormat("yyyy");
+	        SimpleDateFormat monthFormat = new SimpleDateFormat("MM");
+	        Date currentDate = new Date();
+	        String year = yearFormat.format(currentDate);
+	        String month = monthFormat.format(currentDate);
+	
+	        // 현재 연도 폴더 생성
+	        Path yearPath = Paths.get(Constances.FILE_UPLOAD_DIRECTORY, year);
+	        if (!Files.exists(yearPath)) {
+	            Files.createDirectories(yearPath);
+	        }
+	
+	        // 현재 월 폴더 생성
+	        Path monthPath = Paths.get(yearPath.toString(), month);
+	        if (!Files.exists(monthPath)) {
+	            Files.createDirectories(monthPath);
+	        }
 
-        // 파일 저장 경로 설정
-        Path filePath = Paths.get(monthPath.toString().replace("\\", "/"), uniqueFileName);
+	        // 파일 저장 경로 설정
+	        filePath = Paths.get(monthPath.toString().replace("\\", "/"), uniqueFileName);
+        } else {
+	        Path path = Paths.get(Constances.FILE_UPLOAD_DIRECTORY);
+        	filePath = Paths.get(path.toString().replace("\\", "/"), uniqueFileName);
+        }
 
         // 파일 저장
         Files.copy(file.getInputStream(), filePath);
