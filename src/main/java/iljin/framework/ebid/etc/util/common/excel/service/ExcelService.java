@@ -59,7 +59,17 @@ public class ExcelService {
 
     //통계>입찰이력
     public void downLoadBidCompleteListExcel(Map<String, Object> param, HttpServletResponse response) throws IOException{
-        excelUtils.downLoadBidCompleteList(CompanyBidPerformanceExcelDto.class, param, "downLoad", response);
+
+        UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Optional<TCoUser> userOptional = tCoUserRepository.findById(principal.getUsername());
+        String userInterrelatedCustCode = userOptional.get().getInterrelatedCustCode();
+        
+        //롯데 에너지 머트리얼즈 코드 값 '02'로 구분
+        if("02".equals(userInterrelatedCustCode)) {
+            excelUtils.downLoadBidCompleteList(BidHistoryMatExcelDto.class, param, "downLoad", response);
+        } else {
+            excelUtils.downLoadBidCompleteList(BidHistoryExcelDto.class, param, "downLoad", response);
+        }
     }
 
     //통계>회사별 입찰실적 Excel DownLoad

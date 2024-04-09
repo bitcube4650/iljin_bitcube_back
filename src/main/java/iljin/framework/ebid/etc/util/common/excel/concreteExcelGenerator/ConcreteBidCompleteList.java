@@ -57,16 +57,11 @@ public class ConcreteBidCompleteList extends ExcelSupportV2 {
 
         int complateBidListCnt = excelRepository.findComplateBidListCnt(param);
 
-        //로그인 유저가 롯데 에너지 머트리얼즈인지 확인
-        UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Optional<TCoUser> userOptional = tCoUserRepository.findById(principal.getUsername());
-        String userInterrelatedCustCode = userOptional.get().getInterrelatedCustCode();
-
         while(offset < complateBidListCnt) {
             List<BidCompleteDto> data = new ArrayList<>();
 
             //롯데 에너지 머트리얼즈 코드 값 '02'로 구분
-            if("02".equals(userInterrelatedCustCode)) {
+            if("BidHistoryMatExcelDto".equals(clazz.getSimpleName())) {
                 List<BidHistoryMatExcelDto> excelData = new ArrayList<>();
                 String tmpBiNo = "";
                 data = excelRepository.findComplateBidList(param, offset, limit);
