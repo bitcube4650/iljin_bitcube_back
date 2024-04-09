@@ -633,24 +633,33 @@ public class BidStatusService {
 				decryptData = encEsmtSpec;
 			}
 			
+			//만약 데이터가 없으면 continue
+			if(decryptData == null || decryptData.equals("")) {
+				continue;
+			}
+			
 			//복호화 시작
 			ResultBody decryptResult = certificateService.decryptData(decryptData, interrelatedCustCode, certPwd);
 			
 			if(decryptResult.getCode().equals("ERROR")) {//복호화 실패
+
 				//이전 인증서로 다시 복호화 시도
 				String preCertPath = "pre/" + interrelatedCustCode;
 				ResultBody decryptResult2 = certificateService.decryptData(decryptData, preCertPath, certPwd);
 				
 				if(decryptResult.getCode().equals("ERROR")) {//2차 시도 복호화 실패
+
 					return decryptResult2;
+					
 				}else{//2차 시도 복호화 성공
 					decryptData = (String) decryptResult2.getData();
 				}
 			}else {//복호화 성공
+
 				decryptData = (String) decryptResult.getData();
+				
 			}
 			//복호화 끝
-			
 			
 			//데이터 검증
 			ResultBody fixedResult = certificateService.signDataFix(decryptData);
@@ -662,13 +671,12 @@ public class BidStatusService {
 				
 				if(custDto.getInsMode().equals("2")) {//직접입력 방식인 경우
 					//직접입력 총 견적액 구하기
-					String[] esmtSpecArr = decryptData.split("$");
+					String[] esmtSpecArr = decryptData.split("\\$");//정규표현식에서 메타 문자로 사용되기 때문에 \\를 붙여줘야함
 					
 					//각 항목의 가격을 더해서 총 견적액 계산
 					int specTotal = 0;
 					for(String esmtSpec : esmtSpecArr) {
 						String[] info = esmtSpec.split("=");
-						
 						//입찰 직접입력 테이블(t_bi_detail_mat_cust)에 insert
 						TBiDetailMatCust tBiDetailMatCust = new TBiDetailMatCust();
 						tBiDetailMatCust.setBiNo(custDto.getBiNo());
@@ -697,6 +705,7 @@ public class BidStatusService {
 					
 					decryptData = String.valueOf(specTotal);
 				}
+				
 				
 			}
 			//데이터 검증 끝
