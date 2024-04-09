@@ -1189,7 +1189,7 @@ public class BidProgressService {
                                     +
                                     "values (:biNo, :custCode, 'N', '0', 0, 'N', :userId, sysdate())");
                     Query queryList2 = entityManager.createNativeQuery(sbList2.toString());
-                    queryList2.setParameter("biNo", (String) data.get("biNo"));
+                    queryList2.setParameter("biNo", biNo);
                     queryList2.setParameter("custCode", (String) data.get("custCode"));
                     queryList2.setParameter("userId", userId);
                     queryList2.executeUpdate();
