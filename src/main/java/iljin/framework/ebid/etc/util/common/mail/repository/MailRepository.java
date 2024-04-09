@@ -12,7 +12,7 @@ public class MailRepository {
 
     public void saveMailInfo(String title, String content, String userEmail) {
         String saveMailInfo =  "INSERT INTO t_email (title, conts, send_flag, create_date, receives) VALUES " +
-                "(:title, :content, 'N', CURRENT_TIMESTAMP, :userEmail)";
+                "(:title, :content, '0', CURRENT_TIMESTAMP, :userEmail)";
 
         em.createNativeQuery(saveMailInfo)
                 .setParameter("title", title)
