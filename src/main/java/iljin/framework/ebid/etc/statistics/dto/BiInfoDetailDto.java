@@ -21,7 +21,7 @@ public class BiInfoDetailDto {
     private BigDecimal esmtAmtMax;
     private BigDecimal esmtAmtMin;
     private BigDecimal esmtAmtDev;
-    private Short reBidCnt;
+    private Integer reBidCnt;
 
 	
     public BiInfoDetailDto() {}
@@ -44,7 +44,7 @@ public class BiInfoDetailDto {
     	    BigDecimal esmtAmtMax,
     	    BigDecimal esmtAmtMin,
     	    BigDecimal esmtAmtDev,
-    	    Short reBidCnt
+    	    Integer reBidCnt
 
     ) {
         this.biNo = biNo;
