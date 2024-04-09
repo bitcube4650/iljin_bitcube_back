@@ -128,6 +128,7 @@ public class BidPartnerStatusService {
 			
 			StringBuilder sbWhere = new StringBuilder();
 			sbWhere.append("where 1=1 ");
+			sbWhere.append("and (tbim.BI_MODE = 'B' OR (tbim.BI_MODE = 'A' AND tbimc.CUST_CODE = :custCode)) ");
 			if (!StringUtils.isEmpty(params.get("bidNo"))) {
 				sbWhere.append("and tbim.BI_NO = :bidNo ");
 			}
