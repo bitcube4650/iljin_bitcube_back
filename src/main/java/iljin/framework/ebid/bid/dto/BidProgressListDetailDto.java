@@ -55,10 +55,7 @@ public class BidProgressListDetailDto {
     String matCls;
     String matFactory;
     String matFactoryLine;
-    String matFactoryCnt;
-    String createUserName;
-    
-    
+    String matFactoryCnt;   
 
     /**
 	 * 입찰 계획 상세 (/api/v1/bid/progressListDetail)
@@ -113,8 +110,7 @@ public class BidProgressListDetailDto {
     	    String matCls,
     	    String matFactory,
     	    String matFactoryLine,
-    	    String matFactoryCnt,
-    	    String createUserName
+    	    String matFactoryCnt
         ){
 	    this.biNo = biNo;
 	    this.biName = biName;
@@ -166,6 +162,5 @@ public class BidProgressListDetailDto {
 	    this.matFactory = matFactory;
 	    this.matFactoryLine = matFactoryLine;
 	    this.matFactoryCnt = matFactoryCnt;
-	    this.createUserName = createUserName;
     }
 }

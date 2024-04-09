@@ -335,7 +335,7 @@ public class BidProgressService {
                         +
                         "DATE_FORMAT(a.est_close_date, '%Y-%m-%d %H:%i') AS est_close_date, b.user_name AS est_opener, a.est_opener AS est_opener_code, i.user_name AS cuser, a.create_user AS cuser_code, "
                         +
-                        "IFNULL(DATE_FORMAT(a.est_open_date, '%Y-%m-%d %H:%i'),'') AS est_open_date, c.user_name AS open_att1, a.open_att1 AS open_att1_code, a.est_bidder AS est_bidder_code, i.user_name AS est_bidder, "
+                        "IFNULL(DATE_FORMAT(a.est_open_date, '%Y-%m-%d %H:%i'),'') AS est_open_date, c.user_name AS open_att1, a.open_att1 AS open_att1_code, a.est_bidder AS est_bidder_code, ( select tcu.user_name from t_co_user tcu   where a.est_bidder = tcu.user_id  ) AS est_bidder, "
                         +
                         "a.open_att1_sign AS open_att1_sign, d.user_name AS open_att2, a.open_att2 AS open_att2_code, a.open_att2_sign AS open_att2_sign, "
                         +
@@ -345,7 +345,7 @@ public class BidProgressService {
                         +
                         "IFNULL(a.add_accept,'') AS add_accept, a.mat_dept AS mat_dept, a.mat_proc AS mat_proc, a.mat_cls AS mat_cls, "
                         +
-                        "a.mat_factory AS mat_factory, a.mat_factory_line AS mat_factory_line, a.mat_factory_cnt AS mat_factory_cnt, j.user_name as create_user_name "
+                        "a.mat_factory AS mat_factory, a.mat_factory_line AS mat_factory_line, a.mat_factory_cnt AS mat_factory_cnt "
                         +
                         "FROM t_bi_info_mat a " +
                         "LEFT JOIN t_co_user b ON a.est_opener = b.user_id " +
@@ -356,7 +356,6 @@ public class BidProgressService {
                         "LEFT JOIN t_co_user g ON a.gongo_id = g.user_id " +
                         "JOIN t_co_interrelated h ON a.interrelated_cust_code = h.interrelated_cust_code " +
                         "LEFT JOIN t_co_user i ON a.create_user = i.user_id " +
-                        "LEFT JOIN t_co_user j ON a.est_bidder = i.user_id " +
                         "WHERE 1=1 ");
 
         StringBuilder sbTableList = new StringBuilder(
