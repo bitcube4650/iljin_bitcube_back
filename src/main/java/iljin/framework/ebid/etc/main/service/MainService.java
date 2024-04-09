@@ -94,11 +94,12 @@ public class MainService {
 		
 
 		StringBuilder sbCnt = new StringBuilder(" select COUNT(CASE WHEN ing_tag = 'A0' THEN 1 END) AS planning, "
-												      + " COUNT(CASE WHEN ing_tag IN ('A1', 'A3') THEN 1 END) AS noticing, "
+												      + " COUNT(CASE WHEN ing_tag IN ('A1', 'A3') and est_close_date >= SYSDATE() THEN 1 END) AS noticing, "
 												      + " COUNT(CASE WHEN ing_tag IN ('A1', 'A3') AND est_close_date < SYSDATE() THEN 1 END) AS beforeOpening, "
 												      + " COUNT(CASE WHEN ing_tag = 'A2' THEN 1 END) AS opening, "
 												      + " COUNT(CASE WHEN ing_tag = 'A5' AND update_date >= CURDATE() - INTERVAL 12 MONTH THEN 1 END) AS completed, "
-												      + " COUNT(CASE WHEN ing_tag = 'A7' AND update_date >= CURDATE() - INTERVAL 12 MONTH THEN 1 END) AS unsuccessful "
+												      + " COUNT(CASE WHEN ing_tag = 'A7' AND update_date >= CURDATE() - INTERVAL 12 MONTH THEN 1 END) AS unsuccessful, "
+												      + " COUNT(CASE WHEN ing_tag IN ('A1','A2', 'A3') THEN 1 END) AS ing "			// 입찰 진행 전체 건수
 											   + " from t_bi_info_mat "
 											   + " where 1=1 "											   
 												);
@@ -168,6 +169,11 @@ public class MainService {
 	    bidCntDto.setOpening((BigInteger) result[3]);
 	    bidCntDto.setCompleted((BigInteger) result[4]);
 	    bidCntDto.setUnsuccessful((BigInteger) result[5]);
+	    bidCntDto.setIng((BigInteger) result[6]);
+	    
+	    // 진행 중
+	    BigInteger ing = ((BigInteger) result[1]).add((BigInteger) result[2]).add((BigInteger) result[3]);
+	    bidCntDto.setIng(ing);
 
 		
 		return bidCntDto;
@@ -233,27 +239,51 @@ public class MainService {
 
 		PartnerBidCntDto partnerBidCntDto = new PartnerBidCntDto();
 
-		StringBuilder sbCnt = new StringBuilder(" select (select SUM(cnt) from ( "
-				                                                                   //일반경쟁
-																			   + " select COUNT(1) as cnt "
-																			   + " from t_bi_info_mat "
-																			   + " where ing_tag IN ('A1', 'A3') "
-																			   + " and bi_mode = 'B' "
-																			   
-																			   + " union all "
-																			   
-																			       //지명경쟁
-																			   + " select COUNT(1) as cnt "
-																			   + " from t_bi_info_mat tbim "
-																			   + " inner join t_bi_info_mat_cust tbimc "
-																			   + " on tbim.bi_no = tbimc.bi_no "
-																			   + " where tbim.ing_tag IN ('A1', 'A3') "
-																			   + " and tbim.bi_mode = 'A' "
-																			   + " and tbimc.CUST_CODE = :custCode "
-																		   + " ) as noticing "
-													 + " ) as noticing, "//입찰공고 
-												     + " (select COUNT(1) from t_bi_info_mat_cust where esmt_yn = '2' and cust_code = :custCode) as submitted, "//투찰한 입찰
-												     + " (select COUNT(1) from t_bi_info_mat tbim inner join t_bi_info_mat_cust tbimc on tbim.bi_no = tbimc.bi_no where tbim.ing_tag IN ('A5', 'A7') and tbimc.cust_code = :custCode) as confirmation, "//낙찰확인대상
+		StringBuilder sbCnt = new StringBuilder(" select (select count(1) as cnt "
+													+ "from t_bi_info_mat tbim "
+													+ "inner join t_co_cust_ir tcci "
+													+ "on tbim.INTERRELATED_CUST_CODE = tcci.INTERRELATED_CUST_CODE "
+													+ "and tcci.CUST_CODE = :custCode "
+													+ "left outer join t_bi_info_mat_cust tbimc "
+													+ "on tbim.BI_NO = tbimc.BI_NO "
+													+ "and tbimc.CUST_CODE = :custCode "
+													+ "where 1=1 "
+													+ "and tbim.BI_MODE in ('A', 'B') "
+													+ "and tbim.ING_TAG = 'A1' "
+													+ "and (tbimc.ESMT_YN is null "
+													+ "or tbimc.ESMT_YN in ('0', '1'))"
+													 + " ) as noticing, "//입찰공고
+
+												     + "(select count(1) from t_bi_info_mat tbim inner join t_co_cust_ir tcci "
+												     + "on tbim.INTERRELATED_CUST_CODE = tcci.INTERRELATED_CUST_CODE "
+												     + "and tcci.CUST_CODE = :custCode "
+												     + "left outer join t_bi_info_mat_cust tbimc "
+												     + "on tbim.BI_NO = tbimc.BI_NO "
+												     + "and tbimc.CUST_CODE = :custCode "
+												     + "left outer join t_co_user tcu "
+												     + "on tbim.CREATE_USER = tcu.USER_ID "
+												     + "where 1 = 1 "
+												     + "and tbim.BI_MODE in ('A', 'B') "
+												     + "and tbim.ING_TAG in ( 'A1', 'A3' ) "
+												     + "and tbimc.ESMT_YN in ('2')"
+												     + ") as submitted, "//투찰한 입찰
+												     
+												     + " (select count(1) "
+												     + "from t_bi_info_mat tbim "
+												     + "inner join t_co_cust_ir tcci "
+												     + "on tbim.INTERRELATED_CUST_CODE = tcci.INTERRELATED_CUST_CODE "
+												     + "and tcci.CUST_CODE = :custCode "
+												     + "left outer join t_bi_info_mat_cust tbimc "
+												     + "on tbim.BI_NO = tbimc.BI_NO "
+												     + "and tbimc.CUST_CODE = :custCode "
+												     + "left outer join t_co_user tcu "
+												     + "on tbim.CREATE_USER = tcu.USER_ID "
+												     + "where 1 = 1 "
+												     + "and tbim.BI_MODE in ('A', 'B') "
+												     + "and tbim.ING_TAG = 'A3'"
+												     + " and (tbimc.ESMT_YN is null or tbimc.ESMT_YN in ('0', '1')) "
+												     + ") as confirmation, "//재입찰
+												     
 												     + " (select COUNT(1) from t_bi_info_mat tbim inner join t_bi_info_mat_cust tbimc on tbim.bi_no = tbimc.bi_no where tbim.ing_tag = 'A5' and tbimc.succ_yn = 'Y' and tbimc.cust_code = :custCode and tbim.update_date >= CURDATE() - INTERVAL 12 month) AS awarded, "//낙찰(12개월)
 												     + " (select COUNT(1) from t_bi_info_mat tbim inner join t_bi_info_mat_cust tbimc on tbim.bi_no = tbimc.bi_no where tbim.ing_tag = 'A7' and tbimc.cust_code = :custCode and tbim.update_date >= CURDATE() - INTERVAL 12 month) AS unsuccessful "//유찰(12개월)
 											   );
@@ -263,11 +293,14 @@ public class MainService {
 		queryCnt.setParameter("custCode", custCode);
 	    Object[] result = (Object[]) queryCnt.getSingleResult();
 	    
-	    partnerBidCntDto.setNoticing(((BigDecimal) result[0]).toBigInteger());
+	    partnerBidCntDto.setNoticing((BigInteger) result[0]);
 	    partnerBidCntDto.setSubmitted((BigInteger) result[1]);
 	    partnerBidCntDto.setConfirmation((BigInteger) result[2]);
 	    partnerBidCntDto.setAwarded((BigInteger) result[3]);
 	    partnerBidCntDto.setUnsuccessful((BigInteger) result[4]);
+	    
+	    BigInteger ing = ((BigInteger) result[0]).add((BigInteger) result[1]).add((BigInteger) result[2]);
+	    partnerBidCntDto.setIng(ing);
 
 	    return partnerBidCntDto;
 	}
@@ -289,32 +322,18 @@ public class MainService {
 		PartnerCompletedBidCntDto partnerCompletedBidCntDto = new PartnerCompletedBidCntDto();
 		
 		StringBuilder sbCnt = new StringBuilder(" select ( "
-															 //지명경쟁
-														  + "(select COUNT(1) "
-														  + " from t_bi_info_mat tbim "
-														  + " inner join t_bi_info_mat_cust tbimc "
-														  + " on tbim.bi_no = tbimc.bi_no "
-														  + " where tbim.ING_TAG IN ('A5', 'A7') "
-														  + " and (tbim.UPDATE_DATE >= CURDATE() - INTERVAL 12 MONTH) "
-														  + " and tbim.bi_mode = 'A' "
-														  + " and tbimc.cust_code = :custCode "
-														  + ") "
-														  
-														  + " + "
-														  
-														     //일반경쟁
-														  + "(select COUNT(1) "
-														  + " from t_bi_info_mat tbim "
-														  + " inner join t_bi_info_mat_cust tbimc "
-														  + " on tbim.bi_no = tbimc.bi_no "
-														  + " where tbim.ING_TAG IN ('A5', 'A7') "
-														  + " and (tbim.UPDATE_DATE >= CURDATE() - INTERVAL 12 MONTH) "
-														  + " and tbim.bi_mode = 'B' "
-														  + ")"
-														  
-													  + ") as posted, "//공고되었던 입찰
-													 + " (select COUNT(1) from t_bi_info_mat tbim inner join t_bi_info_mat_cust tbimc on(tbim.bi_no = tbimc.bi_no) where tbim.ing_tag IN ('A5', 'A7') and tbimc.ESMT_YN = '2' and (tbim.update_date >= CURDATE() - INTERVAL 12 MONTH) and tbimc.cust_code = :custCode) as submitted, "//투찰했던 입찰
-													 + " (select COUNT(1) from t_bi_info_mat tbim inner join t_bi_info_mat_cust tbimc on(tbim.bi_no = tbimc.bi_no) where tbim.ing_tag IN ('A5') and (tbim.update_date >= CURDATE() - INTERVAL 12 MONTH) and tbimc.succ_yn = 'Y' and tbimc.cust_code = :custCode) as awarded "//낙찰했던 입찰
+														+ "(select count(1) "
+														+ "from t_bi_info_mat tbim "
+														+ "inner join t_bi_info_mat_cust tbimc "
+														+ "on tbim.BI_NO = tbimc.BI_NO "
+														+ "and tbimc.CUST_CODE = :custCode "
+														+ "where tbim.ING_TAG in ('A5', 'A7') "
+														+ "and  (tbim.UPDATE_DATE >= CURDATE() - interval 12 month) "
+														+ "and tbim.BI_MODE in ('A', 'B')"
+														+ ")"
+													+ ") as posted, "//공고되었던 입찰
+													+ " (select COUNT(1) from t_bi_info_mat tbim inner join t_bi_info_mat_cust tbimc on(tbim.bi_no = tbimc.bi_no) where tbim.ing_tag IN ('A5', 'A7') and tbimc.ESMT_YN = '2' and (tbim.update_date >= CURDATE() - INTERVAL 12 MONTH) and tbimc.cust_code = :custCode) as submitted, "//투찰했던 입찰
+													+ " (select COUNT(1) from t_bi_info_mat tbim inner join t_bi_info_mat_cust tbimc on(tbim.bi_no = tbimc.bi_no) where tbim.ing_tag IN ('A5') and (tbim.update_date >= CURDATE() - INTERVAL 12 MONTH) and tbimc.succ_yn = 'Y' and tbimc.cust_code = :custCode) as awarded "//낙찰했던 입찰
 											   );
 		Query queryCnt = entityManager.createNativeQuery(sbCnt.toString());
 
