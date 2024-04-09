@@ -191,7 +191,7 @@ public class UserService {
         if ("4".equals(params.get("userAuth"))) {
             List<Map> list = (List) params.get("userInterrelatedList");
             for (Map<String, Object> data : list) {
-                if (data.get("check") != null) {
+                if (data.get("check") != null && (boolean)data.get("check") == true) {
                     sbQuery = new StringBuilder(" insert into t_co_user_interrelated (interrelated_cust_code, user_id) values (:interrelatedCustCode, :userId)");
                     query = entityManager.createNativeQuery(sbQuery.toString());
                     query.setParameter("interrelatedCustCode", data.get("key"));
