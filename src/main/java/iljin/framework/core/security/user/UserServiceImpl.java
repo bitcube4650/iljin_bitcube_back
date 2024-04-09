@@ -288,10 +288,7 @@ public class UserServiceImpl implements UserService {
         if (!list.isEmpty()) {
             UserDto user = list.get(0);
             // 로그인 아이디 메일 저장 처리
-            mailService.saveMailInfo("[일진그룹 e-bidding] 로그인 아이디", "안녕하십니까\n" +
-                    "일진그룹 전자입찰 e-bidding 입니다.\n" +
-                    "\n" +
-                    "고객님께서 찾으시는 e-bidding 시스템 로그인 아이디는\n" +
+            mailService.saveMailInfo("[일진그룹 e-bidding] 로그인 아이디", "고객님께서 찾으시는 e-bidding 시스템 로그인 아이디는\n" +
                     "<b style='color:red'>" + user.getLoginId() + "</b>\n" +
                     "입니다.\n" +
                     "\n" +
@@ -332,10 +329,7 @@ public class UserServiceImpl implements UserService {
 
         if (cnt > 0) {
             // 로그인 암호 메일 저장 처리
-            mailService.saveMailInfo("[일진그룹 e-bidding] 로그인 암호", "안녕하십니까\n" +
-                    "일진그룹 전자입찰 e-bidding 입니다.\n" +
-                    "\n" +
-                    "e-bidding 시스템에 로그인 하기 위해 초기화된 비밀번호는\n" +
+            mailService.saveMailInfo("[일진그룹 e-bidding] 로그인 암호", "e-bidding 시스템에 로그인 하기 위해 초기화된 비밀번호는\n" +
                     "<b style='color:red'>" + userPwd + "</b>\n" +
                     "입니다.\n" +
                     "\n" +

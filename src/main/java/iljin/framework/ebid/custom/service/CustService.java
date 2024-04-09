@@ -311,10 +311,7 @@ public class CustService {
         insertHistory(params.get("custCode"));
 
         // 회원가입 승인 메일 저장 처리
-        mailService.saveMailInfo("[일진그룹 e-bidding] 회원가입 승인", "안녕하십니까\n" +
-                "일진그룹 전자입찰 e-bidding 입니다.\n" +
-                "\n" +
-                "["+user.getCustName()+"] 계열사에서 ["+params.get("custName")+"] 업체 승인처리 되었습니다.\n" +
+        mailService.saveMailInfo("[일진그룹 e-bidding] 회원가입 승인", "["+user.getCustName()+"] 계열사에서 ["+params.get("custName")+"] 업체 승인처리 되었습니다.\n" +
                 "<b>e-bidding 시스템</b>에 로그인하고 입찰업무를 처리해 주십시오\n" +
                 "입찰 업무는 로그인 후 하단에 입찰업무 안내를 참고하시거나 공지메뉴의 매뉴얼을 참조해 주십시오\n" +
                 "\n" +
@@ -342,10 +339,7 @@ public class CustService {
         insertHistory(params.get("custCode"));
 
         // 회원가입 반려 메일 저장 처리
-        mailService.saveMailInfo("[일진그룹 e-bidding] 회원가입 반려", "안녕하십니까\n" +
-                "일진그룹 전자입찰 e-bidding 입니다.\n" +
-                "\n" +
-                "["+user.getCustName()+"] 계열사에서 ["+params.get("custName")+"] 업체 반려처리 되었습니다.\n" +
+        mailService.saveMailInfo("[일진그룹 e-bidding] 회원가입 반려", "["+user.getCustName()+"] 계열사에서 ["+params.get("custName")+"] 업체 반려처리 되었습니다.\n" +
                 "아래 반려 사유를 확인해 주십시오\n" +
                 "\n" +
                 "감사합니다.\n" +
@@ -473,10 +467,7 @@ public class CustService {
         if (user == null) {
 
             String title = "[일진그룹 e-bidding] 신규업체 승인 요청";
-            String content = "안녕하십니까\n" +
-                    "일진그룹 전자입찰 e-bidding 입니다.\n" +
-                    "\n" +
-                    "[" + params.get("custName") + "] 신규업체 승인 요청이 왔습니다.\n" +
+            String content = "[" + params.get("custName") + "] 신규업체 승인 요청이 왔습니다.\n" +
                     "e-bidding 시스템에 로그인하고 업체정보의 업체승인 페이지에서 \n" +
                     "업체 정보를 확인하십시오\n" +
                     "처리는 3일 이내 처리해야 합니다..\n" +
@@ -494,10 +485,7 @@ public class CustService {
             }
         } else {
             // 회원가입 승인 메일 저장 처리
-            mailService.saveMailInfo("[일진그룹 e-bidding] 회원가입 승인", "안녕하십니까\n" +
-                    "일진그룹 전자입찰 e-bidding 입니다.\n" +
-                    "\n" +
-                    "[" + user.getCustName() + "] 계열사에서 [" + params.get("custName") + "] 업체 승인처리 되었습니다.\n" +
+            mailService.saveMailInfo("[일진그룹 e-bidding] 회원가입 승인", "[" + user.getCustName() + "] 계열사에서 [" + params.get("custName") + "] 업체 승인처리 되었습니다.\n" +
                     "<b>e-bidding 시스템</b>에 로그인하고 입찰업무를 처리해 주십시오\n" +
                     "입찰 업무는 로그인 후 하단에 입찰업무 안내를 참고하시거나 공지메뉴의 매뉴얼을 참조해 주십시오\n" +
                     "\n" +
