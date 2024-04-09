@@ -31,7 +31,7 @@ public class AES_FileEncryption {
         String fileName = path.getFileName().toString();
 
         //파일 경로 추출
-        String directoryPath = path.getParent().toString();
+        String directoryPath = path.getParent().toString().replace("\\", "/");
 
         //임시로 생성될 파일 경로 생성
         String encryptedFilePath = directoryPath +  "/encrypted-" + fileName;
@@ -60,6 +60,8 @@ public class AES_FileEncryption {
     }
 
     public static String decryptFile(String filePath) throws Exception  {
+       filePath = filePath.replace("\\", "/");
+
         //파일 경로를 Path 객체로 변환
         Path path = Paths.get(filePath);
 

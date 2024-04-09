@@ -47,7 +47,7 @@ public class FileService {
         String uniqueFileName = UUID.randomUUID().toString() + "_" + originalFileName;
 
         // 파일 저장 경로 설정
-        Path filePath = Paths.get(monthPath.toString(), uniqueFileName);
+        Path filePath = Paths.get(monthPath.toString().replace("\\", "/"), uniqueFileName);
 
         // 파일 저장
         Files.copy(file.getInputStream(), filePath);
@@ -102,6 +102,8 @@ public class FileService {
         // 파일명에 UUID를 사용하여 고유성 확보
         String originalFileName = file.getOriginalFilename();
         String uniqueFileName = UUID.randomUUID().toString() + "_" + originalFileName;
+
+
 
         // 파일 저장 경로 설정
         Path filePath = Paths.get(monthPath.toString(), uniqueFileName);
