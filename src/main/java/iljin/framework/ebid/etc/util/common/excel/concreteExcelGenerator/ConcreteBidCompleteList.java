@@ -51,15 +51,11 @@ public class ConcreteBidCompleteList extends ExcelSupportV2 {
         }
 
         //DATA 가공.
-     //   List<BidCompleteDto> data = new ArrayList<>();
-
         int offset = 0;
         int limit = 5000;
         int cnt = 0;
 
         int complateBidListCnt = excelRepository.findComplateBidListCnt(param);
-       // int bidDetailCnt2 = excelRepository.findBidDetailListCnt2(param);
-
 
         //로그인 유저가 롯데 에너지 머트리얼즈인지 확인
         UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -73,9 +69,7 @@ public class ConcreteBidCompleteList extends ExcelSupportV2 {
             if("02".equals(userInterrelatedCustCode)) {
                 List<BidHistoryMatExcelDto> excelData = new ArrayList<>();
                 String tmpBiNo = "";
-
                 data = excelRepository.findComplateBidList(param, offset, limit);
-          //      List<BidHistoryMatExcelDto> excelData = new ArrayList<>();
 
                 for(int i = 0; i < data.size(); i++) {
                     if(!tmpBiNo.equals(data.get(i).getBiNo())) {
@@ -124,10 +118,6 @@ public class ConcreteBidCompleteList extends ExcelSupportV2 {
                         tmpBiNo = data.get(i).getBiNo();
                     }
                 }
-                //excelUtils.downLoadExcel(BidHistoryMatExcelDto.class, excelData, "downLoad", response);
-              //  excelUtils.downLoadExcelPaging(BidHistoryMatExcelDto.class, excelData, "downLoad", response);
-                //excelUtils.downLoadCsv(BidHistoryMatExcelDto.class, excelData, "downLoad", response);
-
                 int start = offset;
 
                 createbody(clazz, workbook, excelData, sheet, row, cell, start);
@@ -193,7 +183,6 @@ public class ConcreteBidCompleteList extends ExcelSupportV2 {
             }
         }
         return workbook;
-
 
     }
 

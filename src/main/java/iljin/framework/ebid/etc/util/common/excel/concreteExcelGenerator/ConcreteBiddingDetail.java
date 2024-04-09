@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 @Component
-public class ExcelBiddingDetail extends ExcelSupportV2 {
+public class ConcreteBiddingDetail extends ExcelSupportV2 {
 
     @Autowired
     ExcelRepository excelRepository;

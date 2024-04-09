@@ -324,7 +324,7 @@ public class BidPartnerStatusService {
 				+ ",		tbim.ING_TAG "
 				+ ",		IFNULL((select REBID_ATT from t_bi_info_mat_cust tbimc where tbimc.BI_NO = :biNo and tbimc.CUST_CODE = :custCode), 'N') as CUST_REBID_YN "
 				+ ",		IFNULL((select ESMT_YN from t_bi_info_mat_cust tbimc where tbimc.BI_NO = :biNo and tbimc.CUST_CODE = :custCode), '1') as CUST_ESMT_YN "
-				+ ",		IFNULL((select DATE_FORMAT(tbimc.UPDATE_DATE, '%Y-%m-%d %H:%i') from t_bi_info_mat_cust tbimc where tbimc.BI_NO = :biNo and tbimc.CUST_CODE = :custCode), '') as CUST_ESMT_UPDATE_DATE "
+				+ ",		IFNULL((select DATE_FORMAT(tbimc.SUBMIT_DATE, '%Y-%m-%d %H:%i') from t_bi_info_mat_cust tbimc where tbimc.BI_NO = :biNo and tbimc.CUST_CODE = :custCode), '') as CUST_ESMT_UPDATE_DATE "
 				+ "from t_bi_info_mat tbim "
 				+ "left outer join t_co_user tcu "
 				+ "	on tbim.GONGO_ID = tcu.USER_ID "

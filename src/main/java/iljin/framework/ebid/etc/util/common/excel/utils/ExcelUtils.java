@@ -7,7 +7,6 @@ import iljin.framework.ebid.etc.util.common.excel.dto.BidDetailListDto;
 import iljin.framework.ebid.etc.util.common.excel.dto.BidProgressResponseDto;
 import iljin.framework.ebid.etc.util.common.excel.dto.BiddingDetailExcelDto;
 import iljin.framework.ebid.etc.util.common.excel.repository.ExcelRepository;
-import iljin.framework.ebid.etc.util.common.excel.service.ExcelService;
 import lombok.extern.slf4j.Slf4j;
 
 import org.apache.poi.ss.usermodel.*;
@@ -49,7 +48,7 @@ public final class ExcelUtils implements ExcelSupport {
     @Autowired
     private ConcreteBiInfoDetailList concreteBiInfoDetailList;
     @Autowired
-    private ExcelBiddingDetail excelBiddingDetail;
+    private ConcreteBiddingDetail excelBiddingDetail;
     @Autowired
     private ConcreteBidPresentList concreteBidPresentList;
     @Autowired
@@ -1129,7 +1128,7 @@ public final class ExcelUtils implements ExcelSupport {
         String spotDate     = CommonUtils.getString(result.get("spotDate"), "");         //현장설명일시
         String spotArea     = CommonUtils.getString(result.get("spotArea"), "");         //현장설명장소
         String succDeciMeth = CommonUtils.getString(result.get("succDeciMeth"), "");     //낙찰자결정방법
-        String custName     = CommonUtils.getString(custNameBuilder, "");                //입찰참가업체
+        String custName     = CommonUtils.getString(custNameBuilder, "가입회원사 전체"); //입찰참가업체 -> 일반경쟁입찰 일 경우, default로 가입회원사 전체
         String amtBasis     = CommonUtils.getString(result.get("amtBasis"), "");         //금액기준
         String payCond      = CommonUtils.getString(result.get("payCond"), "");          //결제조건
         String bdAmt        = CommonUtils.getString(result.get("bdAmt"), "");            //예산금액
