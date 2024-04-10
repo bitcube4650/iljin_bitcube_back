@@ -106,6 +106,8 @@ public class BidStatusService {
 			+ "					THEN '입찰공고(개찰대상)' "
 			+ "					WHEN tbim.ing_tag = 'A1' "
 			+ "					THEN '입찰공고' "
+			+ "					WHEN tbim.ing_tag = 'A3' AND tbim.est_close_date < sysdate()  "
+			+ "					THEN '입찰공고(재)(개찰대상)' "
 			+ "					WHEN tbim.ing_tag = 'A3' "
 			+ "					THEN '입찰공고(재)' "
 			+ "					ELSE '개찰' "
