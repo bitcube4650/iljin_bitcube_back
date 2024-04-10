@@ -835,7 +835,7 @@ public class BidStatusService {
 			StringBuilder sbMail = new StringBuilder(
 				"select	tccu.user_email "
 				+ ",	tcu.user_email as from_email "
-				+ ",	tccu.USER_HP "
+				+ ",	REGEXP_REPLACE(tccu.USER_HP , '[^0-9]+', '') as USER_HP "
 				+ ",	tccu.USER_NAME "
 				+ "from t_bi_info_mat_cust tbimc "
 				+ "inner join t_co_cust_master tccm "
@@ -1007,7 +1007,7 @@ public class BidStatusService {
 			StringBuilder sbMail = new StringBuilder(
 				"select	tccu.user_email "
 				+ ",	tcu.user_email as from_email "
-				+ ",	tccu.USER_HP "
+				+ ",	REGEXP_REPLACE(tccu.USER_HP , '[^0-9]+', '') as USER_HP "
 				+ ",	tccu.USER_NAME "
 				+ "from t_bi_info_mat_cust tbimc "
 				+ "inner join t_co_cust_master tccm "
