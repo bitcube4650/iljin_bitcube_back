@@ -52,7 +52,7 @@ public class ConcreteBidCompleteList extends ExcelSupportV2 {
 
         //DATA 가공.
         int offset = 0;
-        int limit = 5000;
+        int limit = 1000;
         int cnt = 0;
 
         int complateBidListCnt = excelRepository.findComplateBidListCnt(param);

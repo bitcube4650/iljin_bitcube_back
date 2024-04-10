@@ -44,7 +44,7 @@ public class ConcreteBiddingDetail extends ExcelSupportV2 {
         List<BidDetailListDto> data = new ArrayList<>();
 
         int offset = 0;
-        int limit = 5000;
+        int limit = 1000;
         int cnt = 0;
 
         int bidDetailCnt = excelRepository.findBidDetailCnt(param);
