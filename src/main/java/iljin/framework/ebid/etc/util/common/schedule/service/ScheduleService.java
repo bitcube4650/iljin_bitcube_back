@@ -78,7 +78,7 @@ public class ScheduleService {
             UpdateEmailInfoDto updateEmailInfoDto = new UpdateEmailInfoDto();
 
             try {
-                String fromMail = mailEntity.getFromMail();
+                String fromMail = CommonUtils.getString(mailEntity.getFromMail(), "");
                 String[] toEmailAddrArray = mailEntity.getReceives().split(";");
                 String mailTitle = mailEntity.getTitle();
                 String mailContents = mailEntity.getConts();

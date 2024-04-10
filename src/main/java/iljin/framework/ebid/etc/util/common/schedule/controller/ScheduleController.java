@@ -41,7 +41,7 @@ public class ScheduleController {
 
     //진행중 입찰에서 30일이 지나도 낙찰처리가 안된 입찰은 유찰처리 : 0시 11분
     @Scheduled(cron="0 11 0 * * *")	//초 분 시 일 월 주(년)
-   // @Scheduled(fixedRate = Long.MAX_VALUE)
+    //@Scheduled(fixedRate = Long.MAX_VALUE)
     public void updateIngTagForLast30Days() {
         if(Constances.COMMON_SCHEDULE_FLAG) {
             log.info("--------------------------Scheduler updateIngTagForLast30Days() method start!-----------------");
@@ -59,12 +59,10 @@ public class ScheduleController {
     //이메일발송 5분마다
    @Scheduled(cron="0 3,8,13,18,23,28,33,38,43,48,53,58 * * * *")	//초 분 시 일 월 주(년)
     //@Scheduled(fixedRate = Long.MAX_VALUE)
-//	@RequestMapping("emailSendExe.sys")
     public void emailSendExe() {
         if(Constances.COMMON_SCHEDULE_FLAG) {
             log.info("--------------------------Scheduler emailSendExe() method start!------------------------------");
             try {
-                //mailService.saveMailInfo("[테스트 제목입니다.]", "테스트 내용입니다.", "test@naver.com");
                 scheduleService.emailSendExe();
             }
             catch(Exception e) {
