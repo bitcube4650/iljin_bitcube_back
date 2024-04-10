@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import org.springframework.stereotype.Service;
 
 import iljin.framework.core.dto.ResultBody;
+import iljin.framework.ebid.etc.util.Constances;
 import tradesign.crypto.provider.JeTS;
 import tradesign.pki.pkix.EnvelopedData;
 import tradesign.pki.pkix.SignedData;
@@ -18,17 +19,15 @@ public class CertificateService {
 	public ResultBody encryptData(String data, String interrelatedCustCode) {
 		ResultBody resultBody = new ResultBody();
 		String encrypted = "";
-		
+
 		try {
-    		// 설정파일 위치를 ebid.jar 경로를 기준으로 상대 경로 지정
-            String relativePath = "./data/tradesign3280.properties";
-			JeTS.installProvider(relativePath);
+			JeTS.installProvider(Constances.CERTIFICATE_SETTING_PATH);
 			
 			//EnvelopedData 객체 생성
 			EnvelopedData ed = new EnvelopedData(data.getBytes(), null);
 			
 			// 계열사의 인증서 설정
-			String certPath = "./data/config/ServerCert/";
+			String certPath = "/data/apps/ebid/data/config/ServerCert/";
 			certPath += interrelatedCustCode;//입찰에 해당하는 계열사 코드
 			certPath += "/kmCert.der";
 			
@@ -66,9 +65,7 @@ public class CertificateService {
 		String decrypted = "";
 		
 		try {
-    		// 설정파일 위치를 ebid.jar 경로를 기준으로 상대 경로 지정
-            String relativePath = "./data/tradesign3280.properties";
-			JeTS.installProvider(relativePath);
+			JeTS.installProvider(Constances.CERTIFICATE_SETTING_PATH);
 			
 			String beforeDec = new String(data.getBytes("ISO-8859-1"));
 			
@@ -76,12 +73,12 @@ public class CertificateService {
 			EnvelopedData ed = new EnvelopedData(JetsUtil.decodeBase64(beforeDec.getBytes()));
 			
 			// 계열사의 인증서 설정
-			String certPath = "./data/config/ServerCert/";
+			String certPath = "/data/apps/ebid/data/config/ServerCert/";
 			certPath += interrelatedCustCode;//입찰에 해당하는 계열사 코드
 			certPath += "/kmCert.der";
 			
 			// 계열사의 키 설정
-			String keyPath = "./data/config/ServerCert/";
+			String keyPath = "/data/apps/ebid/data/config/ServerCert/";
 			keyPath += interrelatedCustCode;//입찰에 해당하는 계열사 코드
 			keyPath += "/kmPri.key";
 			
@@ -121,16 +118,14 @@ public class CertificateService {
 		ResultBody resultBody = new ResultBody();
 		String signed = "";
 		try {
-			// 설정파일 위치를 ebid.jar 경로를 기준으로 상대 경로 지정
-            String relativePath = "./data/tradesign3280.properties";
-			JeTS.installProvider(relativePath);
+			JeTS.installProvider(Constances.CERTIFICATE_SETTING_PATH);
 			
 			// 서명 암호화
 			SignedData sd = new SignedData(data.getBytes(), true);	
 			
 			// 인증서 설정(일진 씨앤에스)
-			String certPath = "./data/config/ServerCert/11/signCert.der";
-			String keyPath = "./data/config/ServerCert/11/signPri.key";
+			String certPath = "/data/apps/ebid/data/config/ServerCert/11/signCert.der";
+			String keyPath = "/data/apps/ebid/data/config/ServerCert/11/signPri.key";
 			
 			// 해당 경로의 인증서, 키 불러오기
 			FileInputStream fis = new FileInputStream(certPath);
@@ -165,9 +160,7 @@ public class CertificateService {
 		ResultBody resultBody = new ResultBody();
 		String fixed = "";
 		try {
-			// 설정파일 위치를 ebid.jar 경로를 기준으로 상대 경로 지정
-            String relativePath = "./data/tradesign3280.properties";
-			JeTS.installProvider(relativePath);
+			JeTS.installProvider(Constances.CERTIFICATE_SETTING_PATH);
 			
 			byte[] signed_msg = JetsUtil.decodeBase64(data.getBytes("ISO-8859-1"));
 			

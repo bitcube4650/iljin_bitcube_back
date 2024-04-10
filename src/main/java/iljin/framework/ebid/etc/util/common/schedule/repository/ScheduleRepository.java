@@ -23,15 +23,10 @@ public class ScheduleRepository {
     }
 
     public void deleteByIngTag() {
-        /*
+
     	String deleteByIngTag = "DELETE FROM t_Bi_info_mat " +
                                 "WHERE EST_CLOSE_DATE < NOW() " +
                                 "AND ING_TAG = 'A0'";
-        */
-    	
-    	String deleteByIngTag = " UPDATE T_BI_INFO_MAT SET ING_TAG = 'D' " +
-				                " WHERE EST_CLOSE_DATE < NOW() " +
-				                " AND ING_TAG = 'A0'";
         em.createNativeQuery(deleteByIngTag)
                 .executeUpdate();
     }

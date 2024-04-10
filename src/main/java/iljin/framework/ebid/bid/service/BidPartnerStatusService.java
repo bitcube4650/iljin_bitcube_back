@@ -511,9 +511,8 @@ public class BidPartnerStatusService {
 				interrelatedCustCode = tBiInfoMat.getInterrelatedCustCode();//계열사 코드
 				
 			}
-			System.out.println("들어온 데이터 >> " +amt);
 			
-			if(amt != null && amt.equals("")) {
+			if(amt != null && !amt.equals("")) {
 			
 				//입찰한 계열사의 인증서로 암호화
 				ResultBody encryptResult = certificateService.encryptData(amt, interrelatedCustCode);//견적액 envelope 암호화
@@ -523,7 +522,6 @@ public class BidPartnerStatusService {
 					
 				}else {//암호화 성공
 					amt = (String) encryptResult.getData();
-					System.out.println("암호화된 결과 >> " +amt);
 				}
 			}
 			

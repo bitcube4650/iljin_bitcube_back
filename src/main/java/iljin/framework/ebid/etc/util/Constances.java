@@ -15,10 +15,16 @@ public class Constances {
     public static boolean COMMON_SCHEDULE_FLAG;
     public static String SYSTEM_FILEENCRYPT_KEY;
     public static String FILE_UPLOAD_DIRECTORY;
+    public static String CERTIFICATE_SETTING_PATH;
 
     @Value("${file.upload.directory}")
     private void setFileUploadDirectory(String fileUploadDirectory) {
         Constances.FILE_UPLOAD_DIRECTORY = fileUploadDirectory;
+    }
+    
+    @Value("${certificate.setting.path}")
+    private void setCertSettingDirectory(String certSettingDirectory) {
+        Constances.CERTIFICATE_SETTING_PATH = certSettingDirectory;
     }
 
 
