@@ -569,7 +569,7 @@ public class BidProgressService {
                 sbMail.append(
         				"select 	tcu.user_email\r\n"
         				+ "				,		tccu.USER_EMAIL as from_email \r\n"
-        				+ ",	tccu.USER_HP "
+        				+ ",	REGEXP_REPLACE(tccu.USER_HP , '[^0-9]+', '') as USER_HP"
         				+ ",	tccu.USER_NAME "
         				+ "				from t_co_user tcu \r\n"
         				+ "				inner join t_co_interrelated tci\r\n"
@@ -782,11 +782,10 @@ public class BidProgressService {
             // 지명경쟁 협력사의 모든 대상자 이메일 insert
 
                 // 지명경쟁 협력사의 모든 대상자 이메일 insert
-                
                 sbMail.append(
         				"select 	tcu.user_email\r\n"
         				+ "				,		tccu.USER_EMAIL as from_email \r\n"
-        				+ ",	tccu.USER_HP "
+        				+ ",	REGEXP_REPLACE(tccu.USER_HP , '[^0-9]+', '') as USER_HP"
         				+ ",	tccu.USER_NAME "
         				+ "				from t_co_user tcu \r\n"
         				+ "				inner join t_co_interrelated tci\r\n"
@@ -1200,7 +1199,7 @@ public class BidProgressService {
             sbMail.append(
     				"select 	tcu.user_email\r\n"
     				+ "				,		tccu.USER_EMAIL as from_email \r\n"
-    				+ ",	tccu.USER_HP "
+    				+ ",	REGEXP_REPLACE(tccu.USER_HP , '[^0-9]+', '') as USER_HP"
     				+ ",	tccu.USER_NAME "
     				+ "				from t_co_user tcu \r\n"
     				+ "				inner join t_co_interrelated tci\r\n"
