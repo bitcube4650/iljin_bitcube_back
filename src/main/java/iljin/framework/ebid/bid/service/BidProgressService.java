@@ -1577,7 +1577,7 @@ public class BidProgressService {
 			for (SendDto recvInfo : sendList) {
 				StringBuilder sbList = new StringBuilder(
 						"INSERT INTO t_email (title, conts, send_flag, create_date, receives, from_mail, bi_no) VALUES " +
-								"(:title, :content, 'N', CURRENT_TIMESTAMP, :userEmail, :fromMail, :biNo)");
+								"(:title, :content, '0', CURRENT_TIMESTAMP, :userEmail, :fromMail, :biNo)");
 
 				Query queryList = entityManager.createNativeQuery(sbList.toString());
 				queryList.setParameter("title", emailContent.get("title"));
