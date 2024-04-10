@@ -44,7 +44,7 @@ public class ConcreteBiInfoDetailList extends ExcelSupportV2 {
         List<BiInfoDetailDto> data = new ArrayList<>();
 
         int offset = 0;
-        int limit = 5000;
+        int limit = 1000;
         int cnt = 0;
 
         int biInfoDetailListCnt = excelRepository.findBiInfoDetailListCnt(param);
@@ -59,31 +59,31 @@ public class ConcreteBiInfoDetailList extends ExcelSupportV2 {
                 String biNo = CommonUtils.getString(data.get(i).getBiNo(), "");
                 String biName = CommonUtils.getString(data.get(i).getBiName(), "");
                 String itemName = CommonUtils.getString(data.get(i).getItemName(), "");
-                String bdAmt = CommonUtils.getString(data.get(i).getBdAmt(), "");
-                String succAmt = CommonUtils.getString(data.get(i).getSuccAmt(), "");
-                String realAmt = CommonUtils.getString(data.get(i).getRealAmt(), "");
+                BigDecimal bdAmt = data.get(i).getBdAmt();
+                BigDecimal succAmt = data.get(i).getSuccAmt();
+                BigDecimal realAmt = data.get(i).getRealAmt();
                 String custCnt = CommonUtils.getString(data.get(i).getCustCnt(), "");
                 String custName = CommonUtils.getString(data.get(i).getCustName(), "");
                 String estStartDate = CommonUtils.getString(data.get(i).getEstStartDate(), "");
                 String estCloseDate = CommonUtils.getString(data.get(i).getEstCloseDate(), "");
-                String esmtAmtMax = CommonUtils.getString(data.get(i).getEsmtAmtMax(), "");
-                String esmtAmtMin = CommonUtils.getString(data.get(i).getEsmtAmtMin(), "");
-                String esmtAmtDev = CommonUtils.getString(data.get(i).getEsmtAmtDev(), "");
+                BigDecimal esmtAmtMax = data.get(i).getEsmtAmtMax();
+                BigDecimal esmtAmtMin = data.get(i).getEsmtAmtMin();
+                BigDecimal esmtAmtDev = data.get(i).getEsmtAmtDev();
                 String reBidCnt = CommonUtils.getString(data.get(i).getReBidCnt(), "");
 
                 biInfoDetailExcelDto.setBiNo(biNo);
                 biInfoDetailExcelDto.setBiName(biName);
                 biInfoDetailExcelDto.setItemName(itemName);
-                biInfoDetailExcelDto.setBdAmt(CommonUtils.getFormatNumber(bdAmt));
-                biInfoDetailExcelDto.setSuccAmt(CommonUtils.getFormatNumber(succAmt));
-                biInfoDetailExcelDto.setRealAmt(CommonUtils.getFormatNumber(realAmt));
+                biInfoDetailExcelDto.setBdAmt(bdAmt);
+                biInfoDetailExcelDto.setSuccAmt(succAmt);
+                biInfoDetailExcelDto.setRealAmt(realAmt);
                 biInfoDetailExcelDto.setCustCnt(CommonUtils.getFormatNumber(custCnt));
                 biInfoDetailExcelDto.setCustName(custName);
                 biInfoDetailExcelDto.setEstStartDate(estStartDate);
                 biInfoDetailExcelDto.setEstCloseDate(estCloseDate);
-                biInfoDetailExcelDto.setEsmtAmtMax(CommonUtils.getFormatNumber(esmtAmtMax));
-                biInfoDetailExcelDto.setEsmtAmtMin(CommonUtils.getFormatNumber(esmtAmtMin));
-                biInfoDetailExcelDto.setEsmtAmtDev(CommonUtils.getFormatNumber(esmtAmtDev));
+                biInfoDetailExcelDto.setEsmtAmtMax(esmtAmtMax);
+                biInfoDetailExcelDto.setEsmtAmtMin(esmtAmtMin);
+                biInfoDetailExcelDto.setEsmtAmtDev(esmtAmtDev);
                 biInfoDetailExcelDto.setReBidCnt(CommonUtils.getFormatNumber(reBidCnt));
 
                 excelData.add(biInfoDetailExcelDto);

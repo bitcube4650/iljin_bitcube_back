@@ -18,11 +18,11 @@ public class BiInfoDetailExcelDto {
     @ExcelColumnName(name = "입찰품명")
     private String itemName;
     @ExcelColumnName(name = "예산금액")
-    private String bdAmt;
+    private BigDecimal bdAmt;
     @ExcelColumnName(name = "낙찰금액")
-    private String succAmt;
+    private BigDecimal succAmt;
     @ExcelColumnName(name = "계약금액")
-    private String realAmt;
+    private BigDecimal realAmt;
     @ExcelColumnName(name = "참여업체수")
     private String custCnt;
     @ExcelColumnName(name = "낙찰사")
@@ -32,11 +32,11 @@ public class BiInfoDetailExcelDto {
     @ExcelColumnName(name = "제출마감일")
     private String estCloseDate;
     @ExcelColumnName(name = "투찰최고가(1)")
-    private String esmtAmtMax;
+    private BigDecimal esmtAmtMax;
     @ExcelColumnName(name = "투찰최저가(2)")
-    private String esmtAmtMin;
+    private BigDecimal esmtAmtMin;
     @ExcelColumnName(name = "편차(1)-(2)")
-    private String esmtAmtDev;
+    private BigDecimal esmtAmtDev;
     @ExcelColumnName(name = "재입찰횟수")
     private String reBidCnt;
 
