@@ -114,7 +114,7 @@ public class BidPartnerStatusService {
 					+ ",		tcu.USER_NAME as DAMDANG_NAME "
 					+ ",		tcu.USER_EMAIL as DAMDANG_EMAIL "
 					+ ",		tbimc.ESMT_YN "
-					+ ",		'' as temp "
+					+ ",		tbimc.REBID_ATT "
 					+ "from t_bi_info_mat tbim "
 					+ "inner join t_co_cust_ir tcci "
 					+ "	on tbim.INTERRELATED_CUST_CODE = tcci.INTERRELATED_CUST_CODE "

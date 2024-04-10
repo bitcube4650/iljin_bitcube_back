@@ -29,6 +29,7 @@ public class BidProgressDto {
     String damdangName;
     String damdangEmail;
     String esmtYn;
+    String rebidAtt;
 
     /**
 	 * 목록 (/api/v1/bid/progressList)
@@ -70,7 +71,7 @@ public class BidProgressDto {
 	//협력사 입찰진행 리스트
     public BidProgressDto(
             String biNo, String biName, String estStartDate, String estCloseDate, String biMode,
-            String ingTag, String insMode, String damdangName, String damdangEmail, String esmtYn, String flag){
+            String ingTag, String insMode, String damdangName, String damdangEmail, String esmtYn, String rebidAtt){
             this.biNo = biNo;
             this.biName = biName;
             this.estStartDate = estStartDate;
@@ -81,5 +82,6 @@ public class BidProgressDto {
             this.damdangName = damdangName;
             this.damdangEmail = damdangEmail;
             this.esmtYn = esmtYn;
+            this.rebidAtt = rebidAtt;
         }
 }
