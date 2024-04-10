@@ -934,8 +934,11 @@ public class BidStatusService {
 				+ "SET		EST_CLOSE_DATE = :estCloseDate "
 				+ ",		WHY_A3 = :whyA3 "
 				+ ",		ING_TAG = 'A3' "
+				+ ",		EST_OPEN_DATE = NULL "
 				+ ",		UPDATE_DATE = sysdate() "
 				+ ",		UPDATE_USER = :userId "
+				+ ",		OPEN_ATT1_SIGN = 'N' "
+				+ ",		OPEN_ATT2_SIGN = 'N' "
 				+ ",		BI_MODE = 'A' "
 				+ ",		BI_OPEN = 'N' "
 				+ "WHERE	bi_no = :biNo");
