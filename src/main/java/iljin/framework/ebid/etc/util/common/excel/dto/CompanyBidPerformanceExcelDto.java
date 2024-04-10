@@ -16,11 +16,11 @@ public class CompanyBidPerformanceExcelDto {
     @ExcelColumnName(name = "입찰건수")
     String cnt;
     @ExcelColumnName(name = "예산금액(1)")
-    String bdAnt;
+    BigDecimal bdAnt;
     @ExcelColumnName(name = "낙찰금액(2)")
-    String succAmt;
+    BigDecimal succAmt;
     @ExcelColumnName(name = "차이(1)-(2)")
-    String mamt;
+    BigDecimal mamt;
     @ExcelColumnName(name = "비고")
     String test6;
 

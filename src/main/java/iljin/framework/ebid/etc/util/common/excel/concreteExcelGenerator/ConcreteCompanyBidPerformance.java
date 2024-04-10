@@ -46,7 +46,7 @@ public class ConcreteCompanyBidPerformance extends ExcelSupportV2 {
         List<BiInfoDto> data = new ArrayList<>();
 
         int offset = 0;
-        int limit = 5000;
+        int limit = 1000;
 
 
         int biInfoListCnt = excelRepository.findBiInfoListCnt(param);
@@ -60,15 +60,15 @@ public class ConcreteCompanyBidPerformance extends ExcelSupportV2 {
 
                 String interrelatedNm = CommonUtils.getString(data.get(i).getInterrelatedNm(), "");
                 String cnt = CommonUtils.getString(data.get(i).getCnt(), "");
-                String bdAnt = CommonUtils.getString(data.get(i).getBdAnt(), "");
-                String succAmt = CommonUtils.getString(data.get(i).getSuccAmt(), "");
-                String mamt = CommonUtils.getString(data.get(i).getMamt(), "");
+                BigDecimal bdAnt = data.get(i).getBdAnt();
+                BigDecimal succAmt = data.get(i).getSuccAmt();
+                BigDecimal mamt = data.get(i).getMamt();
 
                 companyBidPerformanceExcelDto.setInterrelatedNm(interrelatedNm);
                 companyBidPerformanceExcelDto.setCnt(CommonUtils.getFormatNumber(cnt));
-                companyBidPerformanceExcelDto.setBdAnt(CommonUtils.getFormatNumber(bdAnt));
-                companyBidPerformanceExcelDto.setSuccAmt(CommonUtils.getFormatNumber(succAmt));
-                companyBidPerformanceExcelDto.setMamt(CommonUtils.getFormatNumber(mamt));
+                companyBidPerformanceExcelDto.setBdAnt(bdAnt);
+                companyBidPerformanceExcelDto.setSuccAmt(succAmt);
+                companyBidPerformanceExcelDto.setMamt(mamt);
 
                 excelData.add(companyBidPerformanceExcelDto);
             }
