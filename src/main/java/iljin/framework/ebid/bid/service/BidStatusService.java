@@ -680,7 +680,7 @@ public class BidStatusService {
 						//입찰 직접입력 테이블(t_bi_detail_mat_cust)에 insert
 						TBiDetailMatCust tBiDetailMatCust = new TBiDetailMatCust();
 						tBiDetailMatCust.setBiNo(custDto.getBiNo());
-						tBiDetailMatCust.setSeq(CommonUtils.getInt(info[0]));
+						tBiDetailMatCust.setSeq(CommonUtils.getInt(info[0])+1);
 						tBiDetailMatCust.setCustCode(CommonUtils.getInt(custDto.getCustCode()));
 						tBiDetailMatCust.setEsmtUc(new BigDecimal(info[1]));
 						
@@ -689,7 +689,7 @@ public class BidStatusService {
 						//입찰 직접입력 테이블 차수(t_bi_detail_mat_cust_temp)에 insert
 						TBiDetailMatCustTemp tBiDetailMatCustTemp = new TBiDetailMatCustTemp();
 						tBiDetailMatCustTemp.setBiNo(custDto.getBiNo());
-						tBiDetailMatCustTemp.setSeq(CommonUtils.getInt(info[0]));
+						tBiDetailMatCustTemp.setSeq(CommonUtils.getInt(info[0])+1);
 						tBiDetailMatCustTemp.setCustCode(CommonUtils.getInt(custDto.getCustCode()));
 						tBiDetailMatCustTemp.setBiOrder(custDto.getBiOrder());
 						tBiDetailMatCustTemp.setEsmtUc(new BigDecimal(info[1]));
