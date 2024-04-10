@@ -44,7 +44,7 @@ public class ConcreteBidPresentList extends ExcelSupportV2 {
         List<BiInfoDto> data = new ArrayList<>();
 
         int offset = 0;
-        int limit = 5000;
+        int limit = 1000;
         int cnt = 0;
         int bidPresentListCnt = excelRepository.findBidPresentListCnt(param);
 
@@ -57,23 +57,23 @@ public class ConcreteBidPresentList extends ExcelSupportV2 {
 
                 String interrelatedNm = CommonUtils.getString(data.get(i).getInterrelatedNm(), " ");
                 String planCnt = CommonUtils.getString(data.get(i).getPlanCnt(), " ");
-                String planAmt = CommonUtils.getString(data.get(i).getPlanAmt(), " ");
+                BigDecimal planAmt = data.get(i).getPlanAmt();
                 String ingCnt = CommonUtils.getString(data.get(i).getIngCnt(), " ");
-                String ingAmt = CommonUtils.getString(data.get(i).getIngAmt(), " ");
+                BigDecimal ingAmt = data.get(i).getIngAmt();
                 String succCnt = CommonUtils.getString(data.get(i).getSuccCnt(), " ");
-                String succAmt = CommonUtils.getString(data.get(i).getSuccAmt(), " ");
+                BigDecimal succAmt = data.get(i).getSuccAmt();
                 String custCnt = CommonUtils.getString(data.get(i).getCustCnt(), " ");
                 String regCustCnt = CommonUtils.getString(data.get(i).getRegCustCnt(), " ");
                 String testNull = "";
 
                 biddingStatusDto.setInterrelatedNm(interrelatedNm);
                 biddingStatusDto.setPlanCnt(CommonUtils.getFormatNumber(planCnt));
-                biddingStatusDto.setPlanAmt(CommonUtils.getFormatNumber(planAmt));
+                biddingStatusDto.setPlanAmt(planAmt);
                 biddingStatusDto.setIngCnt(CommonUtils.getFormatNumber(ingCnt));
-                biddingStatusDto.setIngAmt(CommonUtils.getFormatNumber(ingAmt));
+                biddingStatusDto.setIngAmt(ingAmt);
                 biddingStatusDto.setSuccCnt(CommonUtils.getFormatNumber(succCnt));
-                biddingStatusDto.setSuccAmt(CommonUtils.getFormatNumber(succAmt));
-                biddingStatusDto.setCustCnt(CommonUtils.getFormatNumber(custCnt));
+                biddingStatusDto.setSuccAmt(succAmt);
+                biddingStatusDto.setCustCnt(custCnt);
                 biddingStatusDto.setRegCustCnt(CommonUtils.getFormatNumber(regCustCnt));
                 biddingStatusDto.setTestNull("");
 
