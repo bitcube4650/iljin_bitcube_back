@@ -23,11 +23,20 @@ public class ScheduleRepository {
     }
 
     public void deleteByIngTag() {
-
+        /*
     	String deleteByIngTag = "DELETE FROM t_Bi_info_mat " +
                                 "WHERE EST_CLOSE_DATE < NOW() " +
                                 "AND ING_TAG = 'A0'";
+
+         */
+        String deleteByIngTag = "UPDATE T_BI_INFO_MAT SET ING_TAG = 'D', " +
+                                "UPDATE_DATE = NOW(), " +
+                                "UPDATE_USER = :updateUser " +
+                                "WHERE EST_CLOSE_DATE < NOW() " +
+                                "AND ING_TAG = 'A0'";
+
         em.createNativeQuery(deleteByIngTag)
+                .setParameter("updateUser", "system")
                 .executeUpdate();
     }
 
@@ -43,10 +52,13 @@ public class ScheduleRepository {
 
 
     public void updateIngTagForLast30Days() {
-        String updateIngTagForLast30Days = "UPDATE T_BI_INFO_MAT SET ING_TAG = 'A7' " +
+        String updateIngTagForLast30Days = "UPDATE T_BI_INFO_MAT SET ING_TAG = 'A7', " +
+                                            "UPDATE_DATE = NOW(), " +
+                                            "UPDATE_USER = :updateUser " +
                                             "WHERE BID_OPEN_DATE < DATE_SUB(NOW(), INTERVAL 30 DAY) " +
                                             "AND ING_TAG IN ('A1', 'A2', 'A3')";
         em.createNativeQuery(updateIngTagForLast30Days)
+                .setParameter("updateUser", "system")
                 .executeUpdate();
     }
 
