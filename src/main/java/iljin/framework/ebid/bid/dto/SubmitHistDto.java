@@ -12,8 +12,7 @@ public class SubmitHistDto {
     BigDecimal esmtAmt;
     String submitDate;
 
-    public SubmitHistDto(String insMode, Short biOrder, String esmtCurr, BigDecimal esmtAmt, String submitDate){
-        this.insMode = insMode;
+    public SubmitHistDto(Short biOrder, String esmtCurr, BigDecimal esmtAmt, String submitDate){
         this.biOrder = biOrder;
         this.esmtCurr = esmtCurr;
         this.esmtAmt = esmtAmt;

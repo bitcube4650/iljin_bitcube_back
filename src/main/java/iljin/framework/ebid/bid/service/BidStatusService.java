@@ -1084,53 +1084,55 @@ public class BidStatusService {
 		}
 	}
 	
-    public Page submitHist(@RequestBody Map<String, Object> params) {
-        String biNo = CommonUtils.getString(params.get("biNo"));
-        String custCode = CommonUtils.getString(params.get("custCode"));
+	/**
+	 * 제출이력
+	 * @param params
+	 * @return
+	 */
+	public ResultBody submitHist(@RequestBody Map<String, Object> params) {
+		ResultBody resultBody = new ResultBody();
+		
+		String biNo = CommonUtils.getString(params.get("biNo"));
+		String custCode = CommonUtils.getString(params.get("custCode"));
 
-        StringBuilder sbCount = new StringBuilder("");
-        StringBuilder sbList = new StringBuilder("");
+		StringBuilder sbCount = new StringBuilder(
+				  "SELECT count(1) "
+				+ "from t_bi_info_mat_cust_temp "
+				+ "where bi_no = :biNo "
+				+ "and cust_code = :custCode "
+		);
+		StringBuilder sbList = new StringBuilder(
+				  "SELECT	tbimct.bi_order "
+				+ ",		tbimct.esmt_curr "
+				+ ",		tbimct.esmt_amt "
+				+ ",		DATE_FORMAT(tbimct.submit_date, '%Y-%m-%d %H:%i') AS submit_date "
+				+ "from t_bi_info_mat_cust_temp tbimct "
+				+ "left outer join t_co_code tcc "
+				+ "	on tcc.COL_CODE = 'T_CO_RATE' "
+				+ "	and tbimct.ESMT_CURR = tcc.CODE_VAL "
+				+ "where tbimct.bi_no = :biNo "
+				+ "and tbimct.cust_code = :custCode "
+				+ "order by tbimct.bi_order asc ");
 
-        StringBuilder ins = new StringBuilder(
-                "SELECT ins_mode from t_bi_info_mat where bi_no = :biNo");
-        Query insList = entityManager.createNativeQuery(ins.toString());
-        insList.setParameter("biNo", biNo);
-        String insMode = (String) insList.getSingleResult();
+		Query queryList = entityManager.createNativeQuery(sbList.toString());
+		Query queryCountList = entityManager.createNativeQuery(sbCount.toString());
+		queryList.setParameter("biNo", biNo);
+		queryCountList.setParameter("biNo", biNo);
+		queryList.setParameter("custCode", custCode);
+		queryCountList.setParameter("custCode", custCode);
 
-        if (insMode.equals("1")) {
-            sbCount.append(
-                    "SELECT count(1) from t_bi_info_mat_cust_temp where bi_no = :biNo and cust_code = :custCode");
-            sbList.append(
-                    "SELECT '1' AS insMode, bi_order, esmt_curr, esmt_amt, DATE_FORMAT(submit_date, '%Y-%m-%d %H:%i') AS submit_date from t_bi_info_mat_cust_temp "
-                            +
-                            "where bi_no = :biNo and cust_code = :custCode");
-        }
+		Pageable pageable = PagaUtils.pageable(params);
+		queryList.setFirstResult(pageable.getPageNumber() * pageable.getPageSize())
+				.setMaxResults(pageable.getPageSize()).getResultList();
+		List list = new JpaResultMapper().list(queryList, SubmitHistDto.class);
 
-        else if (insMode.equals("2")) {
-            sbCount.append(
-                    "SELECT count(1) from t_bi_detail_mat_cust_temp a, t_bi_info_mat_cust b " +
-                            "where a.bi_no = :biNo and a.cust_code = :custCode and (a.bi_no =b.bi_no and a.cust_code = b.cust_code)");
-            sbList.append(
-                    "SELECT '2' AS insMode, a.bi_order AS bi_order, 'KRW' AS esmt_curr, a.esmt_uc AS esmt_amt, DATE_FORMAT(b.submit_date, '%Y-%m-%d %H:%i') AS submit_date "
-                            +
-                            "from t_bi_detail_mat_cust_temp a, t_bi_info_mat_cust b " +
-                            "where a.bi_no = :biNo and a.cust_code = :custCode and (a.bi_no =b.bi_no and a.cust_code = b.cust_code)");
-        }
-        Query queryList = entityManager.createNativeQuery(sbList.toString());
-        Query queryCountList = entityManager.createNativeQuery(sbCount.toString());
-        queryList.setParameter("biNo", biNo);
-        queryCountList.setParameter("biNo", biNo);
-        queryList.setParameter("custCode", custCode);
-        queryCountList.setParameter("custCode", custCode);
-
-        Pageable pageable = PagaUtils.pageable(params);
-        queryList.setFirstResult(pageable.getPageNumber() * pageable.getPageSize())
-                .setMaxResults(pageable.getPageSize()).getResultList();
-        List list = new JpaResultMapper().list(queryList, SubmitHistDto.class);
-
-        BigInteger count = (BigInteger) queryCountList.getSingleResult();
-        return new PageImpl(list, pageable, count.intValue());
-    }
+		BigInteger count = (BigInteger) queryCountList.getSingleResult();
+		Page listPage = new PageImpl(list, pageable, count.intValue());
+		
+		resultBody.setData(listPage);
+		
+		return resultBody;
+	}
 
 	/**
 	 * 입회자 서명
