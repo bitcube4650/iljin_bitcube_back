@@ -164,6 +164,16 @@ public class StatisticsService {
 				+ "inner join t_bi_info_mat_cust tbimc "
 				+ "	on tbim.BI_NO = tbimc.BI_NO "
 				+ "	and tbimc.SUCC_YN = 'Y' "
+				+ "inner join t_co_cust_master tccm "
+				+ "	on tbimc.CUST_CODE = tccm.CUST_CODE "
+				+ "inner join ( "
+				+ "	select	tbimc.BI_NO "
+				+ "	,		COUNT(1) as CNT "
+				+ "	from t_bi_info_mat_cust tbimc "
+				+ "	where tbimc.ESMT_YN = '2' "
+				+ "	group by tbimc.BI_NO "
+				+ ") c "
+				+ "	on tbim.BI_NO = c.BI_NO "
 			);
 			
 			StringBuilder sbList = new StringBuilder(
