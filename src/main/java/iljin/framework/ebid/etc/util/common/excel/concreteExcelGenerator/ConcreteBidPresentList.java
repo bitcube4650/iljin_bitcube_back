@@ -262,10 +262,17 @@ public class ConcreteBidPresentList extends ExcelSupportV2 {
 
                 Object fieldValue = fields.get(i);
                 if (fieldValue instanceof BigDecimal) {
-                    // BigDecimal 값을 통화 형식으로 변환하여 셀에 설정
                     BigDecimal decimalValue = (BigDecimal) fieldValue;
-                    String currencyValue = NumberFormat.getCurrencyInstance().format(decimalValue.doubleValue());
-                    cell.setCellValue(currencyValue);
+                    bodyCellStyle.setDataFormat(cell.getSheet().getWorkbook().createDataFormat().getFormat("#,##0")); // 숫자 서식을 설정합니다.
+
+                    // 셀에 값을 설정할 때 숫자 형식으로 설정합니다.
+                    cell.setCellType(CellType.NUMERIC);
+
+                    // 셀에 값을 설정합니다.
+                    cell.setCellValue(decimalValue.doubleValue());
+
+                    // 셀에 숫자 서식을 적용합니다.
+                    cell.setCellStyle(bodyCellStyle);
                 } else {
                     // 다른 형식의 데이터는 그대로 셀에 설정
                     cell.setCellType(CellType.STRING);
