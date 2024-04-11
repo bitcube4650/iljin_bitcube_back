@@ -389,11 +389,13 @@ public class BidProgressService {
         StringBuilder sbWhere = new StringBuilder();
         sbWhere.append(" and a.bi_no = :param ");
         sbList.append(sbWhere);
+        sbCustList.append(sbWhere);
+        
         sbList.append("GROUP BY a.BI_NO");
+        sbCustList.append(" GROUP BY CUST_CODE");
         
         sbTableList.append(sbWhere);
         sbFileList.append(sbWhere);
-        sbCustList.append(sbWhere);
 
         Query queryList = entityManager.createNativeQuery(sbList.toString());
         Query queryTableList = entityManager.createNativeQuery(sbTableList.toString());
