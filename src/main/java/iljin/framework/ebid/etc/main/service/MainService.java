@@ -271,7 +271,7 @@ public class MainService {
 //												     + " (select 0) as confirmation, "//재입찰
 												     
 												     + " (select COUNT(1) from t_bi_info_mat tbim inner join t_bi_info_mat_cust tbimc on tbim.bi_no = tbimc.bi_no where tbim.ing_tag = 'A5' and tbimc.succ_yn = 'Y' and tbimc.cust_code = :custCode and tbim.update_date >= CURDATE() - INTERVAL 12 month) AS awarded, "//낙찰(12개월)
-												     + " (select COUNT(1) from t_bi_info_mat tbim inner join t_bi_info_mat_cust tbimc on tbim.bi_no = tbimc.bi_no where tbim.ing_tag = 'A7' and tbimc.cust_code = :custCode and tbim.update_date >= CURDATE() - INTERVAL 12 month) AS unsuccessful "//유찰(12개월)
+												     + " (select COUNT(1) from t_bi_info_mat tbim inner join t_bi_info_mat_cust tbimc on tbim.bi_no = tbimc.bi_no where tbim.ing_tag IN ('A5', 'A7') and tbimc.cust_code = :custCode and tbimc.succ_yn = 'N' and tbim.update_date >= CURDATE() - INTERVAL 12 month) AS unsuccessful "//비선정(12개월)
 											   );
 		
 		Query queryCnt = entityManager.createNativeQuery(sbCnt.toString());
