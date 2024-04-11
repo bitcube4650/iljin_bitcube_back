@@ -102,10 +102,14 @@ public class BidStatusController {
 		return resultBody;
 	}
 
-    
-    @PostMapping("/submitHist")
-    public ResultBody submitHist(@RequestBody Map<String, Object> params) {
-    	ResultBody resultBody = new ResultBody();
+	/**
+	 * 제출이력
+	 * @param params
+	 * @return
+	 */
+	@PostMapping("/submitHist")
+	public ResultBody submitHist(@RequestBody Map<String, Object> params) {
+		ResultBody resultBody = new ResultBody();
 		try {
 			resultBody = bidStatusService.submitHist(params); 
 		}catch(Exception e) {
@@ -114,7 +118,7 @@ public class BidStatusController {
 			resultBody.setMsg("제출 이력을 가져오는 도중 오류가 발생했습니다.");	
 		}
 		return resultBody;
-    }
+	}
 
 
 	/**
