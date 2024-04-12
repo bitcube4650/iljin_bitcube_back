@@ -27,7 +27,7 @@ public class CertificateService {
 			EnvelopedData ed = new EnvelopedData(data.getBytes(), null);
 			
 			// 계열사의 인증서 설정
-			String certPath = "/data/apps/ebid/data/config/ServerCert/";
+			String certPath = Constances.CERTIFICATE_FILE_PATH;
 			certPath += interrelatedCustCode;//입찰에 해당하는 계열사 코드
 			certPath += "/kmCert.der";
 			
@@ -73,12 +73,12 @@ public class CertificateService {
 			EnvelopedData ed = new EnvelopedData(JetsUtil.decodeBase64(beforeDec.getBytes()));
 			
 			// 계열사의 인증서 설정
-			String certPath = "/data/apps/ebid/data/config/ServerCert/";
+			String certPath = Constances.CERTIFICATE_FILE_PATH;
 			certPath += interrelatedCustCode;//입찰에 해당하는 계열사 코드
 			certPath += "/kmCert.der";
 			
 			// 계열사의 키 설정
-			String keyPath = "/data/apps/ebid/data/config/ServerCert/";
+			String keyPath = Constances.CERTIFICATE_FILE_PATH;
 			keyPath += interrelatedCustCode;//입찰에 해당하는 계열사 코드
 			keyPath += "/kmPri.key";
 			
