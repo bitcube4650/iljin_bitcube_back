@@ -154,12 +154,12 @@ public class CommonUtils {
         mailContents.append("<body style='background:#f2f3f6'>");
         mailContents.append("    <link href='https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap' rel='stylesheet'>");
         mailContents.append("    <div style='width:600px; min-height:600px; margin:20px auto; background:#fff; padding:40px 40px 100px 40px; box-sizing:border-box; position:relative; font-family:\"Noto Sans KR\", sans-serif'>");
-        mailContents.append("        <div style='border-bottom:1px solid #9F9F9F; padding-bottom:30px; margin-bottom:30px'><img src='https://ebid.iljin.co.kr/images/loginLogo_iljin.svg' alt='일진' style='height:40px'></div>");
+        mailContents.append("        <div style=\"border-bottom:1px solid #9F9F9F; padding-bottom:30px; margin-bottom:30px; font-size:30px; color:#004B9E; font-weight:bold\">ILJIN</div>");
         mailContents.append("        <div style='font-size:18px; font-weight:700; line-height:150%'>");
         mailContents.append("            안녕하십니까<br>");
         mailContents.append("            일진그룹 전자입찰 e-bidding 입니다.<br>");
         mailContents.append("        </div>");
-        mailContents.append("        <div style='font-size:16px; line-height:150%; margin-top:30px'>");
+        mailContents.append("        <div style='font-size:16px; line-height:150%; margin-top:30px; white-space: pre-line;'>");
         mailContents.append(contents + "<br><br>");
         mailContents.append("            자세한 사항은 <a href='https://ebid.iljin.co.kr' target='_blank' style='color:#004B9E !important; font-weight:700; text-decoration:none; border-bottom:1px solid #004B9E'>e-bidding</a> 시스템에 로그인하여 확인해 주십시오<br><br><br>");
         mailContents.append("            감사합니다.");
