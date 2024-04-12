@@ -1612,14 +1612,14 @@ public class BidProgressService {
 		//입찰 공고
 		}else if(type.equals("notice")) {
 			title = "[일진그룹 e-bidding] 입찰 공고(" + biName + ")";
-			content = "[" + interNm + "]에서 입찰공고 하였습니다.\n입찰명은 [" + biName + "] 입니다.\n"
-					+ "자세한 사항은 e-bidding 시스템에 로그인하여 확인해 주십시오.\n\n";
+			content = "[" + interNm + "]에서 입찰공고 하였습니다.\n입찰명은 [" + biName + "] 입니다.\n\n";
+
 			
 		//입찰 계획 등록
 		}else if(type.equals("insert")) {
 			title = "[일진그룹 e-bidding] 계획 등록(" + biName + ")";
-			content = "[" + interNm + "]에서 입찰계획을 등록하였습니다.\n입찰명은 [" + biName + "] 입니다.\n"
-					+ "자세한 사항은 e-bidding 시스템에 로그인하여 확인해 주십시오.\n\n";
+			content = "[" + interNm + "]에서 입찰계획을 등록하였습니다.\n입찰명은 [" + biName + "] 입니다.\n\n";
+=
 			
 		//입찰 유찰처리
 		}else if(type.equals("fail")) {
