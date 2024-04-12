@@ -2,9 +2,6 @@ package iljin.framework.ebid.etc.util.common.excel.service;
 
 import iljin.framework.ebid.custom.entity.TCoUser;
 import iljin.framework.ebid.custom.repository.TCoUserRepository;
-import iljin.framework.ebid.etc.statistics.dto.BiInfoDetailDto;
-import iljin.framework.ebid.etc.statistics.dto.BiInfoDto;
-import iljin.framework.ebid.etc.util.CommonUtils;
 import iljin.framework.ebid.etc.util.common.excel.dto.*;
 import iljin.framework.ebid.etc.util.common.excel.repository.ExcelRepository;
 import iljin.framework.ebid.etc.util.common.excel.utils.ExcelUtils;
@@ -14,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-
 import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
 import java.io.IOException;
