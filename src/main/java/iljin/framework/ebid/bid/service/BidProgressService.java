@@ -1619,7 +1619,7 @@ public class BidProgressService {
 		}else if(type.equals("insert")) {
 			title = "[일진그룹 e-bidding] 계획 등록(" + biName + ")";
 			content = "[" + interNm + "]에서 입찰계획을 등록하였습니다.\n입찰명은 [" + biName + "] 입니다.\n\n";
-=
+
 			
 		//입찰 유찰처리
 		}else if(type.equals("fail")) {
