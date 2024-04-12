@@ -142,7 +142,7 @@ public class ConcreteBidCompleteList extends ExcelSupportV2 {
                         bidHistoryExcelDto.setEstStartDate(data.get(i).getEstStartDate());
                         bidHistoryExcelDto.setEstCloseDate(data.get(i).getEstCloseDate());
                         bidHistoryExcelDto.setUserName(data.get(i).getUserName());
-                        bidHistoryExcelDto.setCustName2(data.get(i).getCustName());
+                        bidHistoryExcelDto.setCustName2(data.get(i).getCustName2());
                         bidHistoryExcelDto.setEsmtAmt(data.get(i).getEsmtAmt());
                         bidHistoryExcelDto.setSubmitDate(data.get(i).getSubmitDate());
                         excelData.add(bidHistoryExcelDto);
@@ -158,7 +158,7 @@ public class ConcreteBidCompleteList extends ExcelSupportV2 {
                         bidHistoryExcelDto.setEstStartDate("");
                         bidHistoryExcelDto.setEstCloseDate("");
                         bidHistoryExcelDto.setUserName("");
-                        bidHistoryExcelDto.setCustName2(data.get(i).getCustName());
+                        bidHistoryExcelDto.setCustName2(data.get(i).getCustName2());
                         bidHistoryExcelDto.setEsmtAmt(data.get(i).getEsmtAmt());
                         bidHistoryExcelDto.setSubmitDate(data.get(i).getSubmitDate());
                         excelData.add(bidHistoryExcelDto);
