@@ -80,12 +80,12 @@ public class ExcelService {
     }
 
     //통계>입찰현황 Excel DownLoad
-    public void downLoadExcelbiddingStatusV2(Map<String, Object> params, HttpServletResponse response) {
+    public void downLoadExcelbiddingStatus(Map<String, Object> params, HttpServletResponse response) {
         excelUtils.downLoadExcelBiddingStatus(BiddingStatusDto.class, params, "downLoad", response);
     }
 
     //통계>입찰 상세내역 Excel DownLoad
-    public void downLoadExcelBiddingDetailV3(Map<String, Object> params, HttpServletResponse response) {
+    public void downLoadExcelBiddingDetail(Map<String, Object> params, HttpServletResponse response) {
         excelUtils.downLoadExcelBiddingDetail(BiddingDetailExcelDto.class, params, "downLoad", response);
     }
 

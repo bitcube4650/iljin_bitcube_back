@@ -78,17 +78,16 @@ public class ExcelController {
     @PostMapping("/statistics/bidPresentList/downLoad")
     public ResponseEntity biddingStatus(HttpServletResponse response,
                                                          @RequestBody Map<String, Object> params) throws IOException {
-        excelService.downLoadExcelbiddingStatusV2(params,response);
+        excelService.downLoadExcelbiddingStatus(params,response);
 
         return ResponseEntity.status(HttpStatus.OK).body(null);
     }
 
-    //통계>입찰상세내역 Excel DownLoad 완성본
+    //통계>입찰상세내역 Excel DownLoad
     @PostMapping("/statistics/bidDetailList/downLoad")
     public ResponseEntity downLoadExcelBiddingDetail(HttpServletResponse response,
                                                      @RequestBody Map<String, Object> params) throws IOException {
-       // excelService.downLoadExcelBiddingDetail(params, response);
-       excelService.downLoadExcelBiddingDetailV3(params, response);
+       excelService.downLoadExcelBiddingDetail(params, response);
 
         return ResponseEntity.status(HttpStatus.OK).body(null);
     }
