@@ -3,6 +3,7 @@ package iljin.framework.ebid.etc.util.common.schedule.controller;
 import iljin.framework.ebid.etc.util.Constances;
 import iljin.framework.ebid.etc.util.common.mail.service.MailService;
 import iljin.framework.ebid.etc.util.common.schedule.service.ScheduleService;
+import iljin.framework.ebid.etc.util.common.schedule.service.ScheduleUserInfoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,6 +19,7 @@ import javax.annotation.PostConstruct;
 public class ScheduleController {
     private final ScheduleService scheduleService;
     private final MailService mailService;
+    private final ScheduleUserInfoService scheduleUserInfoSvc;
 
     @PostConstruct
     public void init() {
@@ -71,4 +73,21 @@ public class ScheduleController {
             log.info("--------------------------Scheduler emailSendExe() method end!--------------------------------");
         }
     }
+   
+	/**
+	 * 사용자 업데이트
+	 */
+	@Scheduled(cron="0 0 2 * * *")	//초 분 시 일 월 주(년)
+	public void updateUserUseYn() {
+		if(!Constances.COMMON_SCHEDULE_FLAG) {
+			log.info("--------------------------Scheduler updateUserUseYn() method start!------------------------------");
+			try {
+				scheduleUserInfoSvc.updateUserUseYn();
+			}
+			catch(Exception e) {
+					log.error("updateUserUseYn Exception : " + e);
+			}
+			log.info("--------------------------Scheduler updateUserUseYn() method end!--------------------------------");
+		}
+	}
 }
