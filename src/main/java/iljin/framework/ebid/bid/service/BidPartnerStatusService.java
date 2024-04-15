@@ -48,6 +48,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Service
 @Slf4j
@@ -471,11 +472,34 @@ public class BidPartnerStatusService {
 		String etcFileName = "";//기타파일 이름
 		String etcFilePath = "";//기타파일 경로
 		
+		//입찰정보를 조회하여 입찰을 한 계열사 조회
+		Optional<TBiInfoMat> optionData = tBiInfoMatRepository.findById(biNo);
+		
+		if(optionData.isPresent()) {
+			
+			TBiInfoMat tBiInfoMat = optionData.get();
+			
+			//제출마감일시 체크
+			String estCloseDateStr = tBiInfoMat.getEstCloseDate();
+			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.S");
+			LocalDateTime estCloseDate = LocalDateTime.parse(estCloseDateStr, formatter);
+			
+			if(!currentDate.isBefore(estCloseDate)) {
+				resultBody.setCode("TIMEOUT");
+				resultBody.setStatus(999);
+				
+				return resultBody;
+			}
+			
+			//암호화에 필요한 계열사코드
+			interrelatedCustCode = tBiInfoMat.getInterrelatedCustCode();
+			
+		}
+		
 		//입력방식 파일등록일 때 총 견적금액 (직접입력은 아래 반목문에서 모두 더해서 계산)
 		if (!StringUtils.isEmpty(params.get("amt"))) {
 			amt = CommonUtils.getString(params.get("amt"));//총 견적금액
 		}
-
 		
 		try {
 			
@@ -502,15 +526,6 @@ public class BidPartnerStatusService {
 			
 		//암호화
 		try {
-			//입찰정보를 조회하여 입찰을 한 계열사 조회
-			Optional<TBiInfoMat> optionData = tBiInfoMatRepository.findById(biNo);
-			
-			if(optionData.isPresent()) {
-				
-				TBiInfoMat tBiInfoMat = optionData.get();
-				interrelatedCustCode = tBiInfoMat.getInterrelatedCustCode();//계열사 코드
-				
-			}
 			
 			if(amt != null && !amt.equals("")) {
 			
