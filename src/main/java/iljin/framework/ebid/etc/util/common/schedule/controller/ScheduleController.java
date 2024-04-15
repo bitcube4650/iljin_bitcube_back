@@ -79,7 +79,7 @@ public class ScheduleController {
 	 */
 	@Scheduled(cron="0 0 2 * * *")	//초 분 시 일 월 주(년)
 	public void updateUserUseYn() {
-		if(!Constances.COMMON_SCHEDULE_FLAG) {
+		if(Constances.COMMON_SCHEDULE_FLAG) {
 			log.info("--------------------------Scheduler updateUserUseYn() method start!------------------------------");
 			try {
 				scheduleUserInfoSvc.updateUserUseYn();
