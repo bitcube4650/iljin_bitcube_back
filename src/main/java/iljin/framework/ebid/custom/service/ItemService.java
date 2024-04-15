@@ -66,12 +66,19 @@ public class ItemService {
         if (!StringUtils.isEmpty(params.get("useYn"))) {
             sbWhere.append(" and a.use_yn = :useYn");
         }
-        if (!StringUtils.isEmpty(params.get("itemCode"))) {
-            sbWhere.append(" and A.ITEM_CODE like concat('%',:itemCode,'%')");
+        
+        if(params.containsKey("nonPopYn")) {
+            if (!StringUtils.isEmpty(params.get("itemCode"))) {
+                sbWhere.append(" and A.ITEM_CODE like concat('%',:itemCode,'%')");
+            }
+            if (!StringUtils.isEmpty(params.get("itemName"))) {
+                sbWhere.append(" and A.ITEM_NAME like concat('%',:itemName,'%')");
+            }
+        }else if(!params.containsKey("nonPopYn") && !StringUtils.isEmpty(params.get("itemName"))) {
+        	sbWhere.append(" and ( A.ITEM_CODE like concat('%',:itemName,'%')  or A.ITEM_NAME like concat('%',:itemName,'%'))");
         }
-        if (!StringUtils.isEmpty(params.get("itemName"))) {
-            sbWhere.append(" and A.ITEM_NAME like concat('%',:itemName,'%')");
-        }
+
+        
         sbList.append(sbWhere);
         sbList.append(" order by A.ITEM_CODE ");
         Query queryList = entityManager.createNativeQuery(sbList.toString());
