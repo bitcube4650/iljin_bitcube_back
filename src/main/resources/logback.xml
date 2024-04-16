@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-<property name="LOGS_ABSOLUTE_PATH" value="./logs/api-logs" />
+<property name="LOGS_ABSOLUTE_PATH" value="/data/apps/ebid/logs/api-logs" />
 
 <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
   <layout class="ch.qos.logback.classic.PatternLayout">
