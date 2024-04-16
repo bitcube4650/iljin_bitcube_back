@@ -7,6 +7,7 @@ import iljin.framework.ebid.etc.util.common.excel.dto.BidProgressResponseDto;
 import iljin.framework.ebid.etc.util.common.excel.repository.ExcelRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -500,18 +501,28 @@ public final class ExcelUtils implements ExcelSupport {
 
     //전자입찰>입찰계획>입찰계획상세 Excel DownLoad
     public void createBidProgressDetailExcel(BidProgressResponseDto param, HttpServletResponse response) throws IOException {
-        InputStream fis = getClass().getResourceAsStream("/menual/bidProgressDetail.xlsx");
+    	Map<String, Object> result = param.getResult();                     //엑셀 모든 컬럼
+        List<Map<String, Object>> custContent = param.getCustContent();     //입찰참가업체 컬럼
+        List<Map<String, Object>> tableContent = param.getTableContent();   //직접등록시 내역사항에 들어가는 세부사항 컬럼
+        List<Map<String, Object>> fileContent = param.getFileContent();     //파일등록시 내역사항에 들어가는 파일리스트 컬럼
+        InputStream fis = null;
+        DecimalFormat decimalFormat = new DecimalFormat("#,###");
+        
+        String insModeFlag = String.valueOf(result.get("insMode"));
+        
+        if("직접입력".equals(insModeFlag)) {
+        	fis = getClass().getResourceAsStream("/menual/bidProgressItemDetail.xlsx");
+        }else {
+        	fis = getClass().getResourceAsStream("/menual/bidProgressDetail.xlsx");
+        }
+    	
         XSSFWorkbook xssfWorkBook = new XSSFWorkbook(fis);
         XSSFSheet xssfSheet = xssfWorkBook.getSheetAt(0);
 
         String fileName = param.getFileName();
         fileName = URLEncoder.encode(fileName,"UTF-8").replaceAll("\\+", "%20");
 
-        Map<String, Object> result = param.getResult();                     //엑셀 모든 컬럼
-        List<Map<String, Object>> custContent = param.getCustContent();     //입찰참가업체 컬럼
-        List<Map<String, Object>> tableContent = param.getTableContent();   //직접등록시 내역사항에 들어가는 세부사항 컬럼
-        List<Map<String, Object>> fileContent = param.getFileContent();     //파일등록시 내역사항에 들어가는 파일리스트 컬럼
-
+        
         /*
          *  입찰참가 업체 컬럼 생성
          */
@@ -531,31 +542,11 @@ public final class ExcelUtils implements ExcelSupport {
          *  직접등록시 내역사항에 세부사항   들어감
          *  파일등록시 내역사항에 파일리스트 들어감
          */
-        String insModeFlag = String.valueOf(result.get("insMode"));
+        
         StringBuilder insModeContentBuilder = new StringBuilder();
 
-        //단가에 통화 포멧팅
-        DecimalFormat decimalFormat = new DecimalFormat("#,###");
-
-        if("직접입력".equals(insModeFlag)) {
-            //직접등록시 내역사항에 들어가는 세부사항
-            for(Map<String, Object> map : tableContent) {
-                insModeContentBuilder.append(map.get("name"));
-                insModeContentBuilder.append("     ");
-                insModeContentBuilder.append(map.get("ssize"));
-                insModeContentBuilder.append("     ");
-                insModeContentBuilder.append(map.get("orderQty"));
-                insModeContentBuilder.append(map.get("unitcode"));
-                insModeContentBuilder.append("     ");
-
-                //단가에 통화 포멧팅
-                String orderUc = decimalFormat.format(map.get("orderUc"));
-                insModeContentBuilder.append("\\");
-                insModeContentBuilder.append(orderUc);
-                insModeContentBuilder.append("\n");
-            }
-        } else {
-            //파일등록시 내역사항에 들어가는 파일리스트
+        if(!"직접입력".equals(insModeFlag)) {//파일입력인 경우
+        	//파일등록시 내역사항에 들어가는 파일리스트
             index = 0;
             for(Map<String, Object> map : fileContent) {
                 insModeContentBuilder.append(map.get("fileNm"));
@@ -565,7 +556,7 @@ public final class ExcelUtils implements ExcelSupport {
                 }
             }
         }
-
+        
         /*
          ** 입찰 기본정보
          */
@@ -581,7 +572,7 @@ public final class ExcelUtils implements ExcelSupport {
         String custName     = CommonUtils.getString(custNameBuilder, "가입회원사 전체"); //입찰참가업체 -> 일반경쟁입찰 일 경우, default로 가입회원사 전체
         String amtBasis     = CommonUtils.getString(result.get("amtBasis"), "");         //금액기준
         String payCond      = CommonUtils.getString(result.get("payCond"), "");          //결제조건
-        String bdAmt        = CommonUtils.getString(result.get("bdAmt"), "");            //예산금액
+        String bdAmt        = CommonUtils.getString(decimalFormat.format(result.get("bdAmt")), "");//예산금액
         String cuser        = CommonUtils.getString(result.get("cuser"), "");            //입찰담당자
 
         /*
@@ -627,7 +618,73 @@ public final class ExcelUtils implements ExcelSupport {
         xssfSheet.getRow(25).getCell(1).setCellValue(openAtt2);      //입회자2
         xssfSheet.getRow(26).getCell(1).setCellValue(supplyCond);    //납품조건
         xssfSheet.getRow(27).getCell(1).setCellValue(insMode);       //내역방식
-        xssfSheet.getRow(28).getCell(1).setCellValue(insModeContent);//내역사항
+        
+        if("직접입력".equals(insModeFlag)) {
+        	//셀 테두리 얇은선으로 설정
+        	CellStyle cellStyle = xssfWorkBook.createCellStyle();
+        	cellStyle.setBorderTop(BorderStyle.THIN);
+        	cellStyle.setBorderBottom(BorderStyle.THIN);
+        	cellStyle.setBorderLeft(BorderStyle.THIN);
+        	cellStyle.setBorderRight(BorderStyle.THIN);
+        	cellStyle.setAlignment(HorizontalAlignment.CENTER);
+        	
+        	int startIdx = 29;
+        	//직접등록시 내역사항에 들어가는 세부사항
+            for(Map<String, Object> map : tableContent) {
+            	Row newRow = xssfSheet.createRow(startIdx);
+            	
+            	String name = CommonUtils.getString(map.get("name"), "");//품목명
+            	String ssize = CommonUtils.getString(map.get("ssize"), "");//규격
+            	int orderQty = (int) map.get("orderQty");//수량
+            	String unitcode = CommonUtils.getString(map.get("unitcode"), "");//단위
+            	int orderUc = (int)map.get("orderUc");//실행단가
+            	String strOrderUc = decimalFormat.format(orderUc);
+            	int itemTotal = orderQty * orderUc;//합계
+            	String strItemTotal = decimalFormat.format(itemTotal);
+
+            	
+            	Cell cell1 = newRow.createCell(1);
+            	cell1.setCellValue(name);
+            	Cell cell2 = newRow.createCell(2);
+            	cell2.setCellValue(ssize);
+            	Cell cell3 = newRow.createCell(3);
+            	cell3.setCellValue(orderQty);
+            	Cell cell4 = newRow.createCell(4);
+            	cell4.setCellValue(unitcode);
+            	Cell cell5 = newRow.createCell(5);
+            	cell5.setCellValue(strOrderUc);
+            	Cell cell6 = newRow.createCell(6);
+            	cell6.setCellValue(strItemTotal);
+            	
+            	//셀 테두리 적용
+            	cell1.setCellStyle(cellStyle);
+            	cell2.setCellStyle(cellStyle);
+            	cell3.setCellStyle(cellStyle);
+            	cell4.setCellStyle(cellStyle);
+            	cell5.setCellStyle(cellStyle);
+            	cell6.setCellStyle(cellStyle);
+            	
+            	//내역사항 셀 밑에 테두리 두께 적용
+            	if(startIdx == 28+tableContent.size()) {
+            		CellStyle cellStyle2 = xssfWorkBook.createCellStyle();
+                    cellStyle2.setBorderBottom(BorderStyle.THIN);
+            		Cell cell = newRow.createCell(0);
+            		cell.setCellStyle(cellStyle2);
+            	}
+            	
+            	startIdx++;
+            }
+            
+            
+            //내역사항 셀 세로 합치기
+            CellRangeAddress mergedRegion = new CellRangeAddress(28, 28+tableContent.size(), 0, 0); 
+            xssfSheet.addMergedRegion(mergedRegion); 
+
+            
+            
+        }else {
+        	xssfSheet.getRow(28).getCell(1).setCellValue(insModeContent);//내역사항
+        }
 
         response.setCharacterEncoding("UTF-8");
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
