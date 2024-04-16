@@ -6,6 +6,7 @@ import iljin.framework.core.security.user.UserDto;
 import iljin.framework.core.security.user.UserRepository;
 import iljin.framework.core.security.user.UserRepositoryCustom;
 import iljin.framework.core.util.Util;
+import iljin.framework.ebid.bid.dto.BidCodeDto;
 import iljin.framework.ebid.bid.dto.BidPastDto;
 import iljin.framework.ebid.bid.dto.BidProgressCustDto;
 import iljin.framework.ebid.bid.dto.BidProgressDetailDto;
@@ -174,6 +175,7 @@ public class BidProgressService {
         }
 
         sbList.append(sbWhere);
+        sbList.append(" order by a.bi_no desc");
         sbCount.append(sbWhere);
         Query queryList = entityManager.createNativeQuery(sbList.toString());
         Query queryCountList = entityManager.createNativeQuery(sbCount.toString());
@@ -1683,5 +1685,22 @@ public class BidProgressService {
 
         return fileResource;
     }
+    
+    public List<?> progressCodeList() {
+        StringBuilder sbList = new StringBuilder("SELECT COL_CODE ,CODE_VAL,CODE_NAME  \r\n"
+        		+ "FROM t_co_code tcc  \r\n"
+        		+ "WHERE COL_CODE IN ('MAT_DEPT','MAT_PROC','MAT_CLS') \r\n"
+        		+ "ORDER BY \r\n"
+        		+ "  CASE \r\n"
+        		+ "    WHEN COL_CODE = 'MAT_DEPT' THEN 1 \r\n"
+        		+ "    WHEN COL_CODE = 'MAT_PROC' THEN 2 \r\n"
+        		+ "    WHEN COL_CODE = 'MAT_CLS' THEN 3 \r\n"
+        		+ "  END,\r\n"
+        		+ "  CAST(SUBSTRING(CODE_VAL, 2) AS UNSIGNED) ");
+
+        Query queryList = entityManager.createNativeQuery(sbList.toString());
+        return new JpaResultMapper().list(queryList, BidCodeDto.class);
+    }
+    
 
 }

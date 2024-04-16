@@ -154,5 +154,9 @@ public class BidProgressController {
     public Page pastBidList(@RequestBody Map<String, Object> params) {
         return bidProgressService.pastBidList(params);
     }
+    @PostMapping("/progressCodeList")
+    public List<?> progressCodeList() {
+        return bidProgressService.progressCodeList();
+    }
 
 }
