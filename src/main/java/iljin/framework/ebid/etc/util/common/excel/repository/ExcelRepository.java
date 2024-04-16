@@ -1086,20 +1086,16 @@ public class ExcelRepository {
         Optional<TCoUser> userOptional = tCoUserRepository.findById(principal.getUsername());
         String userAuth = userOptional.get().getUserAuth();
 
+
         try {
             StringBuilder sbCount = new StringBuilder(
                     "SELECT COUNT(*) AS TOTAL_COUNT\r\n"
                             + "FROM (\r\n"
                             + "    SELECT  1 \r\n"
-                            + "    FROM\r\n"
-                            + "        t_bi_detail_mat_cust tbdmc\r\n"
-                            + "        INNER JOIN t_bi_spec_mat tbsm ON tbdmc.BI_NO = tbsm.BI_NO\r\n"
-                            + "        INNER JOIN t_bi_info_mat tbim ON tbsm.BI_NO = tbim.BI_NO\r\n"
-                            + "        INNER JOIN t_co_cust_master tccm ON tbdmc.CUST_CODE = tccm.CUST_CODE\r\n"
-                            + "        INNER JOIN t_co_cust_ir tcci ON tccm.CUST_CODE = tcci.CUST_CODE\r\n"
-                            + "        INNER JOIN t_co_interrelated tci ON tcci.INTERRELATED_CUST_CODE = tci.INTERRELATED_CUST_CODE\r\n"
+                            + "    FROM t_bi_info_mat tbim\r\n"
+                            + "        INNER JOIN t_co_interrelated tci ON tbim.INTERRELATED_CUST_CODE = tci.INTERRELATED_CUST_CODE\r\n"
                             + "        INNER JOIN t_co_item tcitem ON tbim.ITEM_CODE = tcitem.ITEM_CODE\r\n"
-                            + "        INNER JOIN t_bi_info_mat_cust tbimc ON tbim.BI_NO = tbimc.BI_NO AND tbdmc.CUST_CODE = tbimc.CUST_CODE\r\n"
+                            + "        INNER JOIN t_bi_info_mat_cust tbimc ON tbim.BI_NO = tbimc.BI_NO"
                             + "    WHERE\r\n"
                             + "        tbim.ING_TAG = 'A5'\r\n"
                             + "        AND DATE(tbim.UPDATE_DATE) BETWEEN :startDay AND :endDay\r\n"
@@ -1109,7 +1105,7 @@ public class ExcelRepository {
 
             Object coInter = params.get("coInter");
             if("4".equals(userAuth) || coInter != ""){
-                sbCount.append("AND tcci.INTERRELATED_CUST_CODE IN(" + coInter + ")\r\n");
+                sbCount.append("AND tbim.INTERRELATED_CUST_CODE IN(" + coInter + ")\r\n");
             }
 
             String itemCode = params.get("itemCode").toString();
@@ -1155,8 +1151,8 @@ public class ExcelRepository {
                             + "        tbim.BI_NO AS BI_NO,\r\n"
                             + "        tbim.BI_NAME AS BI_NAME,\r\n"
                             + "        tcitem.ITEM_NAME AS ITEM_NAME,\r\n"
-                            + "        tbim.BD_AMT AS BD_AMT,\r\n"
-                            + "        tbim.SUCC_AMT AS SUCC_AMT,\r\n"
+                            + "        IFNULL(tbim.BD_AMT,0) AS BD_AMT,\r\n"
+                            + "        IFNULL(tbim.SUCC_AMT,0) AS SUCC_AMT,\r\n"
                             + "        IFNULL(tbim.REAL_AMT, 0) AS REAL_AMT,\r\n"
                             + "        (\r\n"
                             + "            SELECT COUNT(*)\r\n"
@@ -1192,15 +1188,10 @@ public class ExcelRepository {
                             + "            WHERE tbimc1.BI_NO = tbimc.BI_NO\r\n"
                             + "            AND tbimc1.SUCC_YN = 'Y'\r\n"
                             + "        ),0) AS RE_BID_CNT\r\n"
-                            + "    FROM\r\n"
-                            + "        t_bi_detail_mat_cust tbdmc\r\n"
-                            + "        INNER JOIN t_bi_spec_mat tbsm ON tbdmc.BI_NO = tbsm.BI_NO\r\n"
-                            + "        INNER JOIN t_bi_info_mat tbim ON tbsm.BI_NO = tbim.BI_NO\r\n"
-                            + "        INNER JOIN t_co_cust_master tccm ON tbdmc.CUST_CODE = tccm.CUST_CODE\r\n"
-                            + "        INNER JOIN t_co_cust_ir tcci ON tccm.CUST_CODE = tcci.CUST_CODE\r\n"
-                            + "        INNER JOIN t_co_interrelated tci ON tcci.INTERRELATED_CUST_CODE = tci.INTERRELATED_CUST_CODE\r\n"
+                            + "    FROM t_bi_info_mat tbim\r\n"
+                            + "        INNER JOIN t_co_interrelated tci ON tbim.INTERRELATED_CUST_CODE = tci.INTERRELATED_CUST_CODE\r\n"
                             + "        INNER JOIN t_co_item tcitem ON tbim.ITEM_CODE = tcitem.ITEM_CODE\r\n"
-                            + "        INNER JOIN t_bi_info_mat_cust tbimc ON tbim.BI_NO = tbimc.BI_NO AND tbdmc.CUST_CODE = tbimc.CUST_CODE\r\n"
+                            + "        INNER JOIN t_bi_info_mat_cust tbimc ON tbim.BI_NO = tbimc.BI_NO"
                             + "    WHERE\r\n"
                             + "        tbim.ING_TAG = 'A5'\r\n"
                             + "        AND DATE(tbim.UPDATE_DATE) BETWEEN :startDay AND :endDay\r\n"
@@ -1208,7 +1199,7 @@ public class ExcelRepository {
 
             Object coInter = params.get("coInter");
             if("4".equals(userAuth) || coInter != ""){
-                sbList.append("AND tcci.INTERRELATED_CUST_CODE IN(" + coInter + ")\r\n");
+                sbList.append("AND tbim.INTERRELATED_CUST_CODE IN(" + coInter + ")\r\n");
             }
 
             String itemCode = params.get("itemCode").toString();
