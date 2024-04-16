@@ -309,7 +309,7 @@ public class BidPartnerStatusService {
 				+ ",		IFNULL((select DATE_FORMAT(tbimc.SUBMIT_DATE, '%Y-%m-%d %H:%i') from t_bi_info_mat_cust tbimc where tbimc.BI_NO = :biNo and tbimc.CUST_CODE = :custCode), '') as CUST_ESMT_UPDATE_DATE "
 				+ "from t_bi_info_mat tbim "
 				+ "left outer join t_co_user tcu "
-				+ "	on tbim.GONGO_ID = tcu.USER_ID "
+				+ "	on tbim.CREATE_USER = tcu.USER_ID "
 				+ "left outer join t_co_item tci  "
 				+ "	on tbim.ITEM_CODE = tci.ITEM_CODE "
 				+ "left outer join t_co_code tcc  "
