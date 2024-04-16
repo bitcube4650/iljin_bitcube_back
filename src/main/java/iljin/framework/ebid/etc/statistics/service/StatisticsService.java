@@ -298,31 +298,27 @@ public class StatisticsService {
 				+ "    FROM \r\n"
 				+ "        (\r\n"
 				+ "            SELECT \r\n"
-				+ "                tbim.BI_NO,\r\n"
-				+ "                tci.INTERRELATED_NM,\r\n"
-				+ "                tbim.BD_AMT,\r\n"
-				+ "                tbim.SUCC_AMT,\r\n"
-				+ "                tcci.INTERRELATED_CUST_CODE \r\n"
+				+ "                AA.BI_NO,\r\n"
+				+ "                BB.INTERRELATED_NM,\r\n"
+				+ "                AA.BD_AMT,\r\n"
+				+ "                AA.SUCC_AMT,\r\n"
+				+ "                AA.INTERRELATED_CUST_CODE \r\n"
 				+ "            FROM \r\n"
-				+ "                t_bi_detail_mat_cust tbdmc \r\n"
-				+ "                INNER JOIN t_bi_spec_mat tbsm ON tbdmc.BI_NO = tbsm.BI_NO \r\n"
-				+ "                INNER JOIN t_bi_info_mat tbim ON tbsm.BI_NO = tbim.BI_NO \r\n"
-				+ "                INNER JOIN t_co_cust_master tccm ON tbdmc.CUST_CODE = tccm.CUST_CODE\r\n"
-				+ "                INNER JOIN t_co_cust_ir tcci ON tbdmc.CUST_CODE = tcci.CUST_CODE \r\n"
-				+ "                INNER JOIN t_co_interrelated tci ON tcci.INTERRELATED_CUST_CODE = tci.INTERRELATED_CUST_CODE \r\n"
+				+ "                t_bi_info_mat AA \r\n"
+				+ "                inner join t_co_interrelated BB on AA.INTERRELATED_CUST_CODE = BB.INTERRELATED_CUST_CODE  \r\n"
 				+ "            WHERE \r\n"
-				+ "                tbim.ING_TAG = 'A5'\r\n"
-				+ "                AND DATE(tbim.UPDATE_DATE) BETWEEN :startDay AND :endDay\r\n");
+				+ "                AA.ING_TAG = 'A5'\r\n"
+				+ "                AND DATE(AA.UPDATE_DATE) BETWEEN :startDay AND :endDay\r\n");
 		
 			Object coInter = params.get("coInter");
 			if("4".equals(userAuth) || coInter != "") {
 				
-			 sbList.append("AND tcci.INTERRELATED_CUST_CODE IN(");
+			 sbList.append("AND AA.INTERRELATED_CUST_CODE IN(");
 			 sbList.append(coInter);
 			 sbList.append(")\r\n");
 			}
 			 sbList.append("GROUP BY \r\n"
-			 		+ "                tci.INTERRELATED_CUST_CODE, tbim.bi_no\r\n"
+			 		+ "                AA.INTERRELATED_CUST_CODE, AA.bi_no\r\n"
 			 		+ "        ) AS A\r\n"
 			 		+ "    GROUP BY \r\n"
 			 		+ "        A.INTERRELATED_CUST_CODE WITH ROLLUP\r\n"
