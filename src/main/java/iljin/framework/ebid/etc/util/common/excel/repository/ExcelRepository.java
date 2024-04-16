@@ -1,32 +1,33 @@
 package iljin.framework.ebid.etc.util.common.excel.repository;
 
-import iljin.framework.core.dto.ResultBody;
-import iljin.framework.ebid.custom.entity.TCoUser;
-import iljin.framework.ebid.custom.repository.TCoCustUserRepository;
-import iljin.framework.ebid.custom.repository.TCoUserRepository;
-import iljin.framework.ebid.etc.statistics.dto.BiInfoDetailDto;
-import iljin.framework.ebid.etc.statistics.dto.BiInfoDto;
-import iljin.framework.ebid.etc.util.PagaUtils;
-import iljin.framework.ebid.etc.util.common.excel.dto.BidCompleteDto;
-import iljin.framework.ebid.etc.util.common.excel.dto.BidDetailListDto;
-import iljin.framework.ebid.etc.util.common.excel.entity.FileEntity;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.math.BigInteger;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+
 import org.qlrm.mapper.JpaResultMapper;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
-import java.math.BigInteger;
-import java.util.*;
+import iljin.framework.core.dto.ResultBody;
+import iljin.framework.ebid.custom.entity.TCoUser;
+import iljin.framework.ebid.custom.repository.TCoCustUserRepository;
+import iljin.framework.ebid.custom.repository.TCoUserRepository;
+import iljin.framework.ebid.etc.statistics.dto.BiInfoDetailDto;
+import iljin.framework.ebid.etc.statistics.dto.BiInfoDto;
+import iljin.framework.ebid.etc.util.common.excel.dto.BidCompleteDto;
+import iljin.framework.ebid.etc.util.common.excel.dto.BidDetailListDto;
+import iljin.framework.ebid.etc.util.common.excel.entity.FileEntity;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Repository
 @RequiredArgsConstructor
@@ -69,32 +70,28 @@ public class ExcelRepository {
                     + "        END AS is_rollup\r\n"
                     + "    FROM \r\n"
                     + "        (\r\n"
-                    + "            SELECT \r\n"
-                    + "                tbim.BI_NO,\r\n"
-                    + "                tci.INTERRELATED_NM,\r\n"
-                    + "                tbim.BD_AMT,\r\n"
-                    + "                tbim.SUCC_AMT,\r\n"
-                    + "                tcci.INTERRELATED_CUST_CODE \r\n"
-                    + "            FROM \r\n"
-                    + "                t_bi_detail_mat_cust tbdmc \r\n"
-                    + "                INNER JOIN t_bi_spec_mat tbsm ON tbdmc.BI_NO = tbsm.BI_NO \r\n"
-                    + "                INNER JOIN t_bi_info_mat tbim ON tbsm.BI_NO = tbim.BI_NO \r\n"
-                    + "                INNER JOIN t_co_cust_master tccm ON tbdmc.CUST_CODE = tccm.CUST_CODE\r\n"
-                    + "                INNER JOIN t_co_cust_ir tcci ON tbdmc.CUST_CODE = tcci.CUST_CODE \r\n"
-                    + "                INNER JOIN t_co_interrelated tci ON tcci.INTERRELATED_CUST_CODE = tci.INTERRELATED_CUST_CODE \r\n"
+    				+ "            SELECT \r\n"
+    				+ "                AA.BI_NO,\r\n"
+    				+ "                BB.INTERRELATED_NM,\r\n"
+    				+ "                AA.BD_AMT,\r\n"
+    				+ "                AA.SUCC_AMT,\r\n"
+    				+ "                AA.INTERRELATED_CUST_CODE \r\n"
+    				+ "            FROM \r\n"
+    				+ "                t_bi_info_mat AA \r\n"
+    				+ "                inner join t_co_interrelated BB on AA.INTERRELATED_CUST_CODE = BB.INTERRELATED_CUST_CODE  \r\n"
                     + "            WHERE \r\n"
-                    + "                tbim.ING_TAG = 'A5'\r\n"
-                    + "                AND DATE(tbim.UPDATE_DATE) BETWEEN :startDay AND :endDay\r\n");
+                    + "                AA.ING_TAG = 'A5'\r\n"
+                    + "                AND DATE(AA.UPDATE_DATE) BETWEEN :startDay AND :endDay\r\n");
 
             Object coInter = params.get("coInter");
             if("4".equals(userAuth) || coInter != "") {
 
-                sbCount.append("AND tcci.INTERRELATED_CUST_CODE IN(");
+                sbCount.append("AND AA.INTERRELATED_CUST_CODE IN(");
                 sbCount.append(coInter);
                 sbCount.append(")\r\n");
             }
             sbCount.append("GROUP BY \r\n"
-                    + "                tci.INTERRELATED_CUST_CODE, tbim.bi_no\r\n"
+                    + "                AA.INTERRELATED_CUST_CODE, AA.bi_no\r\n"
                     + "        ) AS A\r\n"
                     + "    GROUP BY \r\n"
                     + "        A.INTERRELATED_CUST_CODE WITH ROLLUP\r\n"
@@ -142,32 +139,28 @@ public class ExcelRepository {
                     + "        END AS is_rollup\r\n"
                     + "    FROM \r\n"
                     + "        (\r\n"
-                    + "            SELECT \r\n"
-                    + "                tbim.BI_NO,\r\n"
-                    + "                tci.INTERRELATED_NM,\r\n"
-                    + "                tbim.BD_AMT,\r\n"
-                    + "                tbim.SUCC_AMT,\r\n"
-                    + "                tcci.INTERRELATED_CUST_CODE \r\n"
-                    + "            FROM \r\n"
-                    + "                t_bi_detail_mat_cust tbdmc \r\n"
-                    + "                INNER JOIN t_bi_spec_mat tbsm ON tbdmc.BI_NO = tbsm.BI_NO \r\n"
-                    + "                INNER JOIN t_bi_info_mat tbim ON tbsm.BI_NO = tbim.BI_NO \r\n"
-                    + "                INNER JOIN t_co_cust_master tccm ON tbdmc.CUST_CODE = tccm.CUST_CODE\r\n"
-                    + "                INNER JOIN t_co_cust_ir tcci ON tbdmc.CUST_CODE = tcci.CUST_CODE \r\n"
-                    + "                INNER JOIN t_co_interrelated tci ON tcci.INTERRELATED_CUST_CODE = tci.INTERRELATED_CUST_CODE \r\n"
+    				+ "            SELECT \r\n"
+    				+ "                AA.BI_NO,\r\n"
+    				+ "                BB.INTERRELATED_NM,\r\n"
+    				+ "                AA.BD_AMT,\r\n"
+    				+ "                AA.SUCC_AMT,\r\n"
+    				+ "                AA.INTERRELATED_CUST_CODE \r\n"
+    				+ "            FROM \r\n"
+    				+ "                t_bi_info_mat AA \r\n"
+    				+ "                inner join t_co_interrelated BB on AA.INTERRELATED_CUST_CODE = BB.INTERRELATED_CUST_CODE  \r\n"
                     + "            WHERE \r\n"
-                    + "                tbim.ING_TAG = 'A5'\r\n"
-                    + "                AND DATE(tbim.UPDATE_DATE) BETWEEN :startDay AND :endDay\r\n");
+                    + "                AA.ING_TAG = 'A5'\r\n"
+                    + "                AND DATE(AA.UPDATE_DATE) BETWEEN :startDay AND :endDay\r\n");
 
             Object coInter = params.get("coInter");
             if("4".equals(userAuth) || coInter != "") {
 
-                sbList.append("AND tcci.INTERRELATED_CUST_CODE IN(");
+                sbList.append("AND AA.INTERRELATED_CUST_CODE IN(");
                 sbList.append(coInter);
                 sbList.append(")\r\n");
             }
             sbList.append("GROUP BY \r\n"
-                    + "                tci.INTERRELATED_CUST_CODE, tbim.bi_no\r\n"
+                    + "                AA.INTERRELATED_CUST_CODE, AA.bi_no\r\n"
                     + "        ) AS A\r\n"
                     + "    GROUP BY \r\n"
                     + "        A.INTERRELATED_CUST_CODE WITH ROLLUP\r\n"
