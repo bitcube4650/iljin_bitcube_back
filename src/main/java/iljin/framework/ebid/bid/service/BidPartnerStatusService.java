@@ -481,13 +481,15 @@ public class BidPartnerStatusService {
 			
 			TBiInfoMat tBiInfoMat = optionData.get();
 			
-			//제출마감일시 체크
-			String estCloseDateStr = tBiInfoMat.getEstCloseDate();
+			//제출 시작일시, 마감일시 체크
 			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.S");
+			String estStartDateStr = tBiInfoMat.getEstStartDate();
+			LocalDateTime estStartDate = LocalDateTime.parse(estStartDateStr, formatter);
+			String estCloseDateStr = tBiInfoMat.getEstCloseDate();
 			LocalDateTime estCloseDate = LocalDateTime.parse(estCloseDateStr, formatter);
 			
-			if(!currentDate.isBefore(estCloseDate)) {
-				resultBody.setCode("TIMEOUT");
+			if(currentDate.isBefore(estStartDate)) {
+				resultBody.setCode("LESSTIME");
 				resultBody.setStatus(999);
 				
 				return resultBody;

@@ -29,6 +29,7 @@ public class BidCompleteDetailDto {
 	String estOpenDate;						//개찰일시
 	String estOpener;							//개찰자
 	String estBidder;							//낙찰자
+	String gongoId;								//공고자 id
 	String gongoName;							//입찰공고자
 	String openAtt1;							//입회자1
 	String openAtt2;							//입회자2
@@ -58,7 +59,7 @@ public class BidCompleteDetailDto {
 			String biNo, String biName, String itemName, String biMode, String bidJoinSpec, 
 			String specialCond, String spotDate, String spotArea, String succDeciMeth, 
 			String amtBasis, String payCond, BigDecimal bdAmt, BigDecimal realAmt, String createUser, String damdangName, 	String estStartDate, 
-			String estCloseDate, String estOpenDate, String estOpener, String estBidder, String gongoName, String openAtt1, String openAtt2, 
+			String estCloseDate, String estOpenDate, String estOpener, String estBidder, String gongoId, String gongoName, String openAtt1, String openAtt2, 
 			String insMode, String supplyCond, String whyA3, String whyA7, String addAccept, String ingTag, String interrelatedCustCode,
 			String matDept, String matProc, String matCls, String matFactory, String matFactoryLine, String matFactoryCnt
 	) {
@@ -98,6 +99,7 @@ public class BidCompleteDetailDto {
 		this.matFactoryCnt = matFactoryCnt;
 		this.realAmt = realAmt;
 		this.createUser = createUser;
+		this.gongoId = gongoId;
 	}
 		
 	public BidCompleteDetailDto(

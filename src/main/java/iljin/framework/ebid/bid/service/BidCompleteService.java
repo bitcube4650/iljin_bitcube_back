@@ -208,6 +208,7 @@ public class BidCompleteService {
 				+ ",		DATE_FORMAT(tbim.EST_OPEN_DATE, '%Y-%m-%d %H:%i') as EST_OPEN_DATE "
 				+ ",		tcu3.USER_NAME as EST_OPENER "
 				+ ",		tcu4.USER_NAME as EST_BIDDER "
+				+ ",		tbim.GONGO_ID "
 				+ ",		tcu5.USER_NAME as GONGO_NAME "
 				+ ",		tcu1.USER_NAME as OPEN_ATT1 "
 				+ ",		tcu2.USER_NAME as OPEN_ATT2 "
