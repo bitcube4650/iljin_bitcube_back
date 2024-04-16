@@ -608,7 +608,7 @@ public class BidCompleteService {
 				+ "	select	tbimc.BI_NO "
 				+ "	,		COUNT(1) as CNT "
 				+ "	from t_bi_info_mat_cust tbimc "
-				+ "	where tbimc.ESMT_YN = '2' "
+				+ "	where tbimc.ESMT_YN in('2', '3') "
 				+ "	group by tbimc.BI_NO "
 				+ ") c "
 				+ "	on tbim.BI_NO = c.BI_NO "
@@ -665,7 +665,7 @@ public class BidCompleteService {
 			sbCount.append(sbWhere);
 			sbList.append(sbWhere);
 			
-			sbList.append("order by tbim.UPDATE_DATE desc ");
+			sbList.append("order by tbim.EST_CLOSE_DATE desc ");
 			
 			//쿼리 실행
 			Query queryList = entityManager.createNativeQuery(sbList.toString());
@@ -836,7 +836,7 @@ public class BidCompleteService {
 			sbCount.append("where 1=1 " + sbWhereIf);
 			sbList.append("where 1=1 " + sbWhereIf);
 			
-			sbList.append("order by tbim.BID_OPEN_DATE desc ");
+			sbList.append("order by tbim.UPDATE_DATE desc ");
 		
 			//쿼리 실행
 			Query queryList = entityManager.createNativeQuery(sbList.toString());

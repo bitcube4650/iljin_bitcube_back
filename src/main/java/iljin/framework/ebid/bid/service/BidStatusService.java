@@ -185,6 +185,7 @@ public class BidStatusService {
 		);
 		
 		sbList.append(sbWhere);
+		sbList.append(" order by tbim.est_close_date asc ");
 		sbCount.append(sbWhere);
 
 		Query queryList = entityManager.createNativeQuery(sbList.toString());

@@ -273,7 +273,7 @@ public class BidProgressService {
             sbWhere.append(")");
         }
         sbList.append(sbWhere);
-        sbList.append(" order by a.create_date desc");
+        sbList.append(" order by a.est_start_date asc");
         Query queryList = entityManager.createNativeQuery(sbList.toString());
         sbCount.append(sbWhere);
         Query queryTotal = entityManager.createNativeQuery(sbCount.toString());

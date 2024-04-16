@@ -2,18 +2,78 @@ package iljin.framework.ebid.etc.util.common.certificate.service;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.security.cert.CertificateException;
 
 import org.springframework.stereotype.Service;
 
 import iljin.framework.core.dto.ResultBody;
 import iljin.framework.ebid.etc.util.Constances;
 import tradesign.crypto.provider.JeTS;
+import tradesign.pki.asn1.ASN1Exception;
 import tradesign.pki.pkix.EnvelopedData;
 import tradesign.pki.pkix.SignedData;
+import tradesign.pki.pkix.X509CRL;
+import tradesign.pki.pkix.X509Certificate;
 import tradesign.pki.util.JetsUtil;
+import tradesign.pki.x509.X509ExtensionException;
 
 @Service
 public class CertificateService {
+	
+	//인증서 유효한지 확인
+	public ResultBody checkCert(String signedData) {
+		ResultBody resultBody = new ResultBody();
+		
+		try {
+			JeTS.installProvider(Constances.CERTIFICATE_SETTING_PATH);
+			
+			//서명된 데이터를 byte로 전환
+			String message = signedData;
+			byte[] content = JetsUtil.base64ToBytes(message);
+
+			//서명된 데이터에서 인증서 정보 추출
+			SignedData sd =  new SignedData(content);
+			X509Certificate[] certs = sd.verify();
+
+			// crl 통한 검증
+			for (int i = 0; i < certs.length; i++){
+			    
+				X509CRL crl = new X509CRL(certs[i].getCrlDp(), true);
+				boolean r= crl.isRevoked(certs[i].getSerialNumber());
+				
+				if(r){//유효하지 않은 인증서
+
+					/*
+					expyn[i] = "폐지됨";
+					expday[i] = crl.getRevokedDate().toString();
+					*/
+					resultBody.setCode("ERROR");
+					resultBody.setStatus(999);
+					
+					if( crl.getRevokedReason() == null ) {
+						resultBody.setMsg("유효하지 않은 인증서입니다.");
+					}else {
+						resultBody.setMsg(crl.getRevokedReason());
+					}
+					
+					return resultBody;
+					
+				}
+				
+				
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			resultBody.setCode("ERROR");
+			resultBody.setStatus(999);
+			resultBody.setMsg(e.getMessage());
+		}
+		
+		
+		return resultBody;
+	}
 	
 	//envelope 암호화
 	public ResultBody encryptData(String data, String interrelatedCustCode) {

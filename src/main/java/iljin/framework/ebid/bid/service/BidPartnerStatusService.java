@@ -167,6 +167,7 @@ public class BidPartnerStatusService {
 			}
 	
 			sbList.append(sbWhere);
+			sbList.append(" order by tbim.EST_START_DATE ");
 			sbCount.append(sbWhere);
 	
 			Query queryList = entityManager.createNativeQuery(sbList.toString());
@@ -461,7 +462,7 @@ public class BidPartnerStatusService {
 		String interrelatedCustCode = "";//입찰에 해당하는 계열사 번호
 		String biNo = CommonUtils.getString(params.get("biNo"));//입찰번호
 		String insModeCode = CommonUtils.getString(params.get("insModeCode"));//입력방식
-		String amt = "";//총 견적금액
+		String amt = "";//견적금액
 		LocalDateTime currentDate = LocalDateTime.now();//update 또는 insert 되는 현재시점
 		
 		//파일입력
@@ -474,6 +475,7 @@ public class BidPartnerStatusService {
 		
 		//입찰정보를 조회하여 입찰을 한 계열사 조회
 		Optional<TBiInfoMat> optionData = tBiInfoMatRepository.findById(biNo);
+		
 		
 		if(optionData.isPresent()) {
 			
@@ -496,9 +498,16 @@ public class BidPartnerStatusService {
 			
 		}
 		
-		//입력방식 파일등록일 때 총 견적금액 (직접입력은 아래 반목문에서 모두 더해서 계산)
+		//서명된 견적금액 데이터
 		if (!StringUtils.isEmpty(params.get("amt"))) {
 			amt = CommonUtils.getString(params.get("amt"));//총 견적금액
+			
+			//서명한 인증서가 유효한지 crl 검증
+			resultBody = certificateService.checkCert(amt);
+			
+			if(resultBody.getCode().equals("ERROR")) {
+				return resultBody;
+			}
 		}
 		
 		try {
@@ -528,7 +537,7 @@ public class BidPartnerStatusService {
 		try {
 			
 			if(amt != null && !amt.equals("")) {
-			
+				
 				//입찰한 계열사의 인증서로 암호화
 				ResultBody encryptResult = certificateService.encryptData(amt, interrelatedCustCode);//견적액 envelope 암호화
 				if(encryptResult.getCode().equals("ERROR")) {//암호화 실패
