@@ -21,6 +21,8 @@ public class BidCompleteDetailDto {
 	String amtBasis;							//금액기준
 	String payCond;								//결제조건
 	BigDecimal bdAmt;							//예산금액
+	BigDecimal realAmt;							//실제계약금액
+	String createUser;							//입찰담당자id
 	String damdangName;							//입찰담당자
 	String estStartDate;						//제출시작일시
 	String estCloseDate;						//제출마감일시
@@ -55,7 +57,7 @@ public class BidCompleteDetailDto {
 	public BidCompleteDetailDto(
 			String biNo, String biName, String itemName, String biMode, String bidJoinSpec, 
 			String specialCond, String spotDate, String spotArea, String succDeciMeth, 
-			String amtBasis, String payCond, BigDecimal bdAmt, String damdangName, 	String estStartDate, 
+			String amtBasis, String payCond, BigDecimal bdAmt, BigDecimal realAmt, String createUser, String damdangName, 	String estStartDate, 
 			String estCloseDate, String estOpenDate, String estOpener, String estBidder, String gongoName, String openAtt1, String openAtt2, 
 			String insMode, String supplyCond, String whyA3, String whyA7, String addAccept, String ingTag, String interrelatedCustCode,
 			String matDept, String matProc, String matCls, String matFactory, String matFactoryLine, String matFactoryCnt
@@ -94,7 +96,8 @@ public class BidCompleteDetailDto {
 		this.matFactory = matFactory;
 		this.matFactoryLine = matFactoryLine;
 		this.matFactoryCnt = matFactoryCnt;
-				
+		this.realAmt = realAmt;
+		this.createUser = createUser;
 	}
 		
 	public BidCompleteDetailDto(
