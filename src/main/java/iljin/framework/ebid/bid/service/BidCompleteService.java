@@ -828,7 +828,7 @@ public class BidCompleteService {
 			Boolean succY = (Boolean) params.get("succYn_Y");
 			Boolean succN = (Boolean) params.get("succYn_N");
 			if (!succY && succN) {	//비선정만
-				sbWhereIf.append("and tbimc.SUCC_YN = 'N' ");
+				sbWhereIf.append("and (tbimc.SUCC_YN is null or tbimc.SUCC_YN = 'N') ");
 			}else if (succY && !succN) {	//선정(낙찰)만
 				sbWhereIf.append("and tbimc.SUCC_YN = 'Y' ");
 			}
