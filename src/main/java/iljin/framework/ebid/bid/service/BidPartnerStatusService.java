@@ -503,10 +503,7 @@ public class BidPartnerStatusService {
 		//서명된 견적금액 데이터
 		if (!StringUtils.isEmpty(params.get("amt"))) {
 			amt = CommonUtils.getString(params.get("amt"));//총 견적금액
-			
-			//서명한 인증서가 유효한지 crl 검증
-			resultBody = certificateService.checkCert(amt);
-			
+
 			if(resultBody.getCode().equals("ERROR")) {
 				return resultBody;
 			}

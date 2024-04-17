@@ -21,60 +21,6 @@ import tradesign.pki.x509.X509ExtensionException;
 @Service
 public class CertificateService {
 	
-	//인증서 유효한지 확인
-	public ResultBody checkCert(String signedData) {
-		ResultBody resultBody = new ResultBody();
-		
-		try {
-			JeTS.installProvider(Constances.CERTIFICATE_SETTING_PATH);
-			
-			//서명된 데이터를 byte로 전환
-			String message = signedData;
-			byte[] content = JetsUtil.base64ToBytes(message);
-
-			//서명된 데이터에서 인증서 정보 추출
-			SignedData sd =  new SignedData(content);
-			X509Certificate[] certs = sd.verify();
-
-			// crl 통한 검증
-			for (int i = 0; i < certs.length; i++){
-			    
-				X509CRL crl = new X509CRL(certs[i].getCrlDp(), true);
-				boolean r= crl.isRevoked(certs[i].getSerialNumber());
-				
-				if(r){//유효하지 않은 인증서
-
-					/*
-					expyn[i] = "폐지됨";
-					expday[i] = crl.getRevokedDate().toString();
-					*/
-					resultBody.setCode("ERROR");
-					resultBody.setStatus(999);
-					
-					if( crl.getRevokedReason() == null ) {
-						resultBody.setMsg("유효하지 않은 인증서입니다.");
-					}else {
-						resultBody.setMsg(crl.getRevokedReason());
-					}
-					
-					return resultBody;
-					
-				}
-				
-				
-			}
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			resultBody.setCode("ERROR");
-			resultBody.setStatus(999);
-			resultBody.setMsg(e.getMessage());
-		}
-		
-		
-		return resultBody;
-	}
-	
 	//envelope 암호화
 	public ResultBody encryptData(String data, String interrelatedCustCode) {
 		ResultBody resultBody = new ResultBody();

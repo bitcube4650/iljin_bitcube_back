@@ -3,6 +3,7 @@ package iljin.framework.core.security;
 import com.rathontech.sso.sp.config.Env;
 import iljin.framework.core.dto.ResultBody;
 import iljin.framework.core.security.sso.Sso;
+import iljin.framework.core.security.user.User;
 import iljin.framework.core.security.user.UserDto;
 import iljin.framework.core.security.user.UserService;
 import iljin.framework.ebid.custom.repository.TCoInterrelatedRepository;
@@ -10,6 +11,7 @@ import iljin.framework.ebid.custom.repository.TCoItemRepository;
 import iljin.framework.ebid.custom.repository.TCoItemGrpRepository;
 import iljin.framework.ebid.custom.service.CustService;
 import iljin.framework.ebid.custom.service.ItemService;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +33,7 @@ import java.util.Map;
 
 @RestController
 @CrossOrigin
+@Slf4j
 public class LoginController {
 
     private final UserService userService;
@@ -59,8 +62,14 @@ public class LoginController {
     }
 
     @PostMapping("/login/sso")
-    public ResponseEntity<AuthToken> ssoLogin(@RequestBody UserDto userDto, HttpSession session, HttpServletRequest req) {
+    public ResponseEntity<AuthToken> ssoLogin(HttpSession session, HttpServletRequest req) {
+        log.info("==================================================================================================================");
+        log.info("==================================================================================================================");
+        log.info("==================================================================================================================");
+        log.info("req.getSession = {}", req.getSession());
         String loginId = req.getSession().getAttribute(Env.DEFAULT_SESSION_USERID).toString();
+        log.info("SSO loginId = {}", loginId);
+        UserDto userDto = new UserDto();
         userDto.setLoginId(loginId);
         return userService.ssoLogin(userDto, session, req);
     }
