@@ -128,8 +128,8 @@ public class CustUserService {
             query.setParameter("userPwd", passwordEncoder.encode(userPwd));
         }
         query.setParameter("userName", params.get("userName"));
-        query.setParameter("userHp", params.get("userHp"));
-        query.setParameter("userTel", params.get("userTel"));
+        query.setParameter("userHp", CommonUtils.getString(params.get("userHp")).replace("-",""));
+        query.setParameter("userTel", CommonUtils.getString(params.get("userTel")).replace("-",""));
         query.setParameter("userEmail", params.get("userEmail"));
         query.setParameter("userPosition", params.get("userPosition"));
         query.setParameter("userBuseo", params.get("userBuseo"));

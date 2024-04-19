@@ -179,8 +179,8 @@ public class UserService {
         query.setParameter("userAuth", params.get("userAuth"));
         query.setParameter("openauth", params.get("openauth"));
         query.setParameter("bidauth", params.get("bidauth"));
-        query.setParameter("userHp", params.get("userHp"));
-        query.setParameter("userTel", params.get("userTel"));
+        query.setParameter("userHp", CommonUtils.getString(params.get("userHp")).replace("-",""));
+        query.setParameter("userTel", CommonUtils.getString(params.get("userTel")).replace("-",""));
         query.setParameter("userEmail", params.get("userEmail"));
         query.setParameter("userPosition", params.get("userPosition"));
         query.setParameter("deptName", params.get("deptName"));

@@ -5,6 +5,7 @@ import iljin.framework.core.security.user.CustomUserDetails;
 import iljin.framework.ebid.bid.dto.SendDto;
 import iljin.framework.ebid.custom.dto.TCoCustMasterDto;
 import iljin.framework.ebid.custom.dto.TCoUserDto;
+import iljin.framework.ebid.etc.util.CommonUtils;
 import iljin.framework.ebid.etc.util.PagaUtils;
 import iljin.framework.ebid.etc.util.common.file.FileService;
 import iljin.framework.ebid.etc.util.common.mail.service.MailService;
@@ -204,12 +205,20 @@ public class CustService {
                 "     , cust_type1, cust_type2\n" +
                 "     , (SELECT item_name FROM t_co_item x WHERE x.item_code = a.cust_type1) AS cust_type_nm1\n" +
                 "     , (SELECT item_name FROM t_co_item x WHERE x.item_code = a.cust_type2) AS cust_type_nm2\n" +
-                "     , CONCAT(SUBSTR(regnum, 1, 3), '-', SUBSTR(regnum, 4, 2), '-', SUBSTR(regnum, 6, 5)) AS regnum\n" +
+                "     , CASE\n"+
+                "     		WHEN IFNULL(regnum, '') = ''\n"+
+                "     		THEN regnum\n"+
+                "     		ELSE CONCAT(SUBSTR(regnum, 1, 3), '-', SUBSTR(regnum, 4, 2), '-', SUBSTR(regnum, 6, 5))\n"+
+                "     	END as regnum\n"+
                 "     , SUBSTR(regnum, 1, 3) AS regnum1\n" +
                 "     , SUBSTR(regnum, 4, 2) AS regnum2\n" +
                 "     , SUBSTR(regnum, 6, 5) AS regnum3\n" +
                 "     , pres_name \n" +
-                "     , CONCAT(SUBSTR(pres_jumin_no, 1, 6), '-', SUBSTR(pres_jumin_no, 7, 7)) AS pres_jumin_no\n" +
+                "     , CASE\n"+
+                "     		WHEN IFNULL(pres_jumin_no, '') = ''\n"+
+                "     		THEN pres_jumin_no\n"+
+                "     		ELSE CONCAT(SUBSTR(pres_jumin_no, 1, 6), '-', SUBSTR(pres_jumin_no, 7, 7))\n"+
+                "     	END as pres_jumin_no\n"+
                 "     , SUBSTR(pres_jumin_no, 1, 6) AS pres_jumin_no1\n" +
                 "     , SUBSTR(pres_jumin_no, 7, 7) AS pres_jumin_no2\n" +
                 "     , capital\n" +
@@ -250,12 +259,20 @@ public class CustService {
                 "     , cust_type1, cust_type2\n" +
                 "     , (SELECT item_name FROM t_co_item x WHERE x.item_code = a.cust_type1) AS cust_type_nm1\n" +
                 "     , (SELECT item_name FROM t_co_item x WHERE x.item_code = a.cust_type2) AS cust_type_nm2\n" +
-                "     , CONCAT(SUBSTR(regnum, 1, 3), '-', SUBSTR(regnum, 4, 2), '-', SUBSTR(regnum, 6, 5)) AS regnum\n" +
+                "     , CASE\n"+
+                "     		WHEN IFNULL(regnum, '') = ''\n"+
+                "     		THEN regnum\n"+
+                "     		ELSE CONCAT(SUBSTR(regnum, 1, 3), '-', SUBSTR(regnum, 4, 2), '-', SUBSTR(regnum, 6, 5))\n"+
+                "     	END as regnum\n"+
                 "     , SUBSTR(regnum, 1, 3) AS regnum1\n" +
                 "     , SUBSTR(regnum, 4, 2) AS regnum2\n" +
                 "     , SUBSTR(regnum, 6, 5) AS regnum3\n" +
                 "     , pres_name \n" +
-                "     , CONCAT(SUBSTR(pres_jumin_no, 1, 6), '-', SUBSTR(pres_jumin_no, 7, 7)) AS pres_jumin_no\n" +
+                "     , CASE\n"+
+                "     		WHEN IFNULL(pres_jumin_no, '') = ''\n"+
+                "     		THEN pres_jumin_no\n"+
+                "     		ELSE CONCAT(SUBSTR(pres_jumin_no, 1, 6), '-', SUBSTR(pres_jumin_no, 7, 7))\n"+
+                "     	END as pres_jumin_no\n"+
                 "     , SUBSTR(pres_jumin_no, 1, 6) AS pres_jumin_no1\n" +
                 "     , SUBSTR(pres_jumin_no, 7, 7) AS pres_jumin_no2\n" +
                 "     , capital\n" +
@@ -410,27 +427,27 @@ public class CustService {
         StringBuilder sbQuery = new StringBuilder(" INSERT INTO t_co_cust_master (cust_type1, cust_type2, cust_name, regnum, pres_name, pres_jumin_no, tel, fax, zipcode, addr, addr_detail, capital, found_year, cert_yn, etc, create_user, create_date, update_user, update_date, interrelated_cust_code, b_file, b_file_path, regnum_file, regnum_path)" +
                 " VALUES (:custType1, :custType2, :custName, :regnum, :presName, :presJuminNo, :tel, :fax, :zipcode, :addr, :addrDetail, :capital, :foundYear, :certYn, :etc, :userId, now(), :userId, now(), :interrelatedCustCode, :bFile, :bFilePath, :regnumFile, :regnumPath)");
         Query query = entityManager.createNativeQuery(sbQuery.toString());
-        query.setParameter("custType1", params.get("custType1"));
-        query.setParameter("custType2", params.get("custType2"));
-        query.setParameter("custName", params.get("custName"));
-        query.setParameter("regnum", params.get("regnum1").toString()+params.get("regnum2").toString()+params.get("regnum3").toString());
-        query.setParameter("presName", params.get("presName"));
-        query.setParameter("presJuminNo", params.get("presJuminNo1").toString()+params.get("presJuminNo2").toString());
-        query.setParameter("tel", params.get("tel"));
-        query.setParameter("fax", params.get("fax"));
-        query.setParameter("zipcode", params.get("zipcode"));
-        query.setParameter("addr", params.get("addr"));
-        query.setParameter("addrDetail", params.get("addrDetail"));
-        query.setParameter("capital", params.get("capital"));
-        query.setParameter("foundYear", params.get("foundYear"));
-        query.setParameter("certYn", user == null ? "N" : "Y"); // 승인요청 : 승인
-        query.setParameter("etc", "");
-        query.setParameter("interrelatedCustCode", params.get("interrelatedCustCode"));
-        query.setParameter("bFile", params.get("bFile"));
-        query.setParameter("bFilePath", params.get("bFilePath"));
-        query.setParameter("regnumFile", params.get("regnumFile"));
-        query.setParameter("regnumPath", params.get("regnumPath"));
-        query.setParameter("userId", user == null ? "" : user.getUsername());
+        query.setParameter("custType1",		params.get("custType1"));
+        query.setParameter("custType2",		params.get("custType2"));
+        query.setParameter("custName",		params.get("custName"));
+        query.setParameter("regnum",		CommonUtils.getString(params.get("regnum1"))+CommonUtils.getString(params.get("regnum2"))+CommonUtils.getString(params.get("regnum3")));
+        query.setParameter("presName",		params.get("presName"));
+        query.setParameter("presJuminNo",	CommonUtils.getString(params.get("presJuminNo1"))+CommonUtils.getString(params.get("presJuminNo2")));
+        query.setParameter("tel",			CommonUtils.getString(params.get("tel")).replaceAll("-", ""));
+        query.setParameter("fax",			CommonUtils.getString(params.get("fax")).replaceAll("-", ""));
+        query.setParameter("zipcode",		params.get("zipcode"));
+        query.setParameter("addr",			params.get("addr"));
+        query.setParameter("addrDetail",	params.get("addrDetail"));
+        query.setParameter("capital",		CommonUtils.getString(params.get("capital")).replaceAll(",", ""));
+        query.setParameter("foundYear",		params.get("foundYear"));
+        query.setParameter("certYn",		user == null ? "N" : "Y"); // 승인요청 : 승인
+        query.setParameter("etc",			"");
+        query.setParameter("interrelatedCustCode",	params.get("interrelatedCustCode"));
+        query.setParameter("bFile",			params.get("bFile"));
+        query.setParameter("bFilePath",		params.get("bFilePath"));
+        query.setParameter("regnumFile",	params.get("regnumFile"));
+        query.setParameter("regnumPath",	params.get("regnumPath"));
+        query.setParameter("userId",		user == null ? "" : user.getUsername());
         query.executeUpdate();
 
         query = entityManager.createNativeQuery("SELECT LAST_INSERT_ID()");
@@ -450,17 +467,18 @@ public class CustService {
         sbQuery = new StringBuilder(" INSERT INTO t_co_cust_user (user_id, cust_code, user_pwd, user_name, user_tel, user_hp, user_email, user_type, user_buseo, user_position, create_user, create_date, update_user, update_date, pwd_chg_date, use_yn)" +
                 " VALUES (:userId, :custCode, :userPwd, :userName, :userTel, :userHp, :userEmail, :userType, :userBuseo, :userPosition, :updUserId, now(), :updUserId, now(), now(), :useYn)");
         query = entityManager.createNativeQuery(sbQuery.toString());
-        query.setParameter("userId", params.get("userId"));
-        query.setParameter("custCode", custCode.intValue());
-        query.setParameter("userPwd", passwordEncoder.encode((String) params.get("userPwd")));
-        query.setParameter("userName", params.get("userName"));
-        query.setParameter("userTel", params.get("userTel"));
-        query.setParameter("userHp", params.get("userHp"));
-        query.setParameter("userEmail", params.get("userEmail"));
-        query.setParameter("userType", "1"); // 관리자
-        query.setParameter("userBuseo", params.get("userBuseo"));
-        query.setParameter("userPosition", params.get("userPosition"));
-        query.setParameter("updUserId", user == null ? "" : user.getUsername());
+        String userHp = CommonUtils.getString(params.get("userHp")).replaceAll("-", "");
+        query.setParameter("userId",		params.get("userId"));
+        query.setParameter("custCode",		custCode.intValue());
+        query.setParameter("userPwd",		passwordEncoder.encode((String) params.get("userPwd")));
+        query.setParameter("userName",		params.get("userName"));
+        query.setParameter("userTel",		CommonUtils.getString(params.get("userTel")).replaceAll("-", ""));
+        query.setParameter("userHp",		userHp);
+        query.setParameter("userEmail",		params.get("userEmail"));
+        query.setParameter("userType",		"1"); // 관리자
+        query.setParameter("userBuseo",		params.get("userBuseo"));
+        query.setParameter("userPosition",	params.get("userPosition"));
+        query.setParameter("updUserId",		user == null ? "" : user.getUsername());
         query.setParameter("useYn", "Y");
         query.executeUpdate();
 
@@ -493,7 +511,7 @@ public class CustService {
             
             
 			try{
-				messageService.send("일진그룹", (String) params.get("userHp"), (String) params.get("userName"), "[일진그룹 전자입찰시스템] 요청하신 일진그룹 전자입찰 시스템 회원가입이 승인되었습니다.");
+				messageService.send("일진그룹", userHp, (String) params.get("userName"), "[일진그룹 전자입찰시스템] 요청하신 일진그룹 전자입찰 시스템 회원가입이 승인되었습니다.");
 			}catch(Exception e) {
 				log.error("insert send message error : {}", e);
 			}
@@ -522,24 +540,24 @@ public class CustService {
         StringBuilder sbQuery = new StringBuilder(" UPDATE t_co_cust_master SET cust_name = :custName, regnum = :regnum, pres_name = :presName, pres_jumin_no = :presJuminNo, tel = :tel, fax = :fax, zipcode = :zipcode, addr = :addr, addr_detail = :addrDetail, capital = :capital" +
                 " , found_year = :foundYear, update_user = :userId, update_date = now(), b_file = :bFile, b_file_path = :bFilePath, regnum_file = :regnumFile, regnum_path = :regnumPath WHERE cust_code = :custCode");
         Query query = entityManager.createNativeQuery(sbQuery.toString());
-        query.setParameter("custName", params.get("custName"));
-        query.setParameter("regnum", params.get("regnum1").toString()+params.get("regnum2").toString()+params.get("regnum3").toString());
-        query.setParameter("presName", params.get("presName"));
-        query.setParameter("presJuminNo", params.get("presJuminNo1").toString()+params.get("presJuminNo2").toString());
-        query.setParameter("tel", params.get("tel"));
-        query.setParameter("fax", params.get("fax"));
-        query.setParameter("zipcode", params.get("zipcode"));
-        query.setParameter("addr", params.get("addr"));
-        query.setParameter("addrDetail", params.get("addrDetail"));
-        query.setParameter("capital", params.get("capital"));
-        query.setParameter("foundYear", params.get("foundYear"));
-        query.setParameter("bFile", params.get("bfile"));
-        query.setParameter("bFilePath", params.get("bfilePath"));
-        query.setParameter("regnumFile", params.get("regnumFile"));
-        query.setParameter("regnumPath", params.get("regnumPath"));
+        query.setParameter("custName",		params.get("custName"));
+        query.setParameter("regnum",		CommonUtils.getString(params.get("regnum1"))+CommonUtils.getString(params.get("regnum2"))+CommonUtils.getString(params.get("regnum3")));
+        query.setParameter("presName",		params.get("presName"));
+        query.setParameter("presJuminNo",	CommonUtils.getString(params.get("presJuminNo1"))+CommonUtils.getString(params.get("presJuminNo1")));
+        query.setParameter("tel",			CommonUtils.getString(params.get("tel")).replaceAll("-", ""));
+        query.setParameter("fax",			CommonUtils.getString(params.get("fax")).replaceAll("-", ""));
+        query.setParameter("zipcode",		params.get("zipcode"));
+        query.setParameter("addr",			params.get("addr"));
+        query.setParameter("addrDetail",	params.get("addrDetail"));
+        query.setParameter("capital",		CommonUtils.getString(params.get("capital")).replaceAll(",", ""));
+        query.setParameter("foundYear",		params.get("foundYear"));
+        query.setParameter("bFile",			params.get("bfile"));
+        query.setParameter("bFilePath",		params.get("bfilePath"));
+        query.setParameter("regnumFile",	params.get("regnumFile"));
+        query.setParameter("regnumPath",	params.get("regnumPath"));
         CustomUserDetails user = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        query.setParameter("userId", user.getUsername());
-        query.setParameter("custCode", params.get("custCode"));
+        query.setParameter("userId",		user.getUsername());
+        query.setParameter("custCode",		params.get("custCode"));
         query.executeUpdate();
 
         // 협력사 이력 등록
@@ -570,14 +588,14 @@ public class CustService {
 
             sbQuery = new StringBuilder(" UPDATE t_co_cust_user SET user_name = :userName, user_tel = :userTel, user_hp = :userHp, user_email = :userEmail, user_buseo = :userBuseo, user_position = :userPosition, update_user = :updUserId, update_date = now() WHERE user_id = :userId");
             query = entityManager.createNativeQuery(sbQuery.toString());
-            query.setParameter("userName", params.get("userName"));
-            query.setParameter("userTel", params.get("userTel"));
-            query.setParameter("userHp", params.get("userHp"));
-            query.setParameter("userEmail", params.get("userEmail"));
-            query.setParameter("userBuseo", params.get("userBuseo"));
-            query.setParameter("userPosition", params.get("userPosition"));
-            query.setParameter("updUserId", user.getUsername());
-            query.setParameter("userId", params.get("userId"));
+            query.setParameter("userName",		params.get("userName"));
+            query.setParameter("userTel",		CommonUtils.getString(params.get("userTel")).replaceAll("-", ""));
+            query.setParameter("userHp",		CommonUtils.getString(params.get("userHp")).replaceAll("-", ""));
+            query.setParameter("userEmail",		params.get("userEmail"));
+            query.setParameter("userBuseo",		params.get("userBuseo"));
+            query.setParameter("userPosition",	params.get("userPosition"));
+            query.setParameter("updUserId",		user.getUsername());
+            query.setParameter("userId",		params.get("userId"));
             query.executeUpdate();
         }
         return resultBody;
