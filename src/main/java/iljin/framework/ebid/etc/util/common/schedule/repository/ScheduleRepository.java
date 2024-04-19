@@ -68,7 +68,7 @@ public class ScheduleRepository {
     }
 
     public List<MailEntity> findAllMailInfo() {
-        return em.createQuery("select m from MailEntity m where m.sendFlag = '0'", MailEntity.class)
+        return em.createQuery("select m from MailEntity m where m.sendFlag = '0' and m.createDate >= CURDATE() - INTERVAL 7 DAY ", MailEntity.class)
                 .getResultList();
 
     }
