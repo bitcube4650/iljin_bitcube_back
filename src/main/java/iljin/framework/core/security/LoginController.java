@@ -63,12 +63,7 @@ public class LoginController {
 
     @PostMapping("/login/sso")
     public ResponseEntity<AuthToken> ssoLogin(HttpSession session, HttpServletRequest req) {
-        log.info("==================================================================================================================");
-        log.info("==================================================================================================================");
-        log.info("==================================================================================================================");
-        log.info("req.getSession = {}", req.getSession());
         String loginId = req.getSession().getAttribute(Env.DEFAULT_SESSION_USERID).toString();
-        log.info("SSO loginId = {}", loginId);
         UserDto userDto = new UserDto();
         userDto.setLoginId(loginId);
         return userService.ssoLogin(userDto, session, req);
