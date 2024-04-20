@@ -643,25 +643,26 @@ public class BidStatusService {
 			if(decryptData == null || decryptData.equals("")) {
 				continue;
 			}
-			
+			System.out.println("복호화 시작");
 			//복호화 시작
 			ResultBody decryptResult = certificateService.decryptData(decryptData, interrelatedCustCode, certPwd);
-			
+			System.out.println("1차 복호화 결과 >> " + decryptResult.getCode());
 			if(decryptResult.getCode().equals("ERROR")) {//복호화 실패
-
+				System.out.println("1차 복호화 실패");
 				//이전 인증서로 다시 복호화 시도
 				String preCertPath = "pre/" + interrelatedCustCode;
 				ResultBody decryptResult2 = certificateService.decryptData(decryptData, preCertPath, certPwd);
 				
 				if(decryptResult.getCode().equals("ERROR")) {//2차 시도 복호화 실패
-
+					System.out.println("2차 복호화 실패");
 					return decryptResult2;
 					
 				}else{//2차 시도 복호화 성공
+					System.out.println("2차 복호화 성공");
 					decryptData = (String) decryptResult2.getData();
 				}
 			}else {//복호화 성공
-
+				System.out.println("1차 복호화 성공");
 				decryptData = (String) decryptResult.getData();
 				
 			}
@@ -674,6 +675,7 @@ public class BidStatusService {
 				return fixedResult;
 			}else {//검증 성공
 				decryptData = (String) fixedResult.getData();
+				decryptData = decryptData.replaceAll(",", "");// 금액에서 , 빼기
 				
 				if(custDto.getInsMode().equals("2")) {//직접입력 방식인 경우
 					//직접입력 총 견적액 구하기
