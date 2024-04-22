@@ -29,6 +29,12 @@ public class MessageService {
     private String password;
     @Value("${oracle.datasource.driver-class-name}")
     private String drivername;
+    @Value("${send.phone1}")
+    private String sPhone1;
+    @Value("${send.phone2}")
+    private String sPhone2;
+    @Value("${send.phone3}")
+    private String sPhone3;
 
     public void send(String sendName, String rPhone,  String recvName, String msg) {
         send(sendName, rPhone, recvName, msg, null);
@@ -80,9 +86,9 @@ public class MessageService {
             query.setParameter("rphone2", rPhone2);
             query.setParameter("rphone3", rPhone3);
             query.setParameter("recvname", recvName);
-            query.setParameter("sphone1", "02");
-            query.setParameter("sphone2", "707");
-            query.setParameter("sphone3", "9319");
+            query.setParameter("sphone1", sPhone1);
+            query.setParameter("sphone2", sPhone2);
+            query.setParameter("sphone3", sPhone3);
             query.setParameter("msg", msg);
             query.setParameter("rdate", "00000000");
             query.setParameter("rtime", "000000");
