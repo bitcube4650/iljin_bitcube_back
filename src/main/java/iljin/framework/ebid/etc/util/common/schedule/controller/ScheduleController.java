@@ -85,9 +85,26 @@ public class ScheduleController {
 				scheduleUserInfoSvc.updateUserUseYn();
 			}
 			catch(Exception e) {
-					log.error("updateUserUseYn Exception : " + e);
+				log.error("updateUserUseYn Exception : " + e);
 			}
 			log.info("--------------------------Scheduler updateUserUseYn() method end!--------------------------------");
+		}
+	}
+	
+	/**
+	 * 지명입찰 제출마감시간 48시간 ~ 24시간 전 미투찰 협력사에게 메일, 문자 발송
+	 */
+	@Scheduled(cron="0 0 10 * * *")	//초 분 시 일 월 주(년)
+	public void ebidCloseSendCustAlarm() {
+		if(Constances.COMMON_SCHEDULE_FLAG) {
+			log.info("--------------------------Scheduler ebidCloseSendCustAlarm() method start!------------------------------");
+			try {
+				scheduleService.ebidCloseSendCustAlarm();
+			}
+			catch(Exception e) {
+				log.error("ebidCloseSendCustAlarm Exception : " + e);
+			}
+			log.info("--------------------------Scheduler ebidCloseSendCustAlarm() method end!--------------------------------");
 		}
 	}
 }
