@@ -109,7 +109,7 @@ public class BidCompleteService {
 			
 			//입찰번호
 			if (!StringUtils.isEmpty(params.get("biNo"))) {
-				sbWhere.append("and tbim.BI_NO = :biNo ");
+				sbWhere.append("and tbim.BI_NO like concat('%',:biNo,'%') ");
 			}
 			//입찰명
 			if (!StringUtils.isEmpty(params.get("biName"))) {
@@ -493,7 +493,7 @@ public class BidCompleteService {
 	}
 	
 	/**
-	 * 입찰 이력 롯데에너지머티리얼즈 코드값
+	 * 낙찰 이력 롯데에너지머티리얼즈 코드값
 	 * @param params
 	 * @return
 	 */
@@ -559,7 +559,7 @@ public class BidCompleteService {
 	}
 	
 	/**
-	 * 입찰 이력 리스트
+	 * 낙찰 이력 리스트
 	 * @param params : (String) biNo, (String) biName, (String) matDept, (String) matProc, (String) matCls, (String) startDate, (String) endDate
 	 * @return
 	 */
@@ -644,7 +644,7 @@ public class BidCompleteService {
 			
 			//입찰번호
 			if (!StringUtils.isEmpty(params.get("biNo"))) {
-				sbWhere.append("and tbim.BI_NO = :biNo ");
+				sbWhere.append("and tbim.BI_NO like concat('%',:biNo,'%') ");
 			}
 			//입찰명
 			if (!StringUtils.isEmpty(params.get("biName"))) {
@@ -715,7 +715,7 @@ public class BidCompleteService {
 		}catch(Exception e) {
 			log.error("complateBidhistory list error : {}", e);
 			resultBody.setCode("fail");
-			resultBody.setMsg("입찰 이력 리스트를 가져오는것을 실패하였습니다.");
+			resultBody.setMsg("낙찰 이력 리스트를 가져오는것을 실패하였습니다.");
 		}
 		
 		return resultBody;
@@ -819,7 +819,7 @@ public class BidCompleteService {
 			sbWhereIf.append("and tbim.ING_TAG IN ('A5', 'A7') ");
 			
 			if (!StringUtils.isEmpty(params.get("biNo"))) {
-				sbWhereIf.append("and tbim.BI_NO = :biNo ");
+				sbWhereIf.append("and tbim.BI_NO like concat('%',:biNo,'%') ");
 			}
 			if (!StringUtils.isEmpty(params.get("biName"))) {
 				sbWhereIf.append("and tbim.BI_NAME like concat('%',:biName,'%') ");

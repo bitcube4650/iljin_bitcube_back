@@ -231,7 +231,7 @@ public class BidProgressService {
         StringBuilder sbWhere = new StringBuilder();
 
         if (!StringUtils.isEmpty(params.get("bidNo"))) {
-            sbWhere.append(" and a.bi_no = :bidNo ");
+            sbWhere.append(" and a.bi_no like concat('%',:bidNo,'%') ");
         }
 
         if (!StringUtils.isEmpty(params.get("bidName"))) {

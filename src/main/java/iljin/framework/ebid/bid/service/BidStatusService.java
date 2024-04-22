@@ -140,7 +140,7 @@ public class BidStatusService {
 		
 		//입찰번호
 		if (!StringUtils.isEmpty(params.get("bidNo"))) {
-			sbWhere.append(" and tbim.bi_no = :bidNo ");
+			sbWhere.append(" and tbim.bi_no like concat('%',:bidNo,'%') ");
 		}
 		
 		//입찰명
