@@ -834,8 +834,8 @@ public class BidCompleteService {
 			}
 			
 			//조건문 쿼리 삽입
-			sbCount.append("where 1=1 " + sbWhereIf);
-			sbList.append("where 1=1 " + sbWhereIf);
+			sbCount.append("where tbimc.ESMT_YN IN ( '2', '3' ) " + sbWhereIf);
+			sbList.append("where tbimc.ESMT_YN IN ( '2', '3' ) " + sbWhereIf);
 			
 			sbList.append("order by tbim.UPDATE_DATE desc ");
 		
