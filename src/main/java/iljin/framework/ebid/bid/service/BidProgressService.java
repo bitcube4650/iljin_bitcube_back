@@ -232,7 +232,7 @@ public class BidProgressService {
         StringBuilder sbWhere = new StringBuilder();
 
         if (!StringUtils.isEmpty(params.get("bidNo"))) {
-            sbWhere.append(" and a.bi_no = :bidNo ");
+            sbWhere.append(" and a.bi_no like concat('%',:bidNo,'%') ");
         }
 
         if (!StringUtils.isEmpty(params.get("bidName"))) {
@@ -1745,6 +1745,13 @@ public class BidProgressService {
 			content = "입찰명 [" + biName + "]에 업체선정 되었습니다.\n" +
 					"자세한 사항은 e-bidding 시스템에  로그인하여 입찰내용 확인 및 낙찰확인을 하시기 바랍니다.\n(낙찰확인은 계약과 관련없는 내부절차 입니다.)\n\n"+
 					"-추가합의사항\n" + reason;
+		
+		//입찰독촉메일
+		}else if(type.equals("push")) {
+			title = "[일진그룹 e-bidding] 입찰 마감임박";
+			content = "["+interNm+"]에서 공고한 [" + biName + "] 입찰 마감시간이 다가오고 있습니다.\r\n"
+					+ "마감시간 전 전자입찰 e-bidding 시스템에 접속하여 투찰을 진행해 주십시오\r\n"
+					+ "투찰기간 : "+ CommonUtils.getString(params.get("estStartDate")) + " ~ " + CommonUtils.getString(params.get("estCloseDate"));
 		}
 		
 		result.put("title", title);

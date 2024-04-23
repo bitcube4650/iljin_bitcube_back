@@ -318,7 +318,7 @@ public class MainService {
 														+ "and (tbim.BI_MODE = 'B' OR (tbim.BI_MODE = 'A' AND tbimc.CUST_CODE = :custCode))"
 														+ ")"
 													+ ") as posted, "//공고되었던 입찰
-													+ " (select COUNT(1) from t_bi_info_mat tbim inner join t_bi_info_mat_cust tbimc on(tbim.bi_no = tbimc.bi_no) where tbim.ing_tag IN ('A5', 'A7') and tbimc.ESMT_YN = '2' and (tbim.update_date >= CURDATE() - INTERVAL 12 MONTH) and tbimc.cust_code = :custCode) as submitted, "//투찰했던 입찰
+													+ " (select COUNT(1) from t_bi_info_mat tbim inner join t_bi_info_mat_cust tbimc on(tbim.bi_no = tbimc.bi_no) where tbim.ing_tag IN ('A5', 'A7') and tbimc.ESMT_YN IN('2' , '3') and (tbim.update_date >= CURDATE() - INTERVAL 12 MONTH) and tbimc.cust_code = :custCode) as submitted, "//투찰했던 입찰
 													+ " (select COUNT(1) from t_bi_info_mat tbim inner join t_bi_info_mat_cust tbimc on(tbim.bi_no = tbimc.bi_no) where tbim.ing_tag IN ('A5') and (tbim.update_date >= CURDATE() - INTERVAL 12 MONTH) and tbimc.succ_yn = 'Y' and tbimc.cust_code = :custCode) as awarded "//낙찰했던 입찰
 											   );
 		Query queryCnt = entityManager.createNativeQuery(sbCnt.toString());

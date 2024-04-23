@@ -1,18 +1,18 @@
 package iljin.framework.ebid.bid.service;
 
 import iljin.framework.core.dto.ResultBody;
-import iljin.framework.core.security.user.UserService;
 import iljin.framework.core.util.Util;
 import iljin.framework.ebid.bid.dto.BidCustDto;
 import iljin.framework.ebid.bid.dto.BidItemSpecDto;
 import iljin.framework.ebid.bid.dto.BidProgressDetailDto;
 import iljin.framework.ebid.bid.dto.BidProgressDto;
 import iljin.framework.ebid.bid.dto.BidProgressFileDto;
-import iljin.framework.ebid.bid.dto.CoUserInfoDto;
 import iljin.framework.ebid.bid.dto.SendDto;
 import iljin.framework.ebid.bid.dto.SubmitHistDto;
 import iljin.framework.ebid.bid.entity.TBiDetailMatCust;
 import iljin.framework.ebid.bid.entity.TBiDetailMatCustTemp;
+import iljin.framework.ebid.bid.entity.TBiInfoMat;
+import iljin.framework.ebid.bid.repository.TBiInfoMatRepository;
 import iljin.framework.ebid.custom.entity.TCoUser;
 import iljin.framework.ebid.custom.repository.TCoUserRepository;
 import iljin.framework.ebid.etc.util.CommonUtils;
@@ -60,9 +60,9 @@ public class BidStatusService {
     @Autowired
     Util util;
 
-	@Autowired
-	private UserService userService;
-
+    @Autowired
+    private TBiInfoMatRepository tBiInfoMatRepository;
+    
     @Autowired
     private BidProgressService bidProgressService;
     
@@ -140,7 +140,7 @@ public class BidStatusService {
 		
 		//입찰번호
 		if (!StringUtils.isEmpty(params.get("bidNo"))) {
-			sbWhere.append(" and tbim.bi_no = :bidNo ");
+			sbWhere.append(" and tbim.bi_no like concat('%',:bidNo,'%') ");
 		}
 		
 		//입찰명
@@ -505,7 +505,12 @@ public class BidStatusService {
 		String userId = userOptional.get().getUserId();
 		
 		String biNo = CommonUtils.getString(params.get("biNo"));
-
+		String biMode = "";
+		Optional<TBiInfoMat> optionData = tBiInfoMatRepository.findById(biNo);
+		if(optionData.isPresent()) {
+			biMode = optionData.get().getBiMode();
+		}
+		
 		StringBuilder sbList = new StringBuilder(
 				"UPDATE	t_bi_info_mat " 
 			+	"set	ing_tag = 'A7' "
@@ -538,22 +543,51 @@ public class BidStatusService {
 		
 		//메일 전송
 		try {
-			StringBuilder sbMail = new StringBuilder(
-				"select	tccu.user_email "
-				+ ",	tcu.user_email as from_email "
-				+ "from t_bi_info_mat_cust tbimc "
-				+ "inner join t_co_cust_master tccm "
-				+ "	on tbimc.cust_code = tccm.cust_code "
-				+ "inner join t_co_cust_user tccu "
-				+ "	on tccm.cust_code = tccu.cust_code "
-				+ "	and tccu.USE_YN = 'Y' "
-				+ "inner join t_bi_info_mat tbim "
-				+ "	on tbimc.bi_no = tbim.bi_no "
-				+ "left outer join t_co_user tcu "
-				+ "	on tbim.create_user = tcu.user_id "
-				+ "where tbimc.bi_no = :biNo "
-				+ "and tbimc.esmt_yn = '2' "
-			);
+			StringBuilder sbMail = new StringBuilder("");
+			
+			if(biMode.equals("A")) {
+				sbMail.append(
+					"select	tccu.USER_EMAIL "
+					+ ",		a.from_email "
+					+ "from "
+					+ "( "
+					+ "	select	jb.datas as user_id "
+					+ "	,		tcu.user_email as from_email "
+					+ "	from t_bi_info_mat_cust tbimc "
+					+ "	inner join json_table( "
+					+ "		replace(json_array(tbimc.USEMAIL_ID), ',', '\",\"'), "
+					+ "		'$[*]' columns (datas varchar(50) path '$') "
+					+ "	) jb "
+					+ "	inner join t_bi_info_mat tbim "
+					+ "		on tbimc.bi_no = tbim.bi_no "
+					+ "	left outer join t_co_user tcu "
+					+ "		on tbim.create_user = tcu.user_id "
+					+ "	where tbimc.bi_no = :biNo "
+					+ "	and tbimc.esmt_yn = '2' "
+					+ ") a "
+					+ "inner join t_co_cust_user tccu "
+					+ "	on a.user_id = tccu.user_id "
+					+ "	and tccu.USE_YN = 'Y' "
+					+ "group by tccu.USER_EMAIL "
+				);
+			}else if(biMode.equals("B")) {
+				sbMail.append(
+					"select	tccu.user_email "
+					+ ",	tcu.user_email as from_email "
+					+ "from t_bi_info_mat_cust tbimc "
+					+ "inner join t_co_cust_master tccm "
+					+ "	on tbimc.cust_code = tccm.cust_code "
+					+ "inner join t_co_cust_user tccu "
+					+ "	on tccm.cust_code = tccu.cust_code "
+					+ "	and tccu.USE_YN = 'Y' "
+					+ "inner join t_bi_info_mat tbim "
+					+ "	on tbimc.bi_no = tbim.bi_no "
+					+ "left outer join t_co_user tcu "
+					+ "	on tbim.create_user = tcu.user_id "
+					+ "where tbimc.bi_no = :biNo "
+					+ "and tbimc.esmt_yn = '2' "
+				);
+			}
 			
 			//쿼리 실행
 			Query queryMail = entityManager.createNativeQuery(sbMail.toString());
@@ -646,22 +680,20 @@ public class BidStatusService {
 			
 			//복호화 시작
 			ResultBody decryptResult = certificateService.decryptData(decryptData, interrelatedCustCode, certPwd);
-			
 			if(decryptResult.getCode().equals("ERROR")) {//복호화 실패
-
+				
 				//이전 인증서로 다시 복호화 시도
 				String preCertPath = "pre/" + interrelatedCustCode;
 				ResultBody decryptResult2 = certificateService.decryptData(decryptData, preCertPath, certPwd);
 				
-				if(decryptResult.getCode().equals("ERROR")) {//2차 시도 복호화 실패
-
+				if(decryptResult2.getCode().equals("ERROR")) {//2차 시도 복호화 실패
 					return decryptResult2;
 					
 				}else{//2차 시도 복호화 성공
 					decryptData = (String) decryptResult2.getData();
 				}
+				
 			}else {//복호화 성공
-
 				decryptData = (String) decryptResult.getData();
 				
 			}
@@ -674,6 +706,7 @@ public class BidStatusService {
 				return fixedResult;
 			}else {//검증 성공
 				decryptData = (String) fixedResult.getData();
+				decryptData = decryptData.replaceAll(",", "");// 금액에서 , 빼기
 				
 				if(custDto.getInsMode().equals("2")) {//직접입력 방식인 경우
 					//직접입력 총 견적액 구하기
@@ -786,6 +819,11 @@ public class BidStatusService {
 		String userId = userOptional.get().getUserId();
 		
 		String biNo = CommonUtils.getString(params.get("biNo"));
+		String biMode = "";
+		Optional<TBiInfoMat> optionData = tBiInfoMatRepository.findById(biNo);
+		if(optionData.isPresent()) {
+			biMode = optionData.get().getBiMode();
+		}
 		
 		StringBuilder sbList = new StringBuilder( // 입찰 업데이트
 				  "UPDATE t_bi_info_mat "
@@ -838,24 +876,55 @@ public class BidStatusService {
 		
 		//메일, 문자 전송
 		try {
-			StringBuilder sbMail = new StringBuilder(
-				"select	tccu.user_email "
-				+ ",	tcu.user_email as from_email "
-				+ ",	REGEXP_REPLACE(tccu.USER_HP , '[^0-9]+', '') as USER_HP "
-				+ ",	tccu.USER_NAME "
-				+ "from t_bi_info_mat_cust tbimc "
-				+ "inner join t_co_cust_master tccm "
-				+ "	on tbimc.cust_code = tccm.cust_code "
-				+ "inner join t_co_cust_user tccu "
-				+ "	on tccm.cust_code = tccu.cust_code "
-				+ "	and tccu.USE_YN = 'Y' "
-				+ "inner join t_bi_info_mat tbim "
-				+ "	on tbimc.bi_no = tbim.bi_no "
-				+ "left outer join t_co_user tcu "
-				+ "	on tbim.create_user = tcu.user_id "
-				+ "where tbimc.bi_no = :biNo "
-				+ "and tbimc.cust_code = :succCust "
-			);
+			StringBuilder sbMail = new StringBuilder("");
+			
+			if(biMode.equals("A")) {
+				sbMail.append(
+					  "select	tccu.USER_EMAIL  "
+					+ ",		a.from_email "
+					+ ",		REGEXP_REPLACE(tccu.USER_HP , '[^0-9]+', '') as USER_HP "
+					+ ",		tccu.USER_NAME "
+					+ "from "
+					+ "( "
+					+ "	select	jb.datas as user_id "
+					+ "	,		tcu.USER_EMAIL as from_email "
+					+ "	from t_bi_info_mat_cust tbimc "
+					+ "	inner join json_table( "
+					+ "		replace(json_array(tbimc.USEMAIL_ID), ',', '\",\"'), "
+					+ "		'$[*]' columns (datas varchar(50) path '$') "
+					+ "	) jb "
+					+ "	inner join t_bi_info_mat tbim "
+					+ "		on tbimc.bi_no = tbim.bi_no "
+					+ "	left outer join t_co_user tcu "
+					+ "		on tbim.create_user = tcu.user_id "
+					+ "	where tbimc.bi_no = :biNo "
+					+ "	and tbimc.cust_code = :succCust "
+					+ ") a "
+					+ "inner join t_co_cust_user tccu "
+					+ "	on a.user_id = tccu.user_id "
+					+ "	and tccu.USE_YN = 'Y' "
+					+ "group by tccu.USER_EMAIL "	
+				);
+			}else if(biMode.equals("B")) {
+				sbMail.append(
+					"select	tccu.user_email "
+					+ ",	tcu.user_email as from_email "
+					+ ",	REGEXP_REPLACE(tccu.USER_HP , '[^0-9]+', '') as USER_HP "
+					+ ",	tccu.USER_NAME "
+					+ "from t_bi_info_mat_cust tbimc "
+					+ "inner join t_co_cust_master tccm "
+					+ "	on tbimc.cust_code = tccm.cust_code "
+					+ "inner join t_co_cust_user tccu "
+					+ "	on tccm.cust_code = tccu.cust_code "
+					+ "	and tccu.USE_YN = 'Y' "
+					+ "inner join t_bi_info_mat tbim "
+					+ "	on tbimc.bi_no = tbim.bi_no "
+					+ "left outer join t_co_user tcu "
+					+ "	on tbim.create_user = tcu.user_id "
+					+ "where tbimc.bi_no = :biNo "
+					+ "and tbimc.cust_code = :succCust "
+				);
+			}
 			
 			//쿼리 실행
 			Query queryMail = entityManager.createNativeQuery(sbMail.toString());
@@ -933,7 +1002,12 @@ public class BidStatusService {
 		String userId = userOptional.get().getUserId();
 		
 		String biNo = CommonUtils.getString(params.get("biNo"));
-
+		String biMode = "";
+		Optional<TBiInfoMat> optionData = tBiInfoMatRepository.findById(biNo);
+		if(optionData.isPresent()) {
+			biMode = optionData.get().getBiMode();
+		}
+		
 		StringBuilder sbMain = new StringBuilder( // 입찰 업데이트
 				  "UPDATE	t_bi_info_mat "
 				+ "SET		EST_CLOSE_DATE = :estCloseDate "
@@ -1014,24 +1088,55 @@ public class BidStatusService {
 		
 		//메일, 문자 전송
 		try {
-			StringBuilder sbMail = new StringBuilder(
-				"select	tccu.user_email "
-				+ ",	tcu.user_email as from_email "
-				+ ",	REGEXP_REPLACE(tccu.USER_HP , '[^0-9]+', '') as USER_HP "
-				+ ",	tccu.USER_NAME "
-				+ "from t_bi_info_mat_cust tbimc "
-				+ "inner join t_co_cust_master tccm "
-				+ "	on tbimc.cust_code = tccm.cust_code "
-				+ "inner join t_co_cust_user tccu "
-				+ "	on tccm.cust_code = tccu.cust_code "
-				+ "	and tccu.USE_YN = 'Y' "
-				+ "inner join t_bi_info_mat tbim "
-				+ "	on tbimc.bi_no = tbim.bi_no "
-				+ "left outer join t_co_user tcu "
-				+ "	on tbim.create_user = tcu.user_id "
-				+ "where tbimc.bi_no = :biNo "
-				+ "and tccu.CUST_CODE IN ( :custCode ) "
-			);
+			StringBuilder sbMail = new StringBuilder("");
+			
+			if(biMode.equals("A")) {
+				sbMail.append(
+					  "select	tccu.USER_EMAIL "
+					+ ",		a.from_email "
+					+ ",		REGEXP_REPLACE(tccu.USER_HP , '[^0-9]+', '') as USER_HP "
+					+ ",		tccu.USER_NAME "
+					+ "from "
+					+ "( "
+					+ "	select	jb.datas as user_id "
+					+ "	,		tcu.USER_EMAIL as from_email "
+					+ "	from t_bi_info_mat_cust tbimc "
+					+ "	inner join json_table( "
+					+ "		replace(json_array(tbimc.USEMAIL_ID), ',', '\",\"'), "
+					+ "		'$[*]' columns (datas varchar(50) path '$') "
+					+ "	) jb "
+					+ "	inner join t_bi_info_mat tbim "
+					+ "		on tbimc.bi_no = tbim.bi_no "
+					+ "	left outer join t_co_user tcu "
+					+ "		on tbim.create_user = tcu.user_id "
+					+ "	where tbimc.bi_no = :biNo "
+					+ "	and tbimc.cust_code IN ( :custCode ) "
+					+ ") a "
+					+ "inner join t_co_cust_user tccu "
+					+ "	on a.user_id = tccu.user_id "
+					+ "	and tccu.USE_YN = 'Y' "
+					+ "group by tccu.USER_EMAIL "	
+				);
+			}else if(biMode.equals("B")) {
+				sbMail.append(
+					"select	tccu.user_email "
+					+ ",	tcu.user_email as from_email "
+					+ ",	REGEXP_REPLACE(tccu.USER_HP , '[^0-9]+', '') as USER_HP "
+					+ ",	tccu.USER_NAME "
+					+ "from t_bi_info_mat_cust tbimc "
+					+ "inner join t_co_cust_master tccm "
+					+ "	on tbimc.cust_code = tccm.cust_code "
+					+ "inner join t_co_cust_user tccu "
+					+ "	on tccm.cust_code = tccu.cust_code "
+					+ "	and tccu.USE_YN = 'Y' "
+					+ "inner join t_bi_info_mat tbim "
+					+ "	on tbimc.bi_no = tbim.bi_no "
+					+ "left outer join t_co_user tcu "
+					+ "	on tbim.create_user = tcu.user_id "
+					+ "where tbimc.bi_no = :biNo "
+					+ "and tccu.CUST_CODE IN ( :custCode ) "
+				);
+			}
 			
 			//쿼리 실행
 			Query queryMail = entityManager.createNativeQuery(sbMail.toString());
@@ -1072,11 +1177,11 @@ public class BidStatusService {
 				  "insert into t_bi_info_mat_cust_temp( "
 				+ "BI_NO, CUST_CODE, BI_ORDER, REBID_ATT, ESMT_YN, ESMT_AMT, SUCC_YN "
 				+ ", ENC_QUTN, ENC_ESMT_SPEC, FILE_ID, SUBMIT_DATE, CREATE_USER, CREATE_DATE "
-				+ ", UPDATE_USER, UPDATE_DATE, ESMT_CURR, ETC_B_FILE, FILE_HASH_VALUE, ETC_B_FILE_PATH "
+				+ ", UPDATE_USER, UPDATE_DATE, ESMT_CURR, ETC_B_FILE, FILE_HASH_VALUE, ETC_B_FILE_PATH, USEMAIL_ID "
 				+ ") select  "
 				+ "BI_NO, CUST_CODE, BI_ORDER, REBID_ATT, ESMT_YN, ESMT_AMT, SUCC_YN "
 				+ ", ENC_QUTN, ENC_ESMT_SPEC, FILE_ID, SUBMIT_DATE, CREATE_USER, CREATE_DATE "
-				+ ", UPDATE_USER, UPDATE_DATE, ESMT_CURR, ETC_B_FILE, FILE_HASH_VALUE, ETC_B_FILE_PATH "
+				+ ", UPDATE_USER, UPDATE_DATE, ESMT_CURR, ETC_B_FILE, FILE_HASH_VALUE, ETC_B_FILE_PATH, USEMAIL_ID "
 				+ "from t_bi_info_mat_cust tbimc "
 				+ "where tbimc.BI_NO = :biNo "
 				+ "and tbimc.CUST_CODE = :custCode "

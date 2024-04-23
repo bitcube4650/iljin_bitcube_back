@@ -1,5 +1,7 @@
 package iljin.framework.core.security.user;
 
+import com.rathontech.sso.sp.agent.web.WebAgent;
+import com.rathontech.sso.sp.config.Env;
 import iljin.framework.core.dto.ResultBody;
 import iljin.framework.core.security.AuthToken;
 import iljin.framework.core.security.role.Role;
@@ -31,6 +33,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -58,6 +61,8 @@ import static java.util.stream.Collectors.toList;
 @Service
 public class UserServiceImpl implements UserService {
     private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
+    @Autowired
+    private CustomUserDetailsService customUserDetailsService;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -173,6 +178,41 @@ public class UserServiceImpl implements UserService {
     }
 
     @NotNull
+    private AuthToken getAuthTokenForSso(final HttpSession session, final String loginId, final UserDto obj, final UsernamePasswordAuthenticationToken token, final Authentication authentication, boolean sso) {
+        // 4. Authentication 인스턴스를 SecurityContextHolder의 SecurityContext에 설정
+        SecurityContextHolder.getContext().setAuthentication(token);
+        log.info("tokentokentokentokentokentokentokentokentoken={}", token);
+        session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, SecurityContextHolder.getContext());
+
+        StringBuilder sb = new StringBuilder(" SELECT 'inter' AS cust_type\n" +
+                "     , a.interrelated_cust_code AS cust_code \n" +
+                "     , interrelated_nm AS cust_name\n" +
+                "     , user_name \n" +
+                "     , user_id \n" +
+                "     , user_pwd \n" +
+                "     , user_auth\n" +
+                "     , 'token' AS token \n" +
+                "  FROM t_co_user a\n" +
+                "     , t_co_interrelated b\n" +
+                " WHERE a.interrelated_cust_code = b.interrelated_cust_code\n" +
+                "   AND user_id = :loginId\n" +
+                "   AND a.use_yn  = 'Y'\n" +
+                "   AND b.use_yn  = 'Y'");
+        Query query = entityManager.createNativeQuery(sb.toString());
+        query.setParameter("loginId", loginId);
+        UserDto data = new JpaResultMapper().uniqueResult(query, UserDto.class);
+
+        return new AuthToken(data.getCustType(),
+                data.getCustCode(),
+                data.getCustName(),
+                data.getLoginId(),
+                data.getUserName(),
+                data.getUserAuth(),
+                "token",
+                sso);
+    }
+
+    @NotNull
     private AuthToken getAuthToken(final HttpSession session, final String loginId, final UserDto obj, final UsernamePasswordAuthenticationToken token, final Authentication authentication, boolean sso) {
         // 4. Authentication 인스턴스를 SecurityContextHolder의 SecurityContext에 설정
         SecurityContextHolder.getContext().setAuthentication(token);
@@ -233,10 +273,9 @@ public class UserServiceImpl implements UserService {
 
             Optional<AuthToken> result =
                     user.map(obj -> {
-                        Set<GrantedAuthority> grantedAuthorities = new HashSet<>();
-                        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(loginId, null, grantedAuthorities);
-                        Authentication authentication = null;
-                        return getAuthToken(session, loginId, obj, token, authentication, true);
+                        CustomUserDetails userDetails = (CustomUserDetails) customUserDetailsService.loadUserByUsername(loginId);
+                        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(userDetails, null,  AuthorityUtils.createAuthorityList("ADMIN"));
+                        return getAuthTokenForSso(session, loginId, obj, token, null, true);
                     });
 
             return result.map(authToken -> new ResponseEntity<>(authToken, HttpStatus.OK))
@@ -266,6 +305,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void logout(HttpSession session) {
         session.invalidate();
+//        session.removeAttribute(Env.DEFAULT_SESSION_USERID);
     }
 
     public ResultBody idSearch(Map<String, String> params) {

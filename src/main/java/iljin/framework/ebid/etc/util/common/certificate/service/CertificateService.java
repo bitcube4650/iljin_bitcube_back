@@ -87,7 +87,6 @@ public class CertificateService {
 			String keyPath = Constances.CERTIFICATE_FILE_PATH;
 			keyPath += interrelatedCustCode;//입찰에 해당하는 계열사 코드
 			keyPath += "/kmPri.key";
-			
 			// 해당 경로의 인증서 불러오기
 			FileInputStream fis = new FileInputStream(certPath);
 			byte[] cert = new byte[fis.available()];
@@ -97,16 +96,12 @@ public class CertificateService {
 			FileInputStream fis2 = new FileInputStream(keyPath);
 			byte[] key = new byte[fis2.available()];
 			fis2.read(key); fis2.close();
-			
 			// 수신자의 비밀키와 암호 설정
 			ed.setupCipher(cert, key, certPwd);
-		
 			// Devlope 후 원본데이타 추출
 			byte[] dev_msg = ed.getContent();
-		
 			//화면에 표시할 devlope 데이타
 			decrypted = new String(JetsUtil.encodeBase64(dev_msg));
-			
 			resultBody.setData(decrypted);
 			
 		} catch (Exception e1) {
