@@ -11,6 +11,7 @@ import iljin.framework.core.security.role.UserRoleRepository;
 import iljin.framework.core.util.Util;
 import iljin.framework.ebid.custom.dto.TCoCustMasterDto;
 import iljin.framework.ebid.custom.entity.TCoCustUser;
+import iljin.framework.ebid.custom.entity.TCoUser;
 import iljin.framework.ebid.custom.repository.TCoCustUserRepository;
 import iljin.framework.ebid.etc.util.common.mail.service.MailService;
 import iljin.framework.ebid.etc.util.common.message.MessageService;
@@ -36,6 +37,7 @@ import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Service;
@@ -132,6 +134,48 @@ public class UserServiceImpl implements UserService {
                 }
 //            }
 
+            //협력사 사용자인데 아이디와 비밀번호가 일치하지만 협력사가 승인되지 않은 경우
+            StringBuilder sbQuery2 = new StringBuilder(
+								            		   " SELECT b.cert_yn ,"
+								            		        + " a.user_pwd "
+								            		 + " FROM t_co_cust_user a "
+								            		 + "    , t_co_cust_master b "
+								            		 + " WHERE a.cust_code = b.cust_code "
+								            		 + " AND a.user_id = :loginId "
+								            		  );    
+            Query query2 = entityManager.createNativeQuery(sbQuery2.toString());
+            query2.setParameter("loginId", loginId);
+            
+            Optional<Object> certYnOptional = Optional.ofNullable(query2.getSingleResult());
+            String certYn = null;
+            String userPwd = null;
+
+            if (certYnOptional.isPresent()) {//협력사인 경우
+            	Object row = certYnOptional.get();
+                if (row instanceof Object[]) {
+                    Object[] values = (Object[]) row;
+                    if (values.length > 0) {
+                        certYn = (String) values[0]; // 첫 번째 열은 'cert_yn' 값
+                    }
+                    if (values.length > 1) {
+                        userPwd = (String) values[1]; // 두 번째 열은 'user_pwd' 값
+                    }
+                }
+                
+                // db 비밀번호
+        		String dbPassword = userPwd;
+
+        		// 비밀번호 체크
+        		boolean pwdCheck = ((BCryptPasswordEncoder) passwordEncoder).matches(loginPw, dbPassword);
+        		
+        		if(pwdCheck ) {//비밀번호 일치
+                    if(certYn.equals("N")) {//아이디 비밀번호는 일치하지만 아직 승인이 안된 협력사인 경우
+                    	//403에러 발생
+                    	return new ResponseEntity<>(new AuthToken(
+                                null, null, null, null, null, null, null, false), HttpStatus.FORBIDDEN);
+                    }
+        		}
+            }
             Optional<AuthToken> result =
                     user.map(obj -> {
                         // 1. username, password를 조합하여 UsernamePasswordAuthenticationToken 생성
