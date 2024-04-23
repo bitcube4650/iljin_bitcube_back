@@ -108,7 +108,7 @@ public class CustService {
     }
 
 	public Page otherCustList(Map<String, Object> params) {
-		StringBuilder sbCount = new StringBuilder("SELECT count(1)");
+		StringBuilder sbCount = new StringBuilder("SELECT count(1)\n");
 		StringBuilder sbList = new StringBuilder(
 				"SELECT	a.cust_code\n"
 				+ ",	a.cust_name\n"
@@ -145,10 +145,10 @@ public class CustService {
 		
 
         if (!StringUtils.isEmpty(params.get("custType"))) {
-        	sbFrom.append("AND	(a.cust_type1 = :custType OR a.cust_type2 = :custType)");
+        	sbFrom.append("AND	(a.cust_type1 = :custType OR a.cust_type2 = :custType)\n");
         }
         if (!StringUtils.isEmpty(params.get("custName"))) {
-        	sbFrom.append("AND	cust_name like concat('%',:custName,'%')");
+        	sbFrom.append("AND	cust_name like concat('%',:custName,'%')\n");
         }
         sbList.append(sbFrom);
         sbList.append("order by create_date desc");
