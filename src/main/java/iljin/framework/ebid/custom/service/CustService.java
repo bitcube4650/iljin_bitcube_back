@@ -107,29 +107,53 @@ public class CustService {
         return page;
     }
 
-    public Page otherCustList(Map<String, Object> params) {
-        StringBuilder sbCount = new StringBuilder(" SELECT count(1) FROM t_co_cust_master a WHERE interrelated_cust_code != :custCode and cert_yn = 'Y' ");
-        StringBuilder sbList = new StringBuilder(" SELECT cust_code \n" +
-                "     , cust_name \n" +
-                "     , CONCAT((SELECT CONCAT('1. ', item_name, '<br/>') FROM t_co_item x WHERE x.item_code = a.cust_type1)\n" +
-                "     , IFNULL((SELECT CONCAT('2. ', item_name) FROM t_co_item x WHERE x.item_code = a.cust_type2),'')) AS cust_type1\n" +
-                "     , CONCAT(SUBSTR(regnum, 1, 3), '-', SUBSTR(regnum, 4, 2), '-', SUBSTR(regnum, 6, 5)) AS regnum\n" +
-                "     , pres_name \n" +
-                "     , (SELECT GROUP_CONCAT(interrelated_nm SEPARATOR '<br/>') FROM t_co_cust_ir x, t_co_interrelated y WHERE x.cust_code = a.cust_code AND x.interrelated_cust_code = y.interrelated_cust_code) AS interrelated_nm\n" +
-                "  FROM t_co_cust_master a\n" +
-                " WHERE interrelated_cust_code != :custCode and cert_yn = 'Y' ");
-        StringBuilder sbWhere = new StringBuilder();
+	public Page otherCustList(Map<String, Object> params) {
+		StringBuilder sbCount = new StringBuilder("SELECT count(1)");
+		StringBuilder sbList = new StringBuilder(
+				"SELECT	a.cust_code\n"
+				+ ",	a.cust_name\n"
+				+ ",	case\n"
+				+ "			when (select ifnull(ITEM_NAME, '') from t_co_item where item_code = a.CUST_TYPE2) != ''\n"
+				+ "			then CONCAT((select CONCAT('1. ', item_name, '<br/>') from t_co_item x where x.item_code = a.cust_type1) , IFNULL((select CONCAT('2. ', item_name) from t_co_item x where x.item_code = a.cust_type2), ''))\n"
+				+ "			else (select CONCAT('1. ', item_name) from t_co_item where ITEM_CODE = a.CUST_TYPE1)\n"
+				+ "		end as cust_type1\n"
+				+ ",	case\n"
+				+ "			when ifnull(regnum, '') != ''\n"
+				+ "			then CONCAT(SUBSTR(regnum, 1, 3), '-', SUBSTR(regnum, 4, 2), '-', SUBSTR(regnum, 6, 5))\n"
+				+ "			else regnum\n"
+				+ "		end as regnum\n"
+				+ ",	pres_name\n"
+				+ ",	(\n"
+				+ "			select GROUP_CONCAT(interrelated_nm separator '<br/>')\n"
+				+ "			from t_co_cust_ir x\n"
+				+ "			,		t_co_interrelated y\n"
+				+ "			where x.cust_code = a.cust_code\n"
+				+ "			and x.interrelated_cust_code = y.interrelated_cust_code\n"
+				+ "		) as interrelated_nm\n"
+		);
+		
+		StringBuilder sbFrom = new StringBuilder(
+				"FROM	t_co_cust_master a\n"
+				+ "WHERE	a.CERT_YN = 'Y'\n"
+				+ "AND	a.cust_code NOT IN\n"
+				+ "(\n"
+				+ "	select tcci.cust_code\n"
+				+ "	from t_co_cust_ir tcci\n"
+				+ "	where tcci.interrelated_cust_code = :custCode\n"
+				+ ")\n"
+		);
+		
 
         if (!StringUtils.isEmpty(params.get("custType"))) {
-            sbWhere.append(" AND (cust_type1 = :custType OR cust_type2 = :custType)");
+        	sbFrom.append("AND	(a.cust_type1 = :custType OR a.cust_type2 = :custType)");
         }
         if (!StringUtils.isEmpty(params.get("custName"))) {
-            sbWhere.append(" AND cust_name like concat('%',:custName,'%')");
+        	sbFrom.append("AND	cust_name like concat('%',:custName,'%')");
         }
-        sbList.append(sbWhere);
-        sbList.append(" order by create_date desc");
+        sbList.append(sbFrom);
+        sbList.append("order by create_date desc");
         Query queryList = entityManager.createNativeQuery(sbList.toString());
-        sbCount.append(sbWhere);
+        sbCount.append(sbFrom);
         Query queryTotal = entityManager.createNativeQuery(sbCount.toString());
 
         queryList.setParameter("custCode", params.get("custCode"));
@@ -151,6 +175,7 @@ public class CustService {
         BigInteger count = (BigInteger) queryTotal.getSingleResult();
         return new PageImpl(list, pageable, count.intValue());
     }
+	
     public TCoCustMasterDto custDetailForCust(String id) {
         StringBuilder sb = new StringBuilder(" SELECT a.cust_code \n" +
                 "     , cust_name \n" +
