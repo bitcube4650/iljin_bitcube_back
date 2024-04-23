@@ -9,6 +9,7 @@ import iljin.framework.core.util.Util;
 import iljin.framework.ebid.bid.dto.BidCodeDto;
 import iljin.framework.ebid.bid.dto.BidPastDto;
 import iljin.framework.ebid.bid.dto.BidProgressCustDto;
+import iljin.framework.ebid.bid.dto.BidProgressCustUserDto;
 import iljin.framework.ebid.bid.dto.BidProgressDetailDto;
 import iljin.framework.ebid.bid.dto.BidProgressDto;
 import iljin.framework.ebid.bid.dto.BidProgressFileDto;
@@ -380,13 +381,15 @@ public class BidProgressService {
                         +
                         "a.esmt_yn AS esmt_yn, c.file_nm AS file_nm, c.file_path AS file_path, a.etc_b_file AS etc_file, a.etc_b_file_path AS etc_path, a.succ_yn AS succ_yn, "
                         +
-                        "DATE_FORMAT(a.submit_date, '%Y-%m-%d %H:%i') AS submit_date " +
+                        "DATE_FORMAT(a.submit_date, '%Y-%m-%d %H:%i') AS submit_date, "
+                        + "IFNULL(a.usemail_id,'') AS usemail_id " +
                         "FROM t_bi_info_mat_cust a " +
                         "LEFT JOIN t_co_cust_master b ON a.cust_code = b.cust_code " +
                         "LEFT JOIN t_bi_upload c ON a.file_id = c.file_id " +
                         "left join t_co_code d on a.esmt_curr = d.code_val " +
                         "left join t_co_cust_user e on a.cust_code = e.cust_code AND e.user_type = '1' " +
                         "WHERE 1=1 ");
+       
 
         StringBuilder sbWhere = new StringBuilder();
         sbWhere.append(" and a.bi_no = :param ");
@@ -403,21 +406,57 @@ public class BidProgressService {
         Query queryTableList = entityManager.createNativeQuery(sbTableList.toString());
         Query queryFileList = entityManager.createNativeQuery(sbFileList.toString());
         Query queryCustList = entityManager.createNativeQuery(sbCustList.toString());
+        
         queryList.setParameter("param", param);
         queryTableList.setParameter("param", param);
         queryFileList.setParameter("param", param);
         queryCustList.setParameter("param", param);
         
-
         List<BidProgressListDetailDto> resultList = new JpaResultMapper().list(queryList, BidProgressListDetailDto.class);
         List<BidProgressTableDto> tableList = new JpaResultMapper().list(queryTableList, BidProgressTableDto.class);
         List<BidProgressFileDto> fileList = new JpaResultMapper().list(queryFileList, BidProgressFileDto.class);
         List<BidProgressCustDto> custList = new JpaResultMapper().list(queryCustList, BidProgressCustDto.class);
+
         List<List<?>> combinedResults = new ArrayList<>();
         combinedResults.add(resultList);
         combinedResults.add(tableList);
         combinedResults.add(fileList);
         combinedResults.add(custList);
+        
+        if(custList.size() >0) {
+        	
+	        String usemailIdFilter = "";
+	        for (int i = 0; i < custList.size(); i++) {
+	            BidProgressCustDto custDto = custList.get(i);
+	
+	            if (i < custList.size() - 1) {
+	            	usemailIdFilter +=(custDto.getUsemailId().toString()+ ",");
+	            }else {
+	            	usemailIdFilter += custDto.getUsemailId().toString();
+	            }
+	        }
+            
+	        String[] usemailIdArray = usemailIdFilter.split(",");
+
+	        StringBuilder usemailIds = new StringBuilder();
+	
+	        for (int i = 0; i < usemailIdArray.length; i++) {
+	        	usemailIds.append("'").append(usemailIdArray[i].trim()).append("'");
+	
+	            if (i < usemailIdArray.length - 1) {
+	           	 usemailIds.append(", ");
+	            }
+	        }
+         
+            StringBuilder sbCustUserList = new StringBuilder(
+            "select CAST(cust_code AS CHAR) AS CUST_CODE, USER_ID,USER_NAME from t_co_cust_user tccu \r\n"
+            + "	where user_id in(" + usemailIds.toString() + ")");
+            
+            Query queryCustUserList = entityManager.createNativeQuery(sbCustUserList.toString());
+            List<BidProgressCustUserDto> custUserList = new JpaResultMapper().list(queryCustUserList, BidProgressCustUserDto.class);
+            combinedResults.add(custUserList);
+        }
+
 
         return combinedResults;
     }
@@ -571,28 +610,22 @@ public class BidProgressService {
         if( "A".equals(CommonUtils.getString(params.get("biModeCode"))) ) {
                 //지명경쟁입찰
                 sbMail.append(
-        				"select 	tccu.USER_EMAIL\r\n"
-        				+ "				,		tcu.user_email as from_email \r\n"
-        				+ ",	REGEXP_REPLACE(tccu.USER_HP , '[^0-9]+', '') as USER_HP"
-        				+ ",	tccu.USER_NAME "
-        				+ "				from t_co_user tcu \r\n"
-        				+ "				inner join t_co_interrelated tci\r\n"
-        				+ "				on tcu.INTERRELATED_CUST_CODE = tci.INTERRELATED_CUST_CODE\r\n"
-        				+ "				inner join t_co_cust_ir tcci \r\n"
-        				+ "				on tci.INTERRELATED_CUST_CODE = tcci.INTERRELATED_CUST_CODE \r\n"
-        				+ "				inner join t_co_cust_master tccm \r\n"
-        				+ "				on tcci.CUST_CODE = tccm.CUST_CODE 		\r\n"
-        				+ "				left outer join t_co_cust_user tccu \r\n"
-        				+ "				on tccm.CUST_CODE = tccu.CUST_CODE \r\n"
-        				+ "				where tcu.USER_ID = :userId\r\n"
-                		+ "				and tccu.use_yn = 'Y'\r\n"
-        				+ "				and tccu.USER_EMAIL is not null\r\n"
-        				+ "				and tccm.CUST_CODE in(" +  params.get("custCode") + ")"
-        				+ "				union all\r\n"
-            			+ "				select tcu.USER_EMAIL, tcu2.user_email as from_email, REGEXP_REPLACE(tcu.USER_HP , '[^0-9]+', '') as USER_HP ,tcu.USER_NAME from t_co_user tcu \r\n"
-            			+ "				left outer join t_co_user tcu2 \r\n"
-            			+ "				on tcu2.user_id = :userId\r\n"
-            			+ "				where tcu.USER_ID = :cuserCode"
+        				"select tccu.USER_EMAIL \r\n"
+        				+ ",		tcu.user_email as from_email\r\n"
+        				+ ", REGEXP_REPLACE(tccu.USER_HP , '[^0-9]+', '') as USER_HP\r\n"
+        				+ "	,tccu.USER_NAME  from t_co_cust_user tccu \r\n"
+        				+ "	left outer join t_co_user tcu\r\n"
+        				+ "	on tcu.USER_ID = :userId\r\n"
+        				+ "	where tccu.user_id in("+params.get("custUserIds")+")\r\n"
+        				+ "	and tccu.use_yn = 'Y' "
+        				+ "union all\r\n"
+            			+ "select tcu.USER_EMAIL, "
+            			+ "tcu2.user_email as from_email, "
+            			+ "REGEXP_REPLACE(tcu.USER_HP , '[^0-9]+', '') as USER_HP ,"
+            			+ "tcu.USER_NAME from t_co_user tcu \r\n"
+            			+ "left outer join t_co_user tcu2 \r\n"
+            			+ "on tcu2.user_id = :userId\r\n"
+            			+ "where tcu.USER_ID = :cuserCode"
         		);
         		
             }else {
@@ -784,16 +817,28 @@ public class BidProgressService {
         Map<String, Object> emailMap = new HashMap<String, Object>();
         if( "A".equals(CommonUtils.getString(bidContent.get("biModeCode"))) ) {
             List<Map<String, Object >> custContent = (List<Map<String, Object>>) params.get("custContent");
-
+            List<Map<String, Object >> custUserInfo = (List<Map<String, Object>>) bidContent.get("custUserInfo");
+            
                 for (Map<String, Object> data : custContent) {
+                	
+                	String custCode = (String) data.get("custCode");
+                	
+                    Optional<Map<String, Object>> userInfoOptional = custUserInfo.stream()
+                            .filter(userInfo -> custCode.equals(userInfo.get("custCode")))
+                            .findFirst();
+                    
+                    Map<String, Object> userInfo = userInfoOptional.get();
+                    String usemailId = (String) userInfo.get("usemailId");
+                    
                     StringBuilder sbList2 = new StringBuilder(
-                            "INSERT into t_bi_info_mat_cust (bi_no, cust_code, rebid_att, esmt_yn, esmt_amt, succ_yn, create_user, create_date) "
+                            "INSERT into t_bi_info_mat_cust (bi_no, cust_code, rebid_att, esmt_yn, esmt_amt, succ_yn, create_user, create_date,usemail_id) "
                                     +
-                                    "values (:biNo, :custCode, 'N', '0', 0, 'N', :userId, sysdate())");
+                                    "values (:biNo, :custCode, 'N', '0', 0, 'N', :userId, sysdate(),:usemailId)");
                     Query queryList2 = entityManager.createNativeQuery(sbList2.toString());
                     queryList2.setParameter("biNo", (String) data.get("biNo"));
-                    queryList2.setParameter("custCode", (String) data.get("custCode"));
+                    queryList2.setParameter("custCode", (String) custCode);
                     queryList2.setParameter("userId", userId);
+                    queryList2.setParameter("usemailId", usemailId);
                     queryList2.executeUpdate();
                 }
 
@@ -1212,16 +1257,27 @@ public class BidProgressService {
 	        if( "A".equals(CommonUtils.getString(bidContent.get("biModeCode"))) ) {
 	
 	            List<Map<String, Object >> custContent = (List<Map<String, Object>>) params.get("custContent");
+	            List<Map<String, Object >> custUserInfo = (List<Map<String, Object>>) bidContent.get("custUserInfo");
 	            //if(params.get(0).containsKey("insertYn") ) {
 	                for (Map<String, Object> data : custContent) {
+	                	String custCode = (String) data.get("custCode");
+	                	
+	                	Optional<Map<String, Object>> userInfoOptional = custUserInfo.stream()
+	                            .filter(userInfo -> custCode.equals(userInfo.get("custCode")))
+	                            .findFirst();
+	                    
+	                    Map<String, Object> userInfo = userInfoOptional.get();
+	                    String usemailId = (String) userInfo.get("usemailId");
+	                    
 	                    StringBuilder sbList2 = new StringBuilder(
-	                            "INSERT into t_bi_info_mat_cust (bi_no, cust_code, rebid_att, esmt_yn, esmt_amt, succ_yn, create_user, create_date) "
+	                            "INSERT into t_bi_info_mat_cust (bi_no, cust_code, rebid_att, esmt_yn, esmt_amt, succ_yn, create_user, create_date,usemail_id) "
 	                                    +
-	                                    "values (:biNo, :custCode, 'N', '0', 0, 'N', :userId, sysdate())");
+	                                    "values (:biNo, :custCode, 'N', '0', 0, 'N', :userId, sysdate(),:usemailId)");
 	                    Query queryList2 = entityManager.createNativeQuery(sbList2.toString());
 	                    queryList2.setParameter("biNo", biNo);
-	                    queryList2.setParameter("custCode", (String) data.get("custCode"));
+	                    queryList2.setParameter("custCode", custCode);
 	                    queryList2.setParameter("userId", userId);
+	                    queryList2.setParameter("usemailId", usemailId);
 	                    queryList2.executeUpdate();
 	                }
 	            //}

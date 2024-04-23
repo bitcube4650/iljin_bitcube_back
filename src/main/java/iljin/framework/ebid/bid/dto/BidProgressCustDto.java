@@ -26,9 +26,10 @@ public class BidProgressCustDto {
     String etcPath;
     String succYn;
     String submitDate;
+    String usemailId;
 
     public BidProgressCustDto(String biNo, String custCode, String custName, String esmtCurr, BigDecimal esmtAmt, String userName, String esmtYn,
-                String fileNm, String filePath, String etcFile, String etcPath, String succYn, String submitDate){
+                String fileNm, String filePath, String etcFile, String etcPath, String succYn, String submitDate,String usemailId){
         this.biNo = biNo;
         this.custCode = custCode;
         this.custName = custName;
@@ -42,5 +43,6 @@ public class BidProgressCustDto {
         this.etcPath = etcPath;
         this.succYn = succYn;
         this.submitDate = submitDate;
+        this.usemailId = usemailId;
     }
 }
