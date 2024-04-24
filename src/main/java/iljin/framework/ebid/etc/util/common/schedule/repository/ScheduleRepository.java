@@ -5,6 +5,8 @@ import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+
+import java.time.LocalDate;
 import java.util.List;
 
 @Repository
@@ -68,7 +70,9 @@ public class ScheduleRepository {
     }
 
     public List<MailEntity> findAllMailInfo() {
-        return em.createQuery("select m from MailEntity m where m.sendFlag = '0' and m.createDate >= DATE_SUB(CURDATE(), 7, 'DAY')", MailEntity.class)
+    	LocalDate sevenDaysAgo = LocalDate.now().minusDays(7);
+        return em.createQuery("select m from MailEntity m where m.sendFlag = '0' and m.createDate >= :sevenDaysAgo", MailEntity.class)
+                .setParameter("sevenDaysAgo", sevenDaysAgo)
                 .getResultList();
 
     }
