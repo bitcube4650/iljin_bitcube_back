@@ -837,7 +837,7 @@ public class BidCompleteService {
 			sbCount.append("where tbimc.ESMT_YN IN ( '2', '3' ) " + sbWhereIf);
 			sbList.append("where tbimc.ESMT_YN IN ( '2', '3' ) " + sbWhereIf);
 			
-			sbList.append("order by tbim.UPDATE_DATE desc ");
+			sbList.append("order by tbim.BID_OPEN_DATE desc ");
 		
 			//쿼리 실행
 			Query queryList = entityManager.createNativeQuery(sbList.toString());

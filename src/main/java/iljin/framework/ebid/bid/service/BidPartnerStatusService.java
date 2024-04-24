@@ -167,7 +167,7 @@ public class BidPartnerStatusService {
 			}
 	
 			sbList.append(sbWhere);
-			sbList.append(" order by tbim.EST_START_DATE ");
+			sbList.append(" order by tbim.EST_START_DATE desc");
 			sbCount.append(sbWhere);
 	
 			Query queryList = entityManager.createNativeQuery(sbList.toString());
