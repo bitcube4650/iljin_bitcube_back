@@ -44,6 +44,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.servlet.http.HttpServletRequest;
@@ -145,37 +146,43 @@ public class UserServiceImpl implements UserService {
 								            		  );    
             Query query2 = entityManager.createNativeQuery(sbQuery2.toString());
             query2.setParameter("loginId", loginId);
-            
-            Optional<Object> certYnOptional = Optional.ofNullable(query2.getSingleResult());
-            String certYn = null;
-            String userPwd = null;
+            try {
+            	Optional<Object> certYnOptional = Optional.ofNullable(query2.getSingleResult());
+                String certYn = null;
+                String userPwd = null;
 
-            if (certYnOptional.isPresent()) {//협력사인 경우
-            	Object row = certYnOptional.get();
-                if (row instanceof Object[]) {
-                    Object[] values = (Object[]) row;
-                    if (values.length > 0) {
-                        certYn = (String) values[0]; // 첫 번째 열은 'cert_yn' 값
+                if (certYnOptional.isPresent()) {//협력사인 경우
+                	Object row = certYnOptional.get();
+                    if (row instanceof Object[]) {
+                        Object[] values = (Object[]) row;
+                        if (values.length > 0) {
+                            certYn = (String) values[0]; // 첫 번째 열은 'cert_yn' 값
+                        }
+                        if (values.length > 1) {
+                            userPwd = (String) values[1]; // 두 번째 열은 'user_pwd' 값
+                        }
                     }
-                    if (values.length > 1) {
-                        userPwd = (String) values[1]; // 두 번째 열은 'user_pwd' 값
+                    if(certYn != null && userPwd != null) {
+                    	// db 비밀번호
+                		String dbPassword = userPwd;
+
+                		// 비밀번호 체크
+                		boolean pwdCheck = ((BCryptPasswordEncoder) passwordEncoder).matches(loginPw, dbPassword);
+                		
+                		if(pwdCheck ) {//비밀번호 일치
+                            if(certYn.equals("N")) {//아이디 비밀번호는 일치하지만 아직 승인이 안된 협력사인 경우
+                            	//403에러 발생
+                            	return new ResponseEntity<>(new AuthToken(
+                                        null, null, null, null, null, null, null, false), HttpStatus.FORBIDDEN);
+                            }
+                		}
                     }
+                    
                 }
-                
-                // db 비밀번호
-        		String dbPassword = userPwd;
-
-        		// 비밀번호 체크
-        		boolean pwdCheck = ((BCryptPasswordEncoder) passwordEncoder).matches(loginPw, dbPassword);
-        		
-        		if(pwdCheck ) {//비밀번호 일치
-                    if(certYn.equals("N")) {//아이디 비밀번호는 일치하지만 아직 승인이 안된 협력사인 경우
-                    	//403에러 발생
-                    	return new ResponseEntity<>(new AuthToken(
-                                null, null, null, null, null, null, null, false), HttpStatus.FORBIDDEN);
-                    }
-        		}
+            }catch(NoResultException e) {//결과가 없는 경우로 잘못된 아이디 이거나 계열사인 경우
+            	
             }
+            
             Optional<AuthToken> result =
                     user.map(obj -> {
                         // 1. username, password를 조합하여 UsernamePasswordAuthenticationToken 생성
