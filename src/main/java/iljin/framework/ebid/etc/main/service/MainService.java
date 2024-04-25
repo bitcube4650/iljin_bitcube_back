@@ -1,6 +1,5 @@
 package iljin.framework.ebid.etc.main.service;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -14,6 +13,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
+import org.qlrm.mapper.JpaResultMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -26,6 +26,7 @@ import iljin.framework.core.dto.ResultBody;
 import iljin.framework.core.security.user.UserService;
 import iljin.framework.ebid.bid.dto.InterUserInfoDto;
 import iljin.framework.ebid.bid.service.BidProgressService;
+import iljin.framework.ebid.custom.dto.TCoUserDto;
 import iljin.framework.ebid.custom.entity.TCoCustUser;
 import iljin.framework.ebid.custom.entity.TCoInterrelated;
 import iljin.framework.ebid.custom.entity.TCoUser;
@@ -603,6 +604,54 @@ public class MainService {
 		}
 		
 		return resultBody;
+	}
+	
+	// 초기 계열사 사용자 비밀번호 변경 처리
+    @SuppressWarnings("rawtypes")
+	@Transactional
+	public void chgPwdFirst() {
+//		log.info("-----------------------chgPwdFirst service start----------------------");
+		// 계열사 사용자 리스트 조회
+    	// 새로 쿼리를 짜면 dto를 하나 더 생성해야해서 기존 쿼리에서 쓰던 dto를 사용하기위해 쿼리가 길어짐
+		StringBuilder sbList = new StringBuilder(" select "
+				+ "user_name"
+				+ ", user_id"
+				+ ", user_position"
+				+ ", dept_name"
+				+ ", user_tel"
+				+ ", user_hp"
+				+ ", user_auth"
+				+ ", use_yn"
+				+ ", interrelated_cust_code as interrelated_cust_nm "
+				+ "from t_co_user a "
+				+ "where 1=1 "
+//				+ "and user_id = 'gaksa01' "
+				+ " ");
+        Query queryList = entityManager.createNativeQuery(sbList.toString());
+        List list = new JpaResultMapper().list(queryList, TCoUserDto.class);
+        
+        for(int i = 0; i < list.size(); i++) {
+        	TCoUserDto userInfo = (TCoUserDto) list.get(i);
+        	String userId = userInfo.getUserId();
+        	// 패스워드 규칙 사용자 아이디 + !@# 
+    		String chgPwd = userId + "!@#";
+    		// 비밀번호 암호화
+    		String encodedPassword = passwordEncoder.encode(chgPwd);
+    		// 업데이트
+    		StringBuilder sbQuery = new StringBuilder(
+    	            " update t_co_user "
+    	            + " set user_pwd = :userPwd "
+//    	            + ", pwd_edit_yn = 'Y'"
+//    	            + ", pwd_edit_date = now()"
+//    	            + ", update_user = :updateUser"
+//    	            + ", update_date = now() "
+    	            + " where user_id = :userId ");
+            Query query = entityManager.createNativeQuery(sbQuery.toString());
+            query.setParameter("userId", userId);
+            query.setParameter("userPwd", encodedPassword);
+            query.executeUpdate();
+        }
+//        log.info("-----------------------chgPwdFirst service end----------------------");
 	}
 	
 
