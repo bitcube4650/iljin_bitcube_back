@@ -45,6 +45,7 @@ public class CommonUtils {
         Properties prop = new Properties();
 
         prop.put("mail.smtp.host", Constances.MAIL_HOST);
+        prop.put("mail.smtp.port", Constances.MAIL_PORT);
         prop.put(MAIL_SMTP_CONNECTIONTIMEOUT, MAIL_SOCKET_TIMEOUT);
         prop.put(MAIL_SMTP_TIMEOUT, MAIL_SOCKET_TIMEOUT);
         prop.put(MAIL_SMTP_WRITETIMEOUT, MAIL_SOCKET_TIMEOUT);
@@ -98,6 +99,7 @@ public class CommonUtils {
         Properties prop = new Properties();
 
         prop.put("mail.smtp.host", Constances.MAIL_HOST);
+        prop.put("mail.smtp.port", Constances.MAIL_PORT);
         prop.put(MAIL_SMTP_CONNECTIONTIMEOUT, MAIL_SOCKET_TIMEOUT);
         prop.put(MAIL_SMTP_TIMEOUT, MAIL_SOCKET_TIMEOUT);
         prop.put(MAIL_SMTP_WRITETIMEOUT, MAIL_SOCKET_TIMEOUT);
