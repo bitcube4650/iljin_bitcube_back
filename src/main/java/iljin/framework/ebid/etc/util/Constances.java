@@ -49,6 +49,7 @@ public class Constances {
     /*----------------------Mail Constances----------------------------*/
 
     public static String MAIL_HOST;
+    public static String MAIL_PORT;
     public static String MAIL_SENDER_ADDRESS;
     public static String MAIL_REPLYTO_ADDRESS;
     public static String MAIL_LINK_URL;
@@ -57,6 +58,12 @@ public class Constances {
     @Value("${mail.host}")
     private void setMailHost(String mailHost) {
         Constances.MAIL_HOST = mailHost;
+    }
+    
+  //메일호스트정보
+    @Value("${mail.port}")
+    private void setMailPort(String mailPort) {
+        Constances.MAIL_PORT = mailPort;
     }
 
     @Value("${mail.sender.address}")

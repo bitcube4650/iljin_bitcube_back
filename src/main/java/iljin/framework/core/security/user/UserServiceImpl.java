@@ -350,6 +350,16 @@ public class UserServiceImpl implements UserService {
                     , null
                     , null
                     , false), HttpStatus.UNAUTHORIZED);
+        } catch(NoResultException e) {//결과가 없는 경우 > 계열사인데 전자입찰에는 계정이 생성안된 경우
+        	return new ResponseEntity<>(new AuthToken(
+                    null
+                    , null
+                    , null
+                    , null
+                    , null
+                    , null
+                    , null
+                    , false), HttpStatus.UNAUTHORIZED);
         }
     }
 

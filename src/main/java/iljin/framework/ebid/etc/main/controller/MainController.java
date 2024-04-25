@@ -13,6 +13,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -121,4 +122,15 @@ public class MainController {
 				
 	}
 	
+
+	// 초기 계열사 사용자 비밀번호 변경 처리
+	@PostMapping("/chgPwdFirst")
+    public void chgPwdFirst() {
+		log.info("-----------------------chgPwdFirst start----------------------");
+//		try {
+			mainService.chgPwdFirst();
+//		}catch(Exception e) {
+//		}
+		log.info("-----------------------chgPwdFirst end----------------------");
+    }
 }
