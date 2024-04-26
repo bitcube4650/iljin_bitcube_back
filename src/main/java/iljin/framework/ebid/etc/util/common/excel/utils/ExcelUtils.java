@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
@@ -635,11 +636,11 @@ public final class ExcelUtils implements ExcelSupport {
             	
             	String name = CommonUtils.getString(map.get("name"), "");//품목명
             	String ssize = CommonUtils.getString(map.get("ssize"), "");//규격
-            	int orderQty = (int) map.get("orderQty");//수량
             	String unitcode = CommonUtils.getString(map.get("unitcode"), "");//단위
-            	int orderUc = (int)map.get("orderUc");//실행단가
+            	BigInteger orderUc =  BigInteger.valueOf((int)map.get("orderUc"));//실행단가
+            	BigInteger orderQty = BigInteger.valueOf((int)map.get("orderQty"));//수량
             	String strOrderUc = decimalFormat.format(orderUc);
-            	int itemTotal = orderQty * orderUc;//합계
+            	BigInteger  itemTotal = orderQty.multiply(orderUc) ;//합계
             	String strItemTotal = decimalFormat.format(itemTotal);
 
             	
@@ -648,11 +649,11 @@ public final class ExcelUtils implements ExcelSupport {
             	Cell cell2 = newRow.createCell(2);
             	cell2.setCellValue(ssize);
             	Cell cell3 = newRow.createCell(3);
-            	cell3.setCellValue(orderQty);
+            	cell3.setCellValue(unitcode);
             	Cell cell4 = newRow.createCell(4);
-            	cell4.setCellValue(unitcode);
+            	cell4.setCellValue(strOrderUc);
             	Cell cell5 = newRow.createCell(5);
-            	cell5.setCellValue(strOrderUc);
+            	cell5.setCellValue(decimalFormat.format(orderQty));
             	Cell cell6 = newRow.createCell(6);
             	cell6.setCellValue(strItemTotal);
             	
@@ -660,9 +661,17 @@ public final class ExcelUtils implements ExcelSupport {
             	cell1.setCellStyle(cellStyle);
             	cell2.setCellStyle(cellStyle);
             	cell3.setCellStyle(cellStyle);
-            	cell4.setCellStyle(cellStyle);
-            	cell5.setCellStyle(cellStyle);
-            	cell6.setCellStyle(cellStyle);
+            	
+            	//밑에 3개의 셀만 숫자라서 오른쪽 정렬
+            	CellStyle cellStyleRight = xssfWorkBook.createCellStyle();
+            	cellStyleRight.setBorderTop(BorderStyle.THIN);
+            	cellStyleRight.setBorderBottom(BorderStyle.THIN);
+            	cellStyleRight.setBorderLeft(BorderStyle.THIN);
+            	cellStyleRight.setBorderRight(BorderStyle.THIN);
+            	cellStyleRight.setAlignment(HorizontalAlignment.RIGHT);
+            	cell4.setCellStyle(cellStyleRight);
+            	cell5.setCellStyle(cellStyleRight);
+            	cell6.setCellStyle(cellStyleRight);
             	
             	//내역사항 셀 밑에 테두리 두께 적용
             	if(startIdx == 28+tableContent.size()) {
