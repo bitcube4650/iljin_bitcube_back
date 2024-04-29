@@ -644,6 +644,7 @@ public class BidStatusService {
 			+	"	ON	tbimc.BI_NO = tbim.BI_NO "
 			+	"WHERE	tbimc.bi_no = :biNo "
 			+	"AND	tbimc.ESMT_YN = '2' "
+			+	"AND	tbimc.BI_ORDER = (select MAX(BI_ORDER) from t_bi_info_mat_cust where BI_NO = :biNo) "
 		);
 		
 		Query queryCustList = entityManager.createNativeQuery(sbCustList.toString());
@@ -1068,6 +1069,7 @@ public class BidStatusService {
 			+ ",		FILE_HASH_VALUE = NULL "
 			+ ",		UPDATE_USER = :userId "
 			+ ",		UPDATE_DATE = sysdate() "
+			+ ",		BI_ORDER = BI_ORDER + 1 "
 			+ "WHERE	BI_NO = :biNo "
 			+ "AND		CUST_CODE IN ( :custCode ) "
 		);
