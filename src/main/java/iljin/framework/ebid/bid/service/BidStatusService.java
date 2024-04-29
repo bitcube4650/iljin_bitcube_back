@@ -1049,6 +1049,7 @@ public class BidStatusService {
 		StringBuilder sbCustDetailDel = new StringBuilder(
 			  "DELETE FROM t_bi_detail_mat_cust "
 			+ "WHERE BI_NO = :biNo "
+			+ "AND	CUST_CODE IN ( :custCode )"
 		);
 		
 		Query queryCustDetailDel = entityManager.createNativeQuery(sbCustDetailDel.toString());
