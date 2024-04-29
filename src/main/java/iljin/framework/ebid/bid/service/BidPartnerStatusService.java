@@ -603,7 +603,9 @@ public class BidPartnerStatusService {
 			}
 			
 			tBiInfoMatCust.setRebidAtt(optional.get().getRebidAtt());
-			tBiInfoMatCust.setBiOrder(CommonUtils.getInt(optional.get().getBiOrder()) + 1);
+			if(optional.get().getRebidAtt().equals("N")) {
+				tBiInfoMatCust.setBiOrder(CommonUtils.getInt(optional.get().getBiOrder()) + 1);
+			}
 			tBiInfoMatCust.setEsmtCurr(CommonUtils.getString(params.get("esmtCurr")));
 		}
 		
