@@ -1074,7 +1074,7 @@ public class BidStatusService {
 			+ ",		FILE_HASH_VALUE = NULL "
 			+ ",		UPDATE_USER = :userId "
 			+ ",		UPDATE_DATE = sysdate() "
-			+ ",		BI_ORDER = BI_ORDER + 1 "
+			+ ",		BI_ORDER = (select MAX(BI_ORDER)+1 from t_bi_info_mat_cust where BI_NO = :biNo) "
 			+ "WHERE	BI_NO = :biNo "
 			+ "AND		CUST_CODE IN ( :custCode ) "
 		);
