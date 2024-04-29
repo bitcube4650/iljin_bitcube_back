@@ -1046,6 +1046,9 @@ public class BidStatusService {
 		queryReCust.executeUpdate();
 		
 		//협력사 상세내역 삭제
+		
+		ArrayList<Integer> reCustList = (ArrayList<Integer>) params.get("reCustList");
+		
 		StringBuilder sbCustDetailDel = new StringBuilder(
 			  "DELETE FROM t_bi_detail_mat_cust "
 			+ "WHERE BI_NO = :biNo "
@@ -1054,6 +1057,7 @@ public class BidStatusService {
 		
 		Query queryCustDetailDel = entityManager.createNativeQuery(sbCustDetailDel.toString());
 		queryCustDetailDel.setParameter("biNo", biNo);
+		queryCustDetailDel.setParameter("custCode", reCustList);
 		queryCustDetailDel.executeUpdate();
 		
 		//협력사 재입찰대상만 업데이트
@@ -1074,8 +1078,6 @@ public class BidStatusService {
 			+ "WHERE	BI_NO = :biNo "
 			+ "AND		CUST_CODE IN ( :custCode ) "
 		);
-		
-		ArrayList<Integer> reCustList = (ArrayList<Integer>) params.get("reCustList");
 		
 		Query queryCustUpdate = entityManager.createNativeQuery(sbCustUpdate.toString());
 		queryCustUpdate.setParameter("biNo", biNo);
