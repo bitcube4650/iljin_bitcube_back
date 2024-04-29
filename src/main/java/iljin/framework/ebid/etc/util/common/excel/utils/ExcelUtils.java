@@ -6,6 +6,8 @@ import iljin.framework.ebid.etc.util.common.excel.concreteExcelGenerator.*;
 import iljin.framework.ebid.etc.util.common.excel.dto.BidProgressResponseDto;
 import iljin.framework.ebid.etc.util.common.excel.repository.ExcelRepository;
 import lombok.extern.slf4j.Slf4j;
+
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
@@ -573,7 +575,14 @@ public final class ExcelUtils implements ExcelSupport {
         String custName     = CommonUtils.getString(custNameBuilder, "가입회원사 전체"); //입찰참가업체 -> 일반경쟁입찰 일 경우, default로 가입회원사 전체
         String amtBasis     = CommonUtils.getString(result.get("amtBasis"), "");         //금액기준
         String payCond      = CommonUtils.getString(result.get("payCond"), "");          //결제조건
-        String bdAmt        = CommonUtils.getString(decimalFormat.format(result.get("bdAmt")), "");//예산금액
+        
+        String bdAmt        = CommonUtils.getString(result.get("bdAmt"), "");//예산금액
+        
+        if (StringUtils.isNotBlank(bdAmt)) {
+            BigInteger amount = new BigInteger(bdAmt);
+            bdAmt = CommonUtils.getString(decimalFormat.format(amount), "");
+        }
+        
         String cuser        = CommonUtils.getString(result.get("cuser"), "");            //입찰담당자
 
         /*
