@@ -436,7 +436,7 @@ public class MainService {
 				
 				if(userOptional2.isPresent()) {
 				
-					String userTel = userOptional2.get().getUserHp();
+					String userTel = userOptional2.get().getUserTel();
 					String userHp = userOptional2.get().getUserHp();
 					String userEmail = userOptional2.get().getUserEmail();
 					LocalDateTime pwdChgDate = userOptional2.get().getPwdChgDate();
@@ -446,7 +446,7 @@ public class MainService {
 					if(pwdChgDate != null) {
 						formattedDateTime = pwdChgDate.format(formatter);
 					}
-			        
+					
 					userInfo.put("userTel", userTel);
 					userInfo.put("userHp", userHp);
 					userInfo.put("userEmail", userEmail);

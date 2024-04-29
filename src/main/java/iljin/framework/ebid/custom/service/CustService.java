@@ -568,7 +568,7 @@ public class CustService {
         query.setParameter("custName",		params.get("custName"));
         query.setParameter("regnum",		CommonUtils.getString(params.get("regnum1"))+CommonUtils.getString(params.get("regnum2"))+CommonUtils.getString(params.get("regnum3")));
         query.setParameter("presName",		params.get("presName"));
-        query.setParameter("presJuminNo",	CommonUtils.getString(params.get("presJuminNo1"))+CommonUtils.getString(params.get("presJuminNo1")));
+        query.setParameter("presJuminNo",	CommonUtils.getString(params.get("presJuminNo1"))+CommonUtils.getString(params.get("presJuminNo2")));
         query.setParameter("tel",			CommonUtils.getString(params.get("tel")).replaceAll("-", ""));
         query.setParameter("fax",			CommonUtils.getString(params.get("fax")).replaceAll("-", ""));
         query.setParameter("zipcode",		params.get("zipcode"));
