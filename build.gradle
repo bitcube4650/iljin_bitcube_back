@@ -76,6 +76,7 @@ dependencies {
     implementation 'org.apache.poi:poi:4.1.2'
     implementation 'com.opencsv:opencsv:5.5'
     implementation 'com.mashape.unirest:unirest-java:1.4.9'
+    implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.0'
 
 
     runtimeOnly 'org.springframework.boot:spring-boot-devtools'

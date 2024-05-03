@@ -21,6 +21,7 @@ import iljin.framework.ebid.bid.repository.TBiInfoMatRepository;
 import iljin.framework.ebid.custom.entity.TCoCustUser;
 import iljin.framework.ebid.custom.repository.TCoCustUserRepository;
 import iljin.framework.ebid.etc.util.CommonUtils;
+import iljin.framework.ebid.etc.util.GeneralDao;
 import iljin.framework.ebid.etc.util.PagaUtils;
 import iljin.framework.ebid.etc.util.common.certificate.service.CertificateService;
 import iljin.framework.ebid.etc.util.common.file.FileService;
@@ -79,6 +80,9 @@ public class BidPartnerStatusService {
     
     @Value("${file.upload.directory}")
     private String uploadDirectory;
+    
+    @Autowired
+    GeneralDao generalDao;
 
 	/**
 	 * 협력사 입찰진행
@@ -655,6 +659,28 @@ public class BidPartnerStatusService {
 			log.error("bidSubmitting log error : {}", e);
 		}
 			
+		return resultBody;
+	}
+	
+	/**
+	 * TEST mybatis
+	 * @param params
+	 * @return
+	 */
+	public ResultBody test(@RequestBody Map<String, Object> params)  {
+		ResultBody resultBody = new ResultBody();
+		
+		System.out.println("@@@@@@@@@@@@@@@@" + params);
+		try {
+			List<Object> test = generalDao.selectGernalList("test.testUserId", params);
+			int cnt = (int) generalDao.selectGernalCount("test.testUserIdCnt", params);
+			System.out.println("asdfasdf " + test );
+			System.out.println("asdfasdf " + cnt );
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		
+		
 		return resultBody;
 	}
 }
