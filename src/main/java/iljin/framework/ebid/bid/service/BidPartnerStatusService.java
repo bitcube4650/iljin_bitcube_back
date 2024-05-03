@@ -662,25 +662,4 @@ public class BidPartnerStatusService {
 		return resultBody;
 	}
 	
-	/**
-	 * TEST mybatis
-	 * @param params
-	 * @return
-	 */
-	public ResultBody test(@RequestBody Map<String, Object> params)  {
-		ResultBody resultBody = new ResultBody();
-		
-		System.out.println("@@@@@@@@@@@@@@@@" + params);
-		try {
-			List<Object> test = generalDao.selectGernalList("test.testUserId", params);
-			int cnt = (int) generalDao.selectGernalCount("test.testUserIdCnt", params);
-			System.out.println("asdfasdf " + test );
-			System.out.println("asdfasdf " + cnt );
-		} catch (Exception e) {
-			// TODO: handle exception
-		}
-		
-		
-		return resultBody;
-	}
 }

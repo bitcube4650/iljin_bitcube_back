@@ -39,9 +39,7 @@ public class BidPartnerStatusController {
 	 */
 	@PostMapping("/statuslist")
 	public ResultBody statuslist(@RequestBody Map<String, Object> params) {
-		System.out.println("!!!!!!!!!!!!!!!!");
-//		return bidPartnerStatusService.statuslist(params);
-		return bidPartnerStatusService.test(params);
+		return bidPartnerStatusService.statuslist(params);
 	}
 	
 	/**
