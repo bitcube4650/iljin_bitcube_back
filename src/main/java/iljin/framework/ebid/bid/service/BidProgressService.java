@@ -22,6 +22,7 @@ import iljin.framework.ebid.bid.dto.InterrelatedCustDto;
 import iljin.framework.ebid.custom.entity.TCoUser;
 import iljin.framework.ebid.custom.repository.TCoUserRepository;
 import iljin.framework.ebid.etc.util.CommonUtils;
+import iljin.framework.ebid.etc.util.GeneralDao;
 import iljin.framework.ebid.etc.util.PagaUtils;
 import iljin.framework.ebid.etc.util.common.file.FileService;
 import iljin.framework.ebid.etc.util.common.message.MessageService;
@@ -78,6 +79,9 @@ public class BidProgressService {
     
     @Autowired
     private MessageService messageService;
+    
+    @Autowired
+    GeneralDao generalDao;
 
     @Value("${file.upload.directory}")
     private String uploadDirectory;
@@ -205,120 +209,47 @@ public class BidProgressService {
         return new PageImpl(list, pageable, count.intValue());
     }
 
-    public Page progresslist(@RequestBody Map<String, Object> params) {
-
-        UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Optional<TCoUser> userOptional = tCoUserRepository.findById(principal.getUsername());
-
-        String userAuth = userOptional.get().getUserAuth();
-        String interrelatedCode = userOptional.get().getInterrelatedCustCode();
-
-        String userId = principal.getUsername();
-
-        StringBuilder sbCount = new StringBuilder(
-                " select count(1) from t_bi_info_mat a where 1=1 AND a.ing_tag = 'A0' ");
-        StringBuilder sbList = new StringBuilder(
-                "SELECT a.bi_no AS bi_no, a.bi_name AS bi_name, " +
-                        "DATE_FORMAT(a.est_start_date, '%Y-%m-%d %H:%i') AS est_start_date, " +
-                        "DATE_FORMAT(a.est_close_date, '%Y-%m-%d %H:%i') AS est_close_date, " +
-                        "CASE WHEN a.bi_mode = 'A' THEN '지명' ELSE '일반' END AS bi_mode, " +
-                        "CASE WHEN a.ins_mode = '1' THEN '파일' ELSE '직접입력' END AS ins_mode, a.ing_tag AS ing_tag, " +
-                        "b.user_name AS cuser, b.user_email AS cuser_email, " +
-                        "c.user_name AS gongo_id, c.user_email AS gongo_email, " +
-                        "a.interrelated_cust_code AS interrelated_cust_code " +
-                        "FROM t_bi_info_mat a LEFT JOIN t_co_user b ON a.create_user = b.user_id LEFT JOIN t_co_user c ON a.gongo_id = c.user_id "
-                        +
-                        "WHERE a.ing_tag = 'A0'");
-        StringBuilder sbWhere = new StringBuilder();
-
-        if (!StringUtils.isEmpty(params.get("bidNo"))) {
-            sbWhere.append(" and a.bi_no like concat('%',:bidNo,'%') ");
-        }
-
-        if (!StringUtils.isEmpty(params.get("bidName"))) {
-            sbWhere.append(" and a.bi_name like concat('%',:bidName,'%') ");
-        }
-
-        if (userAuth.equals("1") || userAuth.equals("2") || userAuth.equals("3")) {
-            sbWhere.append(" AND a.interrelated_cust_code = :interrelatedCustCode " +
-                    "and (a.create_user = :userid " +
-                    "or a.open_att1 = :userid " +
-                    "or a.open_att2 = :userid " +
-                    "or a.gongo_id = :userid " +
-                    "or a.est_bidder = :userid " +
-                    "or a.est_opener = :userid)");
-        }
-
-        if (userAuth.equals("4")) {
-            sbWhere.append(
-                    "and (a.create_user = :userid " +
-                            "or a.open_att1 = :userid " +
-                            "or a.open_att2 = :userid " +
-                            "or a.gongo_id = :userid " +
-                            "or a.est_bidder = :userid " +
-                            "or a.est_opener = :userid)");
-
-            List<InterUserInfoDto> userInfoList = (List<InterUserInfoDto>) findInterCustCode(userId);
-            List<String> custCodes = new ArrayList<>();
-            for (InterUserInfoDto userInfo : userInfoList) {
-                custCodes.add(userInfo.getInterrelatedCustCode());
-            }
-            sbWhere.append(" and (");
-            for (int i = 0; i < custCodes.size(); i++) {
-                if (i > 0) {
-                    sbWhere.append(" or ");
-                }
-                sbWhere.append("a.interrelated_cust_code = :custCode").append(i);
-            }
-            sbWhere.append(" or a.interrelated_cust_code = :interrelatedCustCode");
-            sbWhere.append(")");
-        }
-        sbList.append(sbWhere);
-        sbList.append(" order by a.bi_no desc");
-        Query queryList = entityManager.createNativeQuery(sbList.toString());
-        sbCount.append(sbWhere);
-        Query queryTotal = entityManager.createNativeQuery(sbCount.toString());
-
-        if (!StringUtils.isEmpty(params.get("bidNo"))) {
-            queryList.setParameter("bidNo", params.get("bidNo"));
-            queryTotal.setParameter("bidNo", params.get("bidNo"));
-        }
-        if (!StringUtils.isEmpty(params.get("bidName"))) {
-            queryList.setParameter("bidName", params.get("bidName"));
-            queryTotal.setParameter("bidName", params.get("bidName"));
-        }
-        if (userAuth.equals("1") || userAuth.equals("2") || userAuth.equals("3")) {
-            queryList.setParameter("interrelatedCustCode", interrelatedCode);
-            queryTotal.setParameter("interrelatedCustCode", interrelatedCode);
-            queryList.setParameter("userid", userId);
-            queryTotal.setParameter("userid", userId);
-        }
-        if (userAuth.equals("4")) {
-            List<InterUserInfoDto> userInfoList = (List<InterUserInfoDto>) findInterCustCode(userId);
-            List<String> custCodes = new ArrayList<>();
-            for (InterUserInfoDto userInfo : userInfoList) {
-                custCodes.add(userInfo.getInterrelatedCustCode());
-            }
-
-            for (int i = 0; i < custCodes.size(); i++) {
-                queryList.setParameter("custCode" + i, custCodes.get(i));
-                queryTotal.setParameter("custCode" + i, custCodes.get(i));
-            }
-
-            queryList.setParameter("interrelatedCustCode", interrelatedCode);
-            queryTotal.setParameter("interrelatedCustCode", interrelatedCode);
-            queryList.setParameter("userid", userId);
-            queryTotal.setParameter("userid", userId);
-        }
-
-        Pageable pageable = PagaUtils.pageable(params);
-        queryList.setFirstResult(pageable.getPageNumber() * pageable.getPageSize())
-                .setMaxResults(pageable.getPageSize()).getResultList();
-        List list = new JpaResultMapper().list(queryList, BidProgressDto.class);
-
-        BigInteger count = (BigInteger) queryTotal.getSingleResult();
-        return new PageImpl(list, pageable, count.intValue());
-    }
+	public Page progresslist(@RequestBody Map<String, Object> params) {
+		ResultBody resultBody = new ResultBody();
+		
+		try {
+			UserDetails			principal	= (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+			Optional<TCoUser>	userOptional= tCoUserRepository.findById(principal.getUsername());
+			
+			String userAuth			= userOptional.get().getUserAuth();
+			String interrelatedCode	= userOptional.get().getInterrelatedCustCode();
+			String userId			= principal.getUsername();
+			
+			params.put("bidNo"					, params.get("bidNo"));
+			params.put("bidName"				, params.get("bidName"));
+			params.put("interrelatedCustCode"	, interrelatedCode);
+			params.put("userid"					, userId);
+			params.put("userAuth"				, userAuth);
+			
+			if (userAuth.equals("4")) {
+				List<InterUserInfoDto> userInfoList = (List<InterUserInfoDto>) findInterCustCode(userId);
+				List<String> custCodes = new ArrayList<>();
+				for (InterUserInfoDto userInfo : userInfoList) {
+					custCodes.add(userInfo.getInterrelatedCustCode());
+				}
+				
+				params.put("custCodes", custCodes);
+			}
+			
+			Page listPage = generalDao.selectGernalListPage("bid.selectProgresslist", params);
+			resultBody.setData(listPage);
+			
+			return listPage;
+		} catch (Exception e) {
+			log.error("BidProgressService progresslist error : ", e);
+			resultBody.setCode("fail");
+			resultBody.setMsg("입찰 계획 리스트를 가져오는것을 실패하였습니다.");
+			
+			return null;
+		}
+		
+		//return resultBody;	//TODO : 추후 return type을 ResultBody로 바꾸며 수정작업 예정
+	}
 
     public List<List<?>> progresslistDetail(String param, CustomUserDetails user) {
     	int custCode = Integer.parseInt(user.getCustCode());//협력사 번호 
