@@ -5,6 +5,6 @@
 		<typeAlias alias="camel" type="iljin.framework.ebid.etc.util.CamelMap" />
 	</typeAliases>
 	<mappers>
-		<mapper resource="mapper/test.xml"/>
+		<mapper resource="mapper/bid_sql.xml"/>
 	</mappers>
 </configuration>

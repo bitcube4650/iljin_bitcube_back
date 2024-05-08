@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="bid">
+	<select id="selectProgresslist_count" resultType="int">
+		/* bid.selectProgresslist_count */
+		SELECT	COUNT(1)
+		FROM	T_BI_INFO_MAT A
+		WHERE	1=1
+		AND		A.ING_TAG = 'A0'
+		<if test="bidNo != null and bidNo != ''">
+		AND		A.BI_NO LIKE CONCAT('%'+ #{bidNo} +'%')
+		</if>
+		<if test="bidName != null and bidName != ''">
+		AND		A.BI_NAME LIKE CONCAT('%'+ #{bidName} +'%')
+		</if>
+		<if test="userAuth == '1' or userAuth == '2' or userAuth == '3'">
+		AND		A.INTERRELATED_CUST_CODE = #{interrelatedCustCode}
+		AND		(	A.CREATE_USER = #{userid}
+				OR	A.OPEN_ATT1 = #{userid}
+				OR	A.OPEN_ATT2 = #{userid}
+				OR	A.GONGO_ID = #{userid}
+				OR	A.EST_BIDDER = #{userid}
+				OR	A.EST_OPENER = #{userid})
+		</if>
+		<if test="userAuth == '4'">
+		AND		(	A.CREATE_USER = #{userid}
+				OR	A.OPEN_ATT1 = #{userid}
+				OR	A.OPEN_ATT2 = #{userid}
+				OR	A.GONGO_ID = #{userid}
+				OR	A.EST_BIDDER = #{userid}
+				OR	A.EST_OPENER = #{userid})
+		AND		(
+				<foreach item="item" collection="custCodes" open=" OR A.INTERRELATED_CUST_CODE IN (" separator="," close=")">
+					#{item}
+				</foreach>
+				OR	A.INTERRELATED_CUST_CODE = #{interrelatedCustCode})
+		</if>
+	</select>
+	
+	<select id="selectProgresslist" resultType="camel">
+		/* bid.selectProgresslist */
+		SELECT	A.BI_NO			AS BI_NO
+		,		A.BI_NAME		AS BI_NAME
+		,		DATE_FORMAT(A.EST_START_DATE, '%Y-%M-%D %H:%I')			AS EST_START_DATE
+		,		DATE_FORMAT(A.EST_CLOSE_DATE, '%Y-%M-%D %H:%I')			AS EST_CLOSE_DATE
+		,		CASE WHEN A.BI_MODE = 'A' THEN '지명' ELSE '일반' END		AS BI_MODE
+		,		CASE WHEN A.INS_MODE = '1' THEN '파일' ELSE '직접입력' END	AS INS_MODE
+		,		A.ING_TAG		AS ING_TAG
+		,		B.USER_NAME		AS CUSER
+		,		B.USER_EMAIL	AS CUSER_EMAIL
+		,		C.USER_NAME		AS GONGO_ID
+		,		C.USER_EMAIL	AS GONGO_EMAIL
+		,		A.INTERRELATED_CUST_CODE	AS INTERRELATED_CUST_CODE
+		FROM	T_BI_INFO_MAT A
+		LEFT JOIN	T_CO_USER B
+			ON A.CREATE_USER = B.USER_ID
+		LEFT JOIN	T_CO_USER C
+			ON A.GONGO_ID = C.USER_ID
+		WHERE	A.ING_TAG = 'A0'
+		<if test="bidNo != null and bidNo != ''">
+		AND		A.BI_NO LIKE CONCAT('%'+ #{bidNo} +'%')
+		</if>
+		<if test="bidName != null and bidName != ''">
+		AND		A.BI_NAME LIKE CONCAT('%'+ #{bidName} +'%')
+		</if>
+		<if test="userAuth == '1' or userAuth == '2' or userAuth == '3'">
+		AND		A.INTERRELATED_CUST_CODE = #{interrelatedCustCode}
+		AND		(	A.CREATE_USER = #{userid}
+				OR	A.OPEN_ATT1 = #{userid}
+				OR	A.OPEN_ATT2 = #{userid}
+				OR	A.GONGO_ID = #{userid}
+				OR	A.EST_BIDDER = #{userid}
+				OR	A.EST_OPENER = #{userid})
+		</if>
+		<if test="userAuth == '4'">
+		AND		(	A.CREATE_USER = #{userid}
+				OR	A.OPEN_ATT1 = #{userid}
+				OR	A.OPEN_ATT2 = #{userid}
+				OR	A.GONGO_ID = #{userid}
+				OR	A.EST_BIDDER = #{userid}
+				OR	A.EST_OPENER = #{userid})
+		AND		(
+				<foreach item="item" collection="custCodes" open=" OR A.INTERRELATED_CUST_CODE IN (" separator="," close=")">
+					#{item}
+				</foreach>
+				OR	A.INTERRELATED_CUST_CODE = #{interrelatedCustCode})
+		</if>
+		ORDER BY A.BI_NO DESC
+		LIMIT ${offset}, ${pageSize}
+	</select>
+</mapper>
