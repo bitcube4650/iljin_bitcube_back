@@ -5,7 +5,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -26,8 +25,6 @@ import iljin.framework.core.dto.ResultBody;
 import iljin.framework.ebid.custom.entity.TCoUser;
 import iljin.framework.ebid.custom.repository.TCoUserRepository;
 import iljin.framework.ebid.etc.notice.dto.FaqDto;
-import iljin.framework.ebid.etc.notice.entity.TCoBoardCustCode;
-import iljin.framework.ebid.etc.notice.entity.TCoBoardNotice;
 import iljin.framework.ebid.etc.notice.entity.TFaq;
 import iljin.framework.ebid.etc.util.PagaUtils;
 import lombok.extern.slf4j.Slf4j;
