@@ -82,7 +82,7 @@
 		GROUP BY A.B_NO
 	</sql>
 	
-	<insert id="insertNotice" parameterType="hashMap" useGeneratedKeys="true" keyProperty="bNo">
+	<insert id="insertNotice" parameterType="map" useGeneratedKeys="true" keyProperty="bno">
 		/* etc.insertNotice */
 		INSERT INTO T_CO_BOARD_NOTICE (
 					B_USERID
@@ -96,7 +96,7 @@
 		) VALUES (
 					#{buserid}
 			,		#{btitle}
-			,		CURDATE()
+			,		NOW()
 			,		0
 			,		#{bcontent}
 			,		#{fileName}
@@ -110,7 +110,7 @@
 		/* etc.updateNotice */
 		UPDATE T_CO_BOARD_NOTICE
 		SET	B_TITLE = #{btitle}
-		,	B_DATE = CURDATE()
+		,	B_DATE = NOW()
 		,	B_CONTENT = #{bcontent}
 		,	B_FILE = #{fileName}
 		,	B_FILE_PATH = #{uploadedPath}
@@ -146,5 +146,79 @@
 		/* etc.deleteNotice */
 		DELETE FROM T_CO_BOARD_NOTICE
 		WHERE B_NO = #{bno}
+	</delete>
+	
+	<select id="selectFaqList_count" resultType="int">
+		/* etc.selectFaqList_count*/
+		SELECT COUNT(1)
+		FROM T_FAQ A
+		LEFT OUTER JOIN T_CO_USER B
+			ON A.CREATE_USER = B.USER_ID
+		WHERE 1=1 
+	</select>
+	
+	<select id="selectFaqList" resultType="camel">
+		/* etc.selectFaqList*/
+		SELECT	A.FAQ_ID
+		,		A.FAQ_TYPE
+		,		CASE
+					WHEN A.FAQ_TYPE = 1 THEN '가입관련'
+					WHEN A.FAQ_TYPE = 2 THEN '입찰관련'
+					WHEN A.FAQ_TYPE = 3 THEN '인증서관련'
+					ELSE '기타'
+				END											AS FAQ_TYPE_DESCRIPTION
+		,		A.TITLE
+		,		A.ANSWER
+		,		A.CREATE_USER
+		,		B.USER_NAME
+		,		DATE_FORMAT(A.CREATE_DATE, '%Y-%m-%d %H:%i')	AS CREATE_DATE
+		FROM T_FAQ A
+		LEFT OUTER JOIN T_CO_USER B
+			ON A.CREATE_USER = B.USER_ID
+		WHERE 1=1 
+		<if test="title != '' and title != null">
+			AND A.TITLE LIKE CONCAT('%', #{title}, '%')
+		</if>
+		<if test="faqType != '' and faqType != null">
+			AND A.FAQ_TYPE = #{faqType}
+		</if>
+		ORDER BY A.CREATE_DATE DESC
+		<if test="admin eq 'Y'.toString()">
+		LIMIT ${offset}, ${pageSize}
+		</if>
+	</select>
+	
+	<insert id="insertFaq">
+		/* etc.insertFaq */
+		INSERT INTO T_FAQ (
+				FAQ_TYPE
+		,		TITLE
+		,		ANSWER
+		,		CREATE_USER
+		,		CREATE_DATE
+		) VALUES (
+				#{faqType}
+		,		#{title}
+		,		#{answer}
+		,		#{userId}
+		,		NOW()
+		)
+	</insert>
+	
+	<update id="updateFaq">
+		/* etc.updateFaq */
+		UPDATE T_FAQ
+		SET	FAQ_TYPE = #{faqType}
+		,	TITLE = #{title}
+		,	ANSWER = #{answer}
+		,	CREATE_USER = #{userId}
+		,	CREATE_DATE = NOW()
+		WHERE FAQ_ID = #{faqId}
+	</update>
+	
+	<delete id="deleteFaq">
+		/* etc.deleteFaq */
+		DELETE FROM T_FAQ
+		WHERE FAQ_ID = #{faqId}
 	</delete>
 </mapper>
