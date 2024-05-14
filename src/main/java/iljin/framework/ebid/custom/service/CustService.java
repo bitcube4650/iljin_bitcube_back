@@ -6,7 +6,9 @@ import iljin.framework.ebid.bid.dto.SendDto;
 import iljin.framework.ebid.custom.dto.TCoCustMasterDto;
 import iljin.framework.ebid.custom.dto.TCoUserDto;
 import iljin.framework.ebid.etc.util.CommonUtils;
+import iljin.framework.ebid.etc.util.GeneralDao;
 import iljin.framework.ebid.etc.util.PagaUtils;
+import iljin.framework.ebid.etc.util.common.consts.DB;
 import iljin.framework.ebid.etc.util.common.file.FileService;
 import iljin.framework.ebid.etc.util.common.mail.service.MailService;
 import iljin.framework.ebid.etc.util.common.message.MessageService;
@@ -37,16 +39,18 @@ import java.util.*;
 @Service
 @Slf4j
 public class CustService {
-    @PersistenceContext
-    private EntityManager entityManager;
-    @Autowired
-    private FileService fileService;
-    @Autowired
-    private MailService mailService;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-    @Autowired
-    private MessageService messageService;
+	@PersistenceContext
+	private EntityManager entityManager;
+	@Autowired
+	private FileService fileService;
+	@Autowired
+	private MailService mailService;
+	@Autowired
+	private PasswordEncoder passwordEncoder;
+	@Autowired
+	private MessageService messageService;
+	@Autowired
+	private GeneralDao generalDao;
 
     public Page custList(Map<String, Object> params) {
         StringBuilder sbCount = new StringBuilder(" SELECT COUNT(1) FROM t_co_cust_master a, t_co_cust_ir b WHERE a.cust_code = b.cust_code ");
@@ -615,13 +619,11 @@ public class CustService {
         }
         return resultBody;
     }
-    public ResultBody idcheck(Map<String, Object> params) {
+    public ResultBody idcheck(Map<String, Object> params) throws Exception {
         ResultBody resultBody = new ResultBody();
-        StringBuilder sb = new StringBuilder(" SELECT (SELECT COUNT(1) FROM t_co_user WHERE user_id = :userId) + (SELECT COUNT(1) FROM t_co_cust_user WHERE user_id = :userId)");
-        Query query = entityManager.createNativeQuery(sb.toString());
-        query.setParameter("userId", params.get("userId"));
-        BigInteger cnt = (BigInteger) query.getSingleResult();
-        if (cnt.longValue() > 0) {
+        
+        int cnt = CommonUtils.getInt(generalDao.selectGernalCount(DB.QRY_SELECT_DUP_USER_CNT, params));
+        if (cnt > 0) {
             resultBody.setCode("DUP"); // 아이디중복됨
         }
         return resultBody;
