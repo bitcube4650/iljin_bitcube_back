@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="bidStatus">
+
+	<select id="selectTBiInfoMatInfomation" resultType="camel">
+		/* bidStatus.selectTBiInfoMatInfomation */
+		SELECT
+		${columns}
+		FROM T_BI_INFO_MAT tbim
+		where tbim.BI_NO = #{biNo}
+	</select>
+	<select id="selectEbidStatusList_count" resultType="int">
+		/* bidStatus.selectEbidStatusList_count */
+		SELECT COUNT(1) 
+		FROM t_bi_info_mat tbim
+		<if test="userAuth == '4'.toString()">
+		INNER JOIN t_co_user_interrelated tcui 
+			ON tbim.INTERRELATED_CUST_CODE = tcui.INTERRELATED_CUST_CODE 
+			AND tcui.USER_ID = #{userId}
+		</if>
+		<include refid="selectEbidStatusList_sql" />
+	</select>
+	<select id="selectEbidStatusList" resultType="camel">
+		/* bidStatus.selectEbidStatusList */
+		SELECT	tbim.bi_no
+		,		tbim.bi_name 
+		,		DATE_FORMAT(tbim.est_close_date, '%Y-%m-%d %H:%i') AS est_close_date 
+		,		tbim.bi_mode 
+		,		tbim.ins_mode 
+		,		CASE	WHEN tbim.ing_tag = 'A1' AND tbim.est_close_date <![CDATA[ < ]]> sysdate() 
+							THEN '입찰공고(개찰대상)' 
+							WHEN tbim.ing_tag = 'A1' 
+							THEN '입찰공고' 
+							WHEN tbim.ing_tag = 'A3' AND tbim.est_close_date <![CDATA[ < ]]> sysdate()  
+							THEN '입찰공고(재)(개찰대상)' 
+							WHEN tbim.ing_tag = 'A3' 
+							THEN '입찰공고(재)' 
+							ELSE '개찰' 
+					END AS ing_tag 
+		,		tcu1.user_name AS cuser 
+		,		tcu1.user_email AS cuser_email 
+		,		tcu2.user_name AS opener_id 
+		,		tcu2.user_email AS opener_email 
+		FROM t_bi_info_mat tbim 
+		LEFT OUTER JOIN t_co_user tcu1 
+			ON tbim.create_user = tcu1.user_id 
+		LEFT OUTER JOIN t_co_user tcu2 
+			ON tbim.est_opener = tcu2.user_id 
+		<if test="userAuth == '4'.toString()">
+		inner join t_co_user_interrelated tcui 
+			on tbim.INTERRELATED_CUST_CODE = tcui.INTERRELATED_CUST_CODE 
+			and tcui.USER_ID = #{userId}
+		</if>
+		<include refid="selectEbidStatusList_sql" />
+		order by tbim.bi_no desc
+		LIMIT ${offset}, ${pageSize}
+	</select>
+	
+	<sql id="selectEbidStatusList_sql">
+		WHERE 1=1
+		<if test="bidNo != null and bidNo != ''">
+		and tbim.bi_no like concat('%', #{bidNo}, '%')
+		</if>
+		<if test="bidName != null and bidName != ''">
+		and tbim.bi_name like concat('%', #{bidName}, '%')
+		</if>
+		<choose>
+			<when test="rebidYn and !dateOverYn and !openBidYn">
+		and tbim.ing_tag in ( 'A1', 'A3' )
+		and tbim.est_close_date <![CDATA[ > ]]> sysdate()
+			</when>
+			<when test="!rebidYn and dateOverYn and !openBidYn">
+		and tbim.ing_tag in ( 'A1', 'A3' )
+		and tbim.est_close_date <![CDATA[ < ]]> sysdate()
+			</when>
+			<when test="!rebidYn and !dateOverYn and openBidYn">
+		and tbim.ing_tag in ( 'A2' )
+			</when>
+			<when test="rebidYn and dateOverYn and !openBidYn">
+		and tbim.ing_tag in ( 'A1', 'A3' )
+			</when>
+			<when test="rebidYn and !dateOverYn and openBidYn">
+		and ((	tbim.ing_tag in ( 'A1', 'A3' ) and tbim.est_close_date <![CDATA[ > ]]> sysdate() ) or tbim.ing_tag in ( 'A2' ))
+			</when>
+			<when test="!rebidYn and dateOverYn and openBidYn">
+		and ((	tbim.ing_tag in ( 'A1', 'A3' ) and tbim.est_close_date <![CDATA[ < ]]> sysdate() ) or tbim.ing_tag in ( 'A2' ))
+			</when>
+			<otherwise>
+		and tbim.ing_tag in ( 'A1', 'A2', 'A3' )
+			</otherwise>
+		</choose>
+		<if test="userAuth != '1'.toString() and userAuth != '4'.toString()">
+		and tbim.interrelated_cust_code = #{interrelatedCustCode}
+		</if>
+		<if test="userAuth != '1'.toString()">
+		and ( tbim.create_user = #{userId} 
+			or tbim.open_att1 = #{userId} 
+			or tbim.open_att2 = #{userId} 
+			or tbim.gongo_id = #{userId} 
+			or tbim.est_bidder = #{userId} 
+			or tbim.est_opener = #{userId} ) 
+		</if>
+	</sql>
+	
+	<select id="selectEbidStatusDetail" resultType="camel">
+		/* bidStatus.selectEbidStatusDetail */
+		select	tbim.BI_NO 
+		,		tbim.BI_NAME 
+		,		tci.ITEM_NAME 
+		,		tbim.BI_MODE 
+		,		tbim.BID_JOIN_SPEC 
+		,		tbim.SPECIAL_COND 
+		,		DATE_FORMAT(tbim.SPOT_DATE, '%Y-%m-%d %H:%i') as SPOT_DATE 
+		,		tbim.SPOT_AREA 
+		,		tcc.CODE_NAME as SUCC_DECI_METH 
+		,		tbim.AMT_BASIS 
+		,		tbim.PAY_COND 
+		,		tbim.BD_AMT 
+		,		tbim.CREATE_USER 
+		,		tcu5.USER_NAME as DAMDANG_NAME 
+		,		DATE_FORMAT(tbim.EST_START_DATE, '%Y-%m-%d %H:%i') as EST_START_DATE 
+		,		DATE_FORMAT(tbim.EST_CLOSE_DATE, '%Y-%m-%d %H:%i') as EST_CLOSE_DATE 
+		,		tbim.EST_CLOSE_DATE <![CDATA[ < ]]> sysdate() as EST_CLOSE_CHECK 
+		,		tcu3.USER_NAME as EST_OPENER 
+		,		tcu4.USER_NAME as EST_BIDDER 
+		,		tcu.USER_NAME as GONGO_NAME 
+		,		tcu1.USER_NAME as OPEN_ATT1 
+		,		tcu2.USER_NAME as OPEN_ATT2 
+		,		tbim.INS_MODE 
+		,		tbim.SUPPLY_COND 
+		,		tbim.WHY_A3 
+		,		tbim.ING_TAG 
+		,		tbim.INTERRELATED_CUST_CODE 
+		,		codeMd.CODE_NAME as MAT_DEPT 
+		,		codeMp.CODE_NAME as MAT_PROC 
+		,		codeMc.CODE_NAME as MAT_CLS 
+		,		tbim.MAT_FACTORY 
+		,		tbim.MAT_FACTORY_LINE 
+		,		tbim.MAT_FACTORY_CNT 
+		,		tbim.OPEN_ATT1 as OPEN_ATT1_ID 
+		,		tbim.OPEN_ATT2 as OPEN_ATT2_ID 
+		,		CASE WHEN tbim.OPEN_ATT1 IS NOT NULL AND tbim.OPEN_ATT1 != '' THEN tbim.OPEN_ATT1_SIGN ELSE 'Y' END AS OPEN_ATT1_SIGN 
+		,		CASE WHEN tbim.OPEN_ATT2 IS NOT NULL AND tbim.OPEN_ATT2 != '' THEN tbim.OPEN_ATT2_SIGN ELSE 'Y' END AS OPEN_ATT2_SIGN 
+		,		tbim.EST_OPENER as EST_OPENER_ID 
+		,		tbim.EST_BIDDER as EST_BIDDER_ID 
+		from t_bi_info_mat tbim 
+		left outer join t_co_user tcu 
+			on tbim.GONGO_ID = tcu.USER_ID 
+		left outer join t_co_user tcu1 
+			on tbim.OPEN_ATT1 = tcu1.USER_ID 
+		left outer join t_co_user tcu2 
+			on tbim.OPEN_ATT2 = tcu2.USER_ID 
+		left outer join t_co_user tcu3 
+			on tbim.EST_OPENER = tcu3.USER_ID 
+		left outer join t_co_user tcu4 
+			on tbim.EST_BIDDER = tcu4.USER_ID 
+		left outer join t_co_user tcu5 
+			on tbim.CREATE_USER = tcu5.USER_ID 
+		left outer join t_co_item tci  
+			on tbim.ITEM_CODE = tci.ITEM_CODE 
+		left outer join t_co_code tcc  
+			on tbim.SUCC_DECI_METH = tcc.CODE_VAL 
+			and tcc.COL_CODE = 'T_CO_SUCC_METHOD' 
+		left outer join t_co_code codeMd 
+			on tbim.MAT_DEPT = codeMd.CODE_VAL 
+			and codeMd.COL_CODE = 'MAT_DEPT' 
+		left outer join t_co_code codeMp 
+			on tbim.MAT_PROC = codeMp.CODE_VAL 
+			and codeMp.COL_CODE = 'MAT_PROC' 
+		left outer join t_co_code codeMc 
+			on tbim.MAT_CLS = codeMc.CODE_VAL 
+			and codeMc.COL_CODE = 'MAT_CLS' 
+		WHERE tbim.BI_NO = #{biNo}
+	</select>
+	
+	<select id="selectEbidStatusJoinCustList" resultType="camel">
+		/* bidStatus.selectEbidStatusJoinCustList */
+		select	tbimc.BI_NO 
+		,		tbimc.CUST_CODE 
+		,		tccm.CUST_NAME 
+		,		tccm.PRES_NAME 
+		,		tcc.CODE_NAME as ESMT_CURR 
+		,		DATE_FORMAT(tbimc.SUBMIT_DATE, '%Y-%m-%d %H:%i') as SUBMIT_DATE 
+		,		(select tccu.USER_NAME from t_co_cust_user tccu where tccu.CUST_CODE = tbimc.CUST_CODE AND tccu.USER_TYPE = '1' LIMIT 1) AS DAMDANG_NAME 
+		,		tbimc.ESMT_YN 
+		,		tbimc.ESMT_AMT 
+		,		tbu.FILE_NM 
+		,		tbu.FILE_PATH 
+		,		tbimc.ETC_B_FILE as ETC_FILE 
+		,		tbimc.ETC_B_FILE_PATH as ETC_PATH 
+		from t_bi_info_mat_cust tbimc 
+		inner join t_co_cust_master tccm 
+			on tbimc.CUST_CODE = tccm.CUST_CODE 
+		left outer join t_co_code tcc 
+			on tcc.COL_CODE = 'T_CO_RATE' 
+			and tbimc.ESMT_CURR = tcc.CODE_VAL 
+		left outer join t_bi_upload tbu 
+			on tbimc.FILE_ID = tbu.FILE_ID 
+			and tbu.FILE_FLAG = 'C'
+		where tbimc.BI_NO = #{biNo}
+		order by field(tbimc.SUCC_YN, 'Y', 'N')
+	</select>
+	
+	<select id="selectEbidStatusJoinCustSpec" resultType="camel">
+		/* bidStatus.selectEbidStatusJoinCustSpec */
+		select	cast(tbdmc.CUST_CODE as char) as CUST_CODE 
+		,		tbsm.NAME 
+		,		tbsm.SSIZE 
+		,		tbsm.UNITCODE 
+		,		tbsm.ORDER_QTY 
+		,		tbdmc.ESMT_UC 
+		from t_bi_detail_mat_cust tbdmc 
+		inner join t_bi_spec_mat tbsm 
+			on tbdmc.BI_NO = tbsm.BI_NO 
+			and tbdmc.SEQ = tbsm.SEQ 
+		where tbdmc.BI_NO = #{biNo}
+		and tbdmc.CUST_CODE = #{custCode}
+	</select>
+	
+	<select id="selectEbidStatusDetailFile" resultType="camel">
+		/* bidStatus.selectEbidStatusDetailFile */
+		select	tbu.FILE_FLAG 
+		,		tbu.FILE_NM 
+		,		tbu.FILE_PATH 
+		from t_bi_upload tbu 
+		where tbu.USE_YN = 'Y' 
+		and tbu.FILE_FLAG in (<foreach collection="fileFlag" item="item" separator=",">#{item}</foreach>) 
+		and tbu.BI_NO = #{biNo}
+		order by field(tbu.FILE_FLAG, '1', '0', 'K')
+	</select>
+	
+	<select id="selectEbidStatusDetailSpec" resultType="camel">
+		/* bidStatus.selectEbidStatusDetailSpec */
+		select	tbsm.NAME 
+		,		tbsm.SSIZE 
+		,		tbsm.UNITCODE 
+		,		tbsm.ORDER_UC 
+		,		tbsm.ORDER_QTY 
+		from t_bi_spec_mat tbsm 
+		where tbsm.BI_NO = #{biNo}
+		order by tbsm.SEQ
+	</select>
+	
+	<update id="updateEbidStatus">
+		/* bidStatus.updateEbidStatus */
+		UPDATE	t_bi_info_mat 
+		set	ing_tag = #{ingTag} 
+		<if test="whyA7 != null and whyA7 != ''">
+		,		why_a7 = #{whyA7}
+		</if>
+		,		update_date = sysdate() 
+		,		update_user = #{userId} 
+		WHERE bi_no = #{biNo}
+	</update>
+	
+	<insert id="insertTBiInfoMatHist">
+		/* bidStatus.insertTBiInfoMatHist */
+		INSERT into t_bi_info_mat_hist (
+		BI_NO, BI_NAME, BI_MODE, INS_MODE, BID_JOIN_SPEC, SPECIAL_COND, SUPPLY_COND, SPOT_DATE, SPOT_AREA, SUCC_DECI_METH, BID_OPEN_DATE, AMT_BASIS, 
+		BD_AMT, SUCC_AMT, EST_START_DATE, EST_CLOSE_DATE, EST_OPENER, EST_BIDDER, EST_OPEN_DATE, OPEN_ATT1, OPEN_ATT1_SIGN, OPEN_ATT2, OPEN_ATT2_SIGN, 
+		ING_TAG, CREATE_USER, CREATE_DATE, UPDATE_USER, UPDATE_DATE, ITEM_CODE, GONGO_ID, PAY_COND, WHY_A3, WHY_A7, BI_OPEN, INTERRELATED_CUST_CODE, 
+		REAL_AMT, ADD_ACCEPT, MAT_DEPT, MAT_PROC, MAT_CLS, MAT_FACTORY, MAT_FACTORY_LINE, MAT_FACTORY_CNT 
+		) select 
+		BI_NO, BI_NAME, BI_MODE, INS_MODE, BID_JOIN_SPEC, SPECIAL_COND, SUPPLY_COND, SPOT_DATE, SPOT_AREA, SUCC_DECI_METH, BID_OPEN_DATE, AMT_BASIS, 
+		BD_AMT, SUCC_AMT, EST_START_DATE, EST_CLOSE_DATE, EST_OPENER, EST_BIDDER, EST_OPEN_DATE, OPEN_ATT1, OPEN_ATT1_SIGN, OPEN_ATT2, OPEN_ATT2_SIGN, 
+		ING_TAG, CREATE_USER, CREATE_DATE, UPDATE_USER, UPDATE_DATE, ITEM_CODE, GONGO_ID, PAY_COND, WHY_A3, WHY_A7, BI_OPEN, INTERRELATED_CUST_CODE, 
+		REAL_AMT, ADD_ACCEPT, MAT_DEPT, MAT_PROC, MAT_CLS, MAT_FACTORY, MAT_FACTORY_LINE, MAT_FACTORY_CNT 
+		from t_bi_info_mat tbim 
+		where tbim.BI_NO = #{biNo}
+	</insert>
+	
+	<insert id="insertTBiLog">
+		/* bidStatus.insertTBiLog */
+		INSERT INTO t_bi_log (
+			bi_no,
+			user_id, 
+			log_text, 
+			create_date
+		) VALUES (
+			#{biNo}, 
+			#{userId}, 
+			#{msg}, 
+			sysdate()
+		)
+	</insert>
+	
+	<select id="selectEbidBiModeASendInfo" resultType="camel">
+		/* bidStatus.selectEbidBiModeASendInfo */
+		select	tccu.USER_EMAIL 
+		,		a.from_email 
+		from 
+		( 
+			select	jb.datas as user_id 
+			,		tcu.user_email as from_email 
+			from t_bi_info_mat_cust tbimc 
+			inner join json_table( 
+				replace(json_array(tbimc.USEMAIL_ID), ',', '","'), 
+				'$[*]' columns (datas varchar(50) path '$') 
+			) jb 
+			inner join t_bi_info_mat tbim 
+				on tbimc.bi_no = tbim.bi_no 
+			left outer join t_co_user tcu 
+				on tbim.create_user = tcu.user_id 
+			where tbimc.bi_no = #{biNo} 
+			and tbimc.esmt_yn = '2' 
+		) a 
+		inner join t_co_cust_user tccu 
+			on a.user_id = tccu.user_id 
+			and tccu.USE_YN = 'Y' 
+		group by tccu.USER_EMAIL 
+	</select>
+	
+	<select id="selectEbidBiModeBSendInfo" resultType="camel">
+		/* bidStatus.selectEbidBiModeBSendInfo */
+		select	tccu.user_email 
+		,	tcu.user_email as from_email 
+		from t_bi_info_mat_cust tbimc 
+		inner join t_co_cust_master tccm 
+			on tbimc.cust_code = tccm.cust_code 
+		inner join t_co_cust_user tccu 
+			on tccm.cust_code = tccu.cust_code 
+			and tccu.USE_YN = 'Y' 
+		inner join t_bi_info_mat tbim 
+			on tbimc.bi_no = tbim.bi_no 
+		left outer join t_co_user tcu 
+			on tbim.create_user = tcu.user_id 
+		where tbimc.bi_no = #{biNo} 
+		and tbimc.esmt_yn = '2' 
+	</select>
+	
+</mapper>
