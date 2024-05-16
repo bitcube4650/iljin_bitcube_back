@@ -8,6 +8,7 @@
 		<mapper resource="mapper/login_sql.xml"/>
 		<mapper resource="mapper/bid_sql.xml"/>
 		<mapper resource="mapper/bid_status_sql.xml"/>
+		<mapper resource="mapper/bid_complete_sql.xml"/>
 		<mapper resource="mapper/etc_sql.xml"/>
 		<mapper resource="mapper/item_sql.xml"/>
 		<mapper resource="mapper/cust_sql.xml"/>

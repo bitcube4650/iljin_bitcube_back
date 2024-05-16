@@ -329,4 +329,254 @@
 		and tbimc.esmt_yn = '2' 
 	</select>
 	
+	<select id="selectDecryptEbidCustList" resultType="camel">
+		/* bidStatus.selectDecryptEbidCustList */
+		SELECT	tbimc.BI_NO 
+		,		tbimc.CUST_CODE 
+		,		tbimc.FILE_ID 
+		,		tbimc.ENC_QUTN 
+		,		tbimc.ENC_ESMT_SPEC 
+		,		tbim.INS_MODE 
+		,		tbimc.BI_ORDER 
+		FROM	t_bi_info_mat_cust tbimc 
+		INNER JOIN	t_bi_info_mat tbim 
+			ON	tbimc.BI_NO = tbim.BI_NO 
+		WHERE	tbimc.bi_no = #{biNo} 
+		AND	tbimc.ESMT_YN = '2' 
+		AND	tbimc.BI_ORDER = (select MAX(BI_ORDER) from t_bi_info_mat_cust where BI_NO = #{biNo}) 
+	</select>
+	
+	<insert id="insertTBiDetailMatCust">
+		/* bidStatus.insertTBiDetailMatCust */
+		INSERT T_BI_DETAIL_MAT_CUST (
+			BI_NO
+		,	SEQ
+		,	CUST_CODE
+		,	ESMT_UC
+		) VALUES (
+			#{biNo}
+		,	#{seq}
+		,	#{custCode}
+		,	#{esmtUc}
+		)
+	</insert>
+	
+	<insert id="insertTBiDetailMatCustTemp">
+		/* bidStatus.insertTBiDetailMatCustTemp */
+		INSERT T_BI_DETAIL_MAT_CUST_TEMP (
+			BI_NO
+		,	BI_ORDER
+		,	SEQ
+		,	CUST_CODE
+		,	ESMT_UC
+		) VALUES (
+			#{biNo}
+		,	#{biOrder}
+		,	#{seq}
+		,	#{custCode}
+		,	#{esmtUc}
+		)
+	</insert>
+	
+	<update id="updateOpenCustTBiIfoMatCust">
+		/* bidStatus.updateOpenCustTBiIfoMatCust */
+		UPDATE	t_bi_info_mat_cust 
+		set	ESMT_AMT = #{esmtAmt} 
+		,		UPDATE_DATE = sysdate() 
+		,		UPDATE_USER = #{userId} 
+		WHERE bi_no = #{biNo} 
+		AND CUST_CODE = #{custCode} 
+	</update>
+	
+	<update id="updateOpenEbidTBiInfoMat">
+		/* bidStatus.updateOpenEbidTBiInfoMat */
+		UPDATE	t_bi_info_mat 
+		set	ING_TAG = 'A2' 
+		,		EST_OPEN_DATE = sysdate() 
+		,		BI_OPEN = 'Y' 
+		,		UPDATE_DATE = sysdate() 
+		,		UPDATE_USER = #{userId} 
+		WHERE bi_no = #{biNo} 
+	</update>
+	
+	<update id="updateEbidSuccessTBiInfoMat">
+		/* bidStatus.updateEbidSuccessTBiInfoMat */
+		UPDATE t_bi_info_mat 
+		SET	ing_tag = 'A5'
+		,	update_user = #{userId} 
+		,	update_date = sysdate() 
+		,	add_accept = #{succDetail} 
+		,	succ_amt = (select ESMT_AMT from t_bi_info_mat_cust tbimc where BI_NO = #{biNo} and CUST_CODE = #{succCust}) 
+		where bi_no = #{biNo} 
+	</update>
+	
+	<update id="updateEbidSuccessTBiInfoMatCust">
+		/* bidStatus.updateEbidSuccessTBiInfoMatCust */
+		UPDATE t_bi_info_mat_cust 
+		SET succ_yn ='Y'
+		, update_user = #{userId}
+		, update_date = sysdate() 
+		where bi_no = #{biNo}
+		and cust_code = #{succCust}
+	</update>
+	
+	<update id="updateEbidSuccessTBiInfoMatCustTemp">
+		/* bidStatus.updateEbidSuccessTBiInfoMatCustTemp */
+		UPDATE t_bi_info_mat_cust_temp 
+		SET succ_yn ='Y'
+		, update_user = #{userId}
+		, update_date = sysdate() 
+		where bi_no = #{biNo}
+		and cust_code = #{succCust}
+	</update>
+	
+	<update id="updateRebidTBiInfoMat">
+		/* bidStatus.updateRebidTBiInfoMat */
+		UPDATE	t_bi_info_mat 
+		SET		EST_CLOSE_DATE = #{estCloseDate} 
+		,		WHY_A3 = #{whyA3} 
+		,		ING_TAG = 'A3' 
+		,		EST_OPEN_DATE = NULL 
+		,		UPDATE_DATE = sysdate() 
+		,		UPDATE_USER = #{userId} 
+		,		OPEN_ATT1_SIGN = 'N' 
+		,		OPEN_ATT2_SIGN = 'N' 
+		,		BI_MODE = 'A' 
+		,		BI_OPEN = 'N' 
+		WHERE	bi_no = #{biNo}
+	</update>
+	
+	<update id="updateRebidAttN">
+		/* bidStatus.updateRebidAttN */
+		UPDATE	t_bi_info_mat_cust 
+		SET		REBID_ATT = 'N' 
+		WHERE	BI_NO = #{biNo} 
+	</update>
+	
+	<delete id="deleteTBiDetailMatCustCustCode">
+		/* bidStatus.deleteTBiDetailMatCustCustCode */
+		DELETE FROM t_bi_detail_mat_cust 
+		WHERE BI_NO = #{biNo} 
+		AND	CUST_CODE IN ( <foreach collection="reCustList" item="item" separator=",">#{item}</foreach> )
+	</delete>
+	
+	<update id="updateRebidTBiInfoMatCustCustCode">
+		/* bidStatus.updateRebidTBiInfoMatCustCustCode */
+		UPDATE t_bi_info_mat_cust 
+		SET		REBID_ATT = 'Y' 
+		,		ESMT_YN = '0' 
+		,		ESMT_CURR = NULL 
+		,		ESMT_AMT = 0 
+		,		ENC_QUTN = '0' 
+		,		ENC_ESMT_SPEC = NULL 
+		,		FILE_ID = NULL 
+		,		SUBMIT_DATE = NULL 
+		,		FILE_HASH_VALUE = NULL 
+		,		UPDATE_USER = #{userId} 
+		,		UPDATE_DATE = sysdate() 
+		,		BI_ORDER = (select MAX(BI_ORDER)+1 from t_bi_info_mat_cust where BI_NO = #{biNo}) 
+		WHERE	BI_NO = #{biNo} 
+		AND		CUST_CODE IN ( <foreach collection="reCustList" item="item" separator=",">#{item}</foreach> )
+	</update>
+	
+	<select id="selectEbidBiModeASendInfoCustList" resultType="camel">
+		/* bidStatus.selectEbidBiModeASendInfoCustList */
+		select	tccu.USER_EMAIL 
+		,		a.from_email 
+		,		REGEXP_REPLACE(tccu.USER_HP , '[^0-9]+', '') as USER_HP 
+		,		tccu.USER_NAME 
+		from 
+		( 
+			select	jb.datas as user_id 
+			,		tcu.USER_EMAIL as from_email 
+			from t_bi_info_mat_cust tbimc 
+			inner join json_table( 
+				replace(json_array(tbimc.USEMAIL_ID), ',', '","'), 
+				'$[*]' columns (datas varchar(50) path '$') 
+			) jb 
+			inner join t_bi_info_mat tbim 
+				on tbimc.bi_no = tbim.bi_no 
+			left outer join t_co_user tcu 
+				on tbim.create_user = tcu.user_id 
+			where tbimc.bi_no = #{biNo} 
+			and tbimc.cust_code IN ( <foreach collection="custList" item="item" separator=",">#{item}</foreach> )
+		) a 
+		inner join t_co_cust_user tccu 
+			on a.user_id = tccu.user_id 
+			and tccu.USE_YN = 'Y' 
+		group by tccu.USER_EMAIL 
+	</select>
+	
+	<select id="selectEbidBiModeBSendInfoCustList" resultType="camel">
+		/* bidStatus.selectEbidBiModeBSendInfoCustList */
+		select	tccu.user_email 
+		,	tcu.user_email as from_email 
+		,	REGEXP_REPLACE(tccu.USER_HP , '[^0-9]+', '') as USER_HP 
+		,	tccu.USER_NAME 
+		from t_bi_info_mat_cust tbimc 
+		inner join t_co_cust_master tccm 
+			on tbimc.cust_code = tccm.cust_code 
+		inner join t_co_cust_user tccu 
+			on tccm.cust_code = tccu.cust_code 
+			and tccu.USE_YN = 'Y' 
+		inner join t_bi_info_mat tbim 
+			on tbimc.bi_no = tbim.bi_no 
+		left outer join t_co_user tcu 
+			on tbim.create_user = tcu.user_id 
+		where tbimc.bi_no = #{biNo}
+		and tccu.CUST_CODE IN ( <foreach collection="custList" item="item" separator=",">#{item}</foreach> )
+	</select>
+	
+	<insert id="insertIBiInfoMatCustTemp">
+		/* bidStatus.insertIBiInfoMatCustTemp */
+		insert into t_bi_info_mat_cust_temp( 
+		BI_NO, CUST_CODE, BI_ORDER, REBID_ATT, ESMT_YN, ESMT_AMT, SUCC_YN 
+		, ENC_QUTN, ENC_ESMT_SPEC, FILE_ID, SUBMIT_DATE, CREATE_USER, CREATE_DATE 
+		, UPDATE_USER, UPDATE_DATE, ESMT_CURR, ETC_B_FILE, FILE_HASH_VALUE, ETC_B_FILE_PATH, USEMAIL_ID 
+		) select  
+		BI_NO, CUST_CODE, BI_ORDER, REBID_ATT, ESMT_YN, ESMT_AMT, SUCC_YN 
+		, ENC_QUTN, ENC_ESMT_SPEC, FILE_ID, SUBMIT_DATE, CREATE_USER, CREATE_DATE 
+		, UPDATE_USER, UPDATE_DATE, ESMT_CURR, ETC_B_FILE, FILE_HASH_VALUE, ETC_B_FILE_PATH, USEMAIL_ID 
+		from t_bi_info_mat_cust tbimc 
+		where tbimc.BI_NO = #{biNo} 
+		and tbimc.CUST_CODE = #{custCode} 
+	</insert>
+	
+	<select id="selectTBiInfoMatCustTempCustCode_count" resultType="int">
+		/* bidStatus.selectTBiInfoMatCustTempCustCode_count */
+		SELECT count(1) 
+		from t_bi_info_mat_cust_temp 
+		where bi_no = #{biNo} 
+		and cust_code = #{custCode} 
+	</select>
+	
+	<select id="selectTBiInfoMatCustTempCustCode" resultType="camel">
+		/* bidStatus.selectTBiInfoMatCustTempCustCode */
+		SELECT	tbimct.bi_order 
+		,		tbimct.esmt_curr 
+		,		tbimct.esmt_amt 
+		,		DATE_FORMAT(tbimct.submit_date, '%Y-%m-%d %H:%i') AS submit_date 
+		from t_bi_info_mat_cust_temp tbimct 
+		left outer join t_co_code tcc 
+			on tcc.COL_CODE = 'T_CO_RATE' 
+			and tbimct.ESMT_CURR = tcc.CODE_VAL 
+		where tbimct.bi_no = #{biNo} 
+		and tbimct.cust_code = #{custCode} 
+		order by tbimct.bi_order asc 
+	</select>
+	
+	<update id="updateOpenAttSign">
+		/* bidStatus.updateOpenAttSign */
+		UPDATE t_bi_info_mat 
+		SET
+		<choose>
+			<when test="whoAtt == '1'.toString()">
+		OPEN_ATT1_SIGN = 'Y'
+			</when>
+			<otherwise>
+		OPEN_ATT2_SIGN = 'Y'
+			</otherwise>
+		</choose>
+		WHERE BI_NO = #{biNo} 
+	</update>
 </mapper>

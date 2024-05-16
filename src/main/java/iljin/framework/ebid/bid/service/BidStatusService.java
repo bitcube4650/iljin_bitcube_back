@@ -1,29 +1,17 @@
 package iljin.framework.ebid.bid.service;
 
-import iljin.framework.core.dto.ResultBody;
-import iljin.framework.core.util.Util;
-import iljin.framework.ebid.bid.dto.BidCustDto;
-import iljin.framework.ebid.bid.dto.SendDto;
-import iljin.framework.ebid.bid.dto.SubmitHistDto;
-import iljin.framework.ebid.bid.entity.TBiDetailMatCust;
-import iljin.framework.ebid.bid.entity.TBiDetailMatCustTemp;
-import iljin.framework.ebid.bid.entity.TBiInfoMat;
-import iljin.framework.ebid.bid.repository.TBiInfoMatRepository;
-import iljin.framework.ebid.custom.entity.TCoUser;
-import iljin.framework.ebid.custom.repository.TCoUserRepository;
-import iljin.framework.ebid.etc.util.CommonUtils;
-import iljin.framework.ebid.etc.util.GeneralDao;
-import iljin.framework.ebid.etc.util.PagaUtils;
-import iljin.framework.ebid.etc.util.common.certificate.service.CertificateService;
-import iljin.framework.ebid.etc.util.common.message.MessageService;
-import lombok.extern.slf4j.Slf4j;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
-import org.qlrm.mapper.JpaResultMapper;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -33,17 +21,14 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
-
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import iljin.framework.core.dto.ResultBody;
+import iljin.framework.ebid.custom.entity.TCoUser;
+import iljin.framework.ebid.custom.repository.TCoUserRepository;
+import iljin.framework.ebid.etc.util.CommonUtils;
+import iljin.framework.ebid.etc.util.GeneralDao;
+import iljin.framework.ebid.etc.util.common.certificate.service.CertificateService;
+import iljin.framework.ebid.etc.util.common.message.MessageService;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
@@ -55,14 +40,8 @@ public class BidStatusService {
 	private TCoUserRepository tCoUserRepository;
 	
 	@Autowired
-	Util util;
-	
-	@Autowired
 	private GeneralDao generalDao;
 
-	@Autowired
-	private TBiInfoMatRepository tBiInfoMatRepository;
-	
 	@Autowired
 	private BidProgressService bidProgressService;
 	
@@ -75,9 +54,6 @@ public class BidStatusService {
 	@Autowired
 	private PasswordEncoder passwordEncoder;
 	
-	@Value("${file.upload.directory}")
-	private String uploadDirectory;
-
 	/**
 	 * 입찰진행 리스트
 	 * @param params
@@ -123,8 +99,8 @@ public class BidStatusService {
 		
 		// ************ 로그인 당사자 개찰권한, 낙찰권한 확인 ************
 		
-		detailObj.put("bidAuth", CommonUtils.getString(detailObj.get("estBidderId")).equals(userId));
-		detailObj.put("openAuth", CommonUtils.getString(detailObj.get("estOpenerId")).equals(userId));
+		detailObj.put("bid_Auth", CommonUtils.getString(detailObj.get("estBidderId")).equals(userId));
+		detailObj.put("open_Auth", CommonUtils.getString(detailObj.get("estOpenerId")).equals(userId));
 		
 		// ************ 데이터 검색 -- 입찰참가업체 ************
 		
@@ -144,7 +120,7 @@ public class BidStatusService {
 			}
 		}
 		
-		detailObj.put("custList", custData);
+		detailObj.put("cust_List", custData);
 		
 		// ************ 데이터 검색 -- 세부내역 ************
 		if(CommonUtils.getString(detailObj.get("insMode")).equals("1")) {		//내역방식이 파일등록일 경우
@@ -156,12 +132,12 @@ public class BidStatusService {
 			innerParams.put("fileFlag", fileFlagArr);
 			List<Object> specfile = generalDao.selectGernalList("bidStatus.selectEbidStatusDetailFile", innerParams);
 			
-			detailObj.put("specFile", specfile);
+			detailObj.put("spec_File", specfile);
 			
 		}else if(CommonUtils.getString(detailObj.get("insMode")).equals("2")) {		//내역방식이 직접입력일 경우
 			List<Object> specInput = generalDao.selectGernalList("bidStatus.selectEbidStatusDetailSpec", params);
 			
-			detailObj.put("specInput", specInput);
+			detailObj.put("spec_Input", specInput);
 			
 		}
 		
@@ -175,7 +151,7 @@ public class BidStatusService {
 		innerParams.put("fileFlag", fileFlagArr);
 		List<Object> fileData = generalDao.selectGernalList("bidStatus.selectEbidStatusDetailFile", innerParams);
 		
-		detailObj.put("fileList", fileData);
+		detailObj.put("file_List", fileData);
 		
 		resultBody.setData(detailObj);
 		
@@ -246,6 +222,7 @@ public class BidStatusService {
 	 * @return
 	 */
 	@Transactional
+	@SuppressWarnings({ "unchecked" })
 	public ResultBody bidOpening(Map<String, String> params) throws Exception {
 		ResultBody resultBody = new ResultBody();
 		
@@ -257,45 +234,28 @@ public class BidStatusService {
 		String biNo = CommonUtils.getString(params.get("biNo"));
 		String certPwd = CommonUtils.getString(params.get("certPwd"));
 		
+		params.put("userId", userId);
+		
 		//복호화 대상 협력사
-		StringBuilder sbCustList = new StringBuilder(
-				"SELECT	tbimc.BI_NO "
-			+	",		tbimc.CUST_CODE "
-			+	",		tbimc.FILE_ID "
-			+	",		tbimc.ENC_QUTN "
-			+	",		tbimc.ENC_ESMT_SPEC "
-			+	",		tbim.INS_MODE "
-			+	",		tbimc.BI_ORDER "
-			+	"FROM	t_bi_info_mat_cust tbimc " 
-			+	"INNER JOIN	t_bi_info_mat tbim "
-			+	"	ON	tbimc.BI_NO = tbim.BI_NO "
-			+	"WHERE	tbimc.bi_no = :biNo "
-			+	"AND	tbimc.ESMT_YN = '2' "
-			+	"AND	tbimc.BI_ORDER = (select MAX(BI_ORDER) from t_bi_info_mat_cust where BI_NO = :biNo) "
-		);
+		List<Object> custList = generalDao.selectGernalList("bidStatus.selectDecryptEbidCustList", params);
 		
-		Query queryCustList = entityManager.createNativeQuery(sbCustList.toString());
-		queryCustList.setParameter("biNo", biNo);
-		queryCustList.executeUpdate();
-		
-		List<BidCustDto> custList = new JpaResultMapper().list(queryCustList, BidCustDto.class);
-		
-		for(BidCustDto custDto : custList) {
+		for(Object obj : custList) {
+			Map<String, Object> custDto = (Map<String, Object>) obj;
 			//복호화
 			String encQutn = null;//파일입력
 			String encEsmtSpec = null;//직접입력
 			String decryptData = null;//복호화 할 데이터(파일입력 방식은 encQutn, 직접입력 방식은 encEsmtSpec)
 			
-			if(custDto.getEncQutn() != null) {
-				encQutn = custDto.getEncQutn();
+			if(custDto.get("encQutn") != null) {
+				encQutn = CommonUtils.getString(custDto.get("encQutn"));
 			};
 			
-			if(custDto.getEncEsmtSpec() != null) {
-				encEsmtSpec = custDto.getEncEsmtSpec();
+			if(custDto.get("encEsmtSpec") != null) {
+				encEsmtSpec = CommonUtils.getString(custDto.get("encEsmtSpec"));
 			};
 			
 			//파일입력 방식은 encQutn, 직접입력 방식은 encEsmtSpec 복호화
-			if(custDto.getInsMode().equals("1")) {//파일등록 방식
+			if(CommonUtils.getString(custDto.get("insMode")).equals("1")) {//파일등록 방식
 				decryptData = encQutn;
 			}else{//직접입력 방식
 				decryptData = encEsmtSpec;
@@ -336,7 +296,7 @@ public class BidStatusService {
 				decryptData = (String) fixedResult.getData();
 				decryptData = decryptData.replaceAll(",", "");// 금액에서 , 빼기
 				
-				if(custDto.getInsMode().equals("2")) {//직접입력 방식인 경우
+				if(CommonUtils.getString(custDto.get("insMode")).equals("2")) {//직접입력 방식인 경우
 					//직접입력 총 견적액 구하기
 					String[] esmtSpecArr = decryptData.split("\\$");//정규표현식에서 메타 문자로 사용되기 때문에 \\를 붙여줘야함
 					
@@ -344,29 +304,21 @@ public class BidStatusService {
 					int specTotal = 0;
 					for(String esmtSpec : esmtSpecArr) {
 						String[] info = esmtSpec.split("=");
+						Map<String, Object> innerParams = new HashMap<String, Object>();
+						innerParams.put("biNo", custDto.get("biNo"));
+						innerParams.put("seq", CommonUtils.getInt(info[0])+1);
+						innerParams.put("custCode", CommonUtils.getInt(custDto.get("custCode")));
+						innerParams.put("esmtUc", new BigDecimal(info[1]));
+						innerParams.put("biOrder", custDto.get("biOrder"));
+						
 						//입찰 직접입력 테이블(t_bi_detail_mat_cust)에 insert
-						TBiDetailMatCust tBiDetailMatCust = new TBiDetailMatCust();
-						tBiDetailMatCust.setBiNo(custDto.getBiNo());
-						tBiDetailMatCust.setSeq(CommonUtils.getInt(info[0])+1);
-						tBiDetailMatCust.setCustCode(CommonUtils.getInt(custDto.getCustCode()));
-						tBiDetailMatCust.setEsmtUc(new BigDecimal(info[1]));
+						generalDao.insertGernal("bidStatus.insertTBiDetailMatCust", params);
 						
-						entityManager.persist(tBiDetailMatCust);
-						
-						//입찰 직접입력 테이블 차수(t_bi_detail_mat_cust_temp)에 insert
-						TBiDetailMatCustTemp tBiDetailMatCustTemp = new TBiDetailMatCustTemp();
-						tBiDetailMatCustTemp.setBiNo(custDto.getBiNo());
-						tBiDetailMatCustTemp.setSeq(CommonUtils.getInt(info[0])+1);
-						tBiDetailMatCustTemp.setCustCode(CommonUtils.getInt(custDto.getCustCode()));
-						tBiDetailMatCustTemp.setBiOrder(custDto.getBiOrder());
-						tBiDetailMatCustTemp.setEsmtUc(new BigDecimal(info[1]));
-						
-						entityManager.persist(tBiDetailMatCustTemp);
-						
+						//입찰 직접입력 이력 테이블(t_bi_detail_mat_cust_temp)에 insert
+						generalDao.insertGernal("bidStatus.insertTBiDetailMatCustTemp", params);
 						
 						int itemPrice = Integer.parseInt(info[1]);
 						specTotal += itemPrice;
-						
 						
 					}
 					
@@ -378,56 +330,26 @@ public class BidStatusService {
 			//데이터 검증 끝
 			
 			//총견적액 업데이트
-			StringBuilder sbCust = new StringBuilder(
-					"UPDATE	t_bi_info_mat_cust " 
-			+		"set	ESMT_AMT = :esmtAmt "
-			+		",		UPDATE_DATE = sysdate() "
-			+		",		UPDATE_USER = :userId "
-			+		"WHERE bi_no = :biNo "
-			+		"AND CUST_CODE = :custCode "
-			);
+			Map<String, Object> innerParams = new HashMap<String, Object>();
+			innerParams.put("esmtAmt", decryptData);
+			innerParams.put("userId", userId);
+			innerParams.put("biNo", custDto.get("biNo"));
+			innerParams.put("custCode", custDto.get("custCode"));
 			
-			Query queryCust = entityManager.createNativeQuery(sbCust.toString());
-			queryCust.setParameter("esmtAmt", decryptData);
-			queryCust.setParameter("userId", userId);
-			queryCust.setParameter("biNo", custDto.getBiNo());
-			queryCust.setParameter("custCode", custDto.getCustCode());
-			queryCust.executeUpdate();
 			
 			//협력사 입찰 temp 테이블 insert
-			this.insertBiInfoMatCustTemp(custDto.getBiNo(), custDto.getCustCode());
+			this.insertBiInfoMatCustTemp(CommonUtils.getString(custDto.get("biNo")), CommonUtils.getInt(custDto.get("custCode")));
 		
 		}
 		
 		//입찰 메인 업데이트
-		StringBuilder sbMain = new StringBuilder(
-				"UPDATE	t_bi_info_mat " 
-			+	"set	ING_TAG = 'A2' "
-			+	",		EST_OPEN_DATE = sysdate() "
-			+	",		BI_OPEN = 'Y' "
-			+	",		UPDATE_DATE = sysdate() "
-			+	",		UPDATE_USER = :userId "
-			+	"WHERE bi_no = :biNo "
-		);
-
-		Query queryMain = entityManager.createNativeQuery(sbMain.toString());
-		queryMain.setParameter("userId", userId);
-		queryMain.setParameter("biNo", biNo);
-		queryMain.executeUpdate();
+		generalDao.updateGernal("bidStatus.updateOpenEbidTBiInfoMat", params);
 		
 		//입찰 이력 업데이트
 		this.bidHist(biNo);
 		
-		//로그
-		Map<String, String> logParams = new HashMap<>();
-		logParams.put("msg", "[본사] 개찰");
-		logParams.put("biNo", biNo);
-		logParams.put("userId", userId);
-		try {
-			bidProgressService.updateLog(logParams);
-		}catch(Exception e) {
-			log.error("bidOpening updateLog error : {}", e);
-		}
+		//로그입력
+		this.insertTBiLog("[본사] 개찰", biNo, userId);
 		
 		return resultBody;
 	}
@@ -438,6 +360,7 @@ public class BidStatusService {
 	 * @return
 	 */
 	@Transactional
+	@SuppressWarnings({ "unchecked" })
 	public ResultBody bidSucc(@RequestBody Map<String, Object> params) throws Exception {
 
 		ResultBody resultBody = new ResultBody();
@@ -447,133 +370,54 @@ public class BidStatusService {
 		String userId = userOptional.get().getUserId();
 		
 		String biNo = CommonUtils.getString(params.get("biNo"));
-		String biMode = "";
-		Optional<TBiInfoMat> optionData = tBiInfoMatRepository.findById(biNo);
-		if(optionData.isPresent()) {
-			biMode = optionData.get().getBiMode();
-		}
+		Map<String, Object> biInfo = this.selectTBiInfoMatInfomation(biNo, "bi_mode");
+		String biMode = CommonUtils.getString(biInfo.get("biMode"));
 		
-		StringBuilder sbList = new StringBuilder( // 입찰 업데이트
-				  "UPDATE t_bi_info_mat "
-				+ "SET	ing_tag = 'A5'"
-				+ ",	update_user = :userId "
-				+ ",	update_date = sysdate() "
-				+ ",	add_accept = :succDetail "
-				+ ",	succ_amt = (select ESMT_AMT from t_bi_info_mat_cust tbimc where BI_NO = :biNo and CUST_CODE = :succCust) "
-				+ "where bi_no = :biNo ");
+		params.put("userId", userId);
 		
-		Query queryList = entityManager.createNativeQuery(sbList.toString());
-		queryList.setParameter("userId", userId);
-		queryList.setParameter("succDetail", CommonUtils.getString(params.get("succDetail")));
-		queryList.setParameter("succCust", CommonUtils.getString(params.get("succCust")));
-		queryList.setParameter("biNo", biNo);
-
-		queryList.executeUpdate();
+		generalDao.updateGernal("bidStatus.updateEbidSuccessTBiInfoMat", params);
+		
 		
 		//입찰 hist 테이블 insert
 		this.bidHist((String) params.get("biNo"));
 
 		// 낙찰 업체정보 업데이트
-		StringBuilder sbCust = new StringBuilder(
-				"UPDATE t_bi_info_mat_cust SET succ_yn ='Y', update_user = :userId, update_date = sysdate() " +
-						"where bi_no = :biNo and cust_code = :custCode");
-		Query custQuery = entityManager.createNativeQuery(sbCust.toString());
-		custQuery.setParameter("userId", userId);
-		custQuery.setParameter("biNo", biNo);
-		custQuery.setParameter("custCode", CommonUtils.getString(params.get("succCust")));
-
-		custQuery.executeUpdate();
+		generalDao.updateGernal("bidStatus.updateEbidSuccessTBiInfoMatCust", params);
 		
 		//업체정보차수 업데이트
-		StringBuilder sbList3 = new StringBuilder(
-				"UPDATE t_bi_info_mat_cust_temp SET succ_yn ='Y', update_user = :userId, update_date = sysdate() " +
-						"where bi_no = :biNo and cust_code = :custCode");
-		Query queryList3 = entityManager.createNativeQuery(sbList3.toString());
-		queryList3.setParameter("userId", userId);
-		queryList3.setParameter("biNo", biNo);
-		queryList3.setParameter("custCode", CommonUtils.getString(params.get("succCust")));
-
-		queryList3.executeUpdate();
+		generalDao.updateGernal("bidStatus.updateEbidSuccessTBiInfoMatCustTemp", params);
 		
-		//로그 입력
-		Map<String, String> logParams = new HashMap<>();
-		logParams.put("msg", "[본사] 낙찰");
-		logParams.put("biNo", biNo);
-		logParams.put("userId", userId);
-		bidProgressService.updateLog(logParams);
+		//로그입력
+		this.insertTBiLog("[본사] 낙찰", biNo, userId);
 		
 		//메일, 문자 전송
 		try {
-			StringBuilder sbMail = new StringBuilder("");
+			List<Object> list = null;
+			ArrayList<Integer> arr = new ArrayList<Integer>();
+			arr.add(CommonUtils.getInt(params.get("succCust")));
+			params.put("custList", arr);
 			
 			if(biMode.equals("A")) {
-				sbMail.append(
-					  "select	tccu.USER_EMAIL  "
-					+ ",		a.from_email "
-					+ ",		REGEXP_REPLACE(tccu.USER_HP , '[^0-9]+', '') as USER_HP "
-					+ ",		tccu.USER_NAME "
-					+ "from "
-					+ "( "
-					+ "	select	jb.datas as user_id "
-					+ "	,		tcu.USER_EMAIL as from_email "
-					+ "	from t_bi_info_mat_cust tbimc "
-					+ "	inner join json_table( "
-					+ "		replace(json_array(tbimc.USEMAIL_ID), ',', '\",\"'), "
-					+ "		'$[*]' columns (datas varchar(50) path '$') "
-					+ "	) jb "
-					+ "	inner join t_bi_info_mat tbim "
-					+ "		on tbimc.bi_no = tbim.bi_no "
-					+ "	left outer join t_co_user tcu "
-					+ "		on tbim.create_user = tcu.user_id "
-					+ "	where tbimc.bi_no = :biNo "
-					+ "	and tbimc.cust_code = :succCust "
-					+ ") a "
-					+ "inner join t_co_cust_user tccu "
-					+ "	on a.user_id = tccu.user_id "
-					+ "	and tccu.USE_YN = 'Y' "
-					+ "group by tccu.USER_EMAIL "	
-				);
+				list = generalDao.selectGernalList("bidStatus.selectEbidBiModeASendInfoCustList", params);
+				
 			}else if(biMode.equals("B")) {
-				sbMail.append(
-					"select	tccu.user_email "
-					+ ",	tcu.user_email as from_email "
-					+ ",	REGEXP_REPLACE(tccu.USER_HP , '[^0-9]+', '') as USER_HP "
-					+ ",	tccu.USER_NAME "
-					+ "from t_bi_info_mat_cust tbimc "
-					+ "inner join t_co_cust_master tccm "
-					+ "	on tbimc.cust_code = tccm.cust_code "
-					+ "inner join t_co_cust_user tccu "
-					+ "	on tccm.cust_code = tccu.cust_code "
-					+ "	and tccu.USE_YN = 'Y' "
-					+ "inner join t_bi_info_mat tbim "
-					+ "	on tbimc.bi_no = tbim.bi_no "
-					+ "left outer join t_co_user tcu "
-					+ "	on tbim.create_user = tcu.user_id "
-					+ "where tbimc.bi_no = :biNo "
-					+ "and tbimc.cust_code = :succCust "
-				);
+				list = generalDao.selectGernalList("bidStatus.selectEbidBiModeBSendInfoCustList", params);
 			}
 			
-			//쿼리 실행
-			Query queryMail = entityManager.createNativeQuery(sbMail.toString());
-			//조건 대입
-			queryMail.setParameter("biNo", biNo);
-			queryMail.setParameter("succCust", CommonUtils.getString(params.get("succCust")));
-			List<SendDto> sendList = new JpaResultMapper().list(queryMail, SendDto.class);
-			
-			if(sendList.size() != 0) {
+			if(list.size() != 0) {
 				Map<String, Object> emailParam = new HashMap<String, Object>();
 				emailParam.put("type", "succ");
 				emailParam.put("biName", params.get("biName"));
 				emailParam.put("reason", params.get("succDetail"));
-				emailParam.put("sendList", sendList);
+				emailParam.put("sendList", list);
 				emailParam.put("biNo", biNo);
 				
 				bidProgressService.updateEmail(emailParam);
 				
 				//문자
-				for(SendDto dto : sendList) {
-					messageService.send("일진그룹", dto.getUserHp(), dto.getUserName(), "[일진그룹 전자입찰시스템] 참여하신 입찰에("+biNo+") 낙찰되었습니다.\r\n확인바랍니다.", biNo);
+				for(Object obj : list) {
+					Map<String, Object> map = (Map<String, Object>) obj;
+					messageService.send("일진그룹", CommonUtils.getString(map.get("userHp")), CommonUtils.getString(map.get("userName")), "[일진그룹 전자입찰시스템] 참여하신 입찰에("+biNo+") 낙찰되었습니다.\r\n확인바랍니다.", biNo);
 				}
 				
 			}
@@ -592,30 +436,10 @@ public class BidStatusService {
 	public void bidHist(String biNo) throws Exception{
 		
 		if(!StringUtils.isEmpty(biNo)) {
-//			StringBuilder sbHist = new StringBuilder( // 입찰 hist 업데이트
-//				"INSERT into t_bi_info_mat_hist ("
-//				+ "BI_NO, BI_NAME, BI_MODE, INS_MODE, BID_JOIN_SPEC, SPECIAL_COND, SUPPLY_COND, SPOT_DATE, SPOT_AREA, SUCC_DECI_METH, BID_OPEN_DATE, AMT_BASIS, "
-//				+ "BD_AMT, SUCC_AMT, EST_START_DATE, EST_CLOSE_DATE, EST_OPENER, EST_BIDDER, EST_OPEN_DATE, OPEN_ATT1, OPEN_ATT1_SIGN, OPEN_ATT2, OPEN_ATT2_SIGN, "
-//				+ "ING_TAG, CREATE_USER, CREATE_DATE, UPDATE_USER, UPDATE_DATE, ITEM_CODE, GONGO_ID, PAY_COND, WHY_A3, WHY_A7, BI_OPEN, INTERRELATED_CUST_CODE, "
-//				+ "REAL_AMT, ADD_ACCEPT, MAT_DEPT, MAT_PROC, MAT_CLS, MAT_FACTORY, MAT_FACTORY_LINE, MAT_FACTORY_CNT "
-//				+ ") select "
-//				+ "BI_NO, BI_NAME, BI_MODE, INS_MODE, BID_JOIN_SPEC, SPECIAL_COND, SUPPLY_COND, SPOT_DATE, SPOT_AREA, SUCC_DECI_METH, BID_OPEN_DATE, AMT_BASIS, "
-//				+ "BD_AMT, SUCC_AMT, EST_START_DATE, EST_CLOSE_DATE, EST_OPENER, EST_BIDDER, EST_OPEN_DATE, OPEN_ATT1, OPEN_ATT1_SIGN, OPEN_ATT2, OPEN_ATT2_SIGN, "
-//				+ "ING_TAG, CREATE_USER, CREATE_DATE, UPDATE_USER, UPDATE_DATE, ITEM_CODE, GONGO_ID, PAY_COND, WHY_A3, WHY_A7, BI_OPEN, INTERRELATED_CUST_CODE, "
-//				+ "REAL_AMT, ADD_ACCEPT, MAT_DEPT, MAT_PROC, MAT_CLS, MAT_FACTORY, MAT_FACTORY_LINE, MAT_FACTORY_CNT "
-//				+ "from t_bi_info_mat tbim "
-//				+ "where tbim.BI_NO = :biNo"
-//			);
-//			
 			Map<String, Object> params = new HashMap<String, Object>();
 			params.put("biNo", biNo);
 			
 			generalDao.insertGernal("bidStatus.insertTBiInfoMatHist", params);
-//	
-//			Query histQuery = entityManager.createNativeQuery(sbHist.toString());
-//			histQuery.setParameter("biNo", biNo);
-//	
-//			histQuery.executeUpdate();
 		}
 	}
 	
@@ -635,166 +459,54 @@ public class BidStatusService {
 		String userId = userOptional.get().getUserId();
 		
 		String biNo = CommonUtils.getString(params.get("biNo"));
-		String biMode = "";
-		Optional<TBiInfoMat> optionData = tBiInfoMatRepository.findById(biNo);
-		if(optionData.isPresent()) {
-			biMode = optionData.get().getBiMode();
-		}
+		Map<String, Object> biInfo = this.selectTBiInfoMatInfomation(biNo, "bi_mode");
+		String biMode = CommonUtils.getString(biInfo.get("biMode"));
 		
-		StringBuilder sbMain = new StringBuilder( // 입찰 업데이트
-				  "UPDATE	t_bi_info_mat "
-				+ "SET		EST_CLOSE_DATE = :estCloseDate "
-				+ ",		WHY_A3 = :whyA3 "
-				+ ",		ING_TAG = 'A3' "
-				+ ",		EST_OPEN_DATE = NULL "
-				+ ",		UPDATE_DATE = sysdate() "
-				+ ",		UPDATE_USER = :userId "
-				+ ",		OPEN_ATT1_SIGN = 'N' "
-				+ ",		OPEN_ATT2_SIGN = 'N' "
-				+ ",		BI_MODE = 'A' "
-				+ ",		BI_OPEN = 'N' "
-				+ "WHERE	bi_no = :biNo");
-
-		Query queryMain = entityManager.createNativeQuery(sbMain.toString());
-		queryMain.setParameter("estCloseDate", CommonUtils.getString(params.get("estCloseDate")));
-		queryMain.setParameter("whyA3", CommonUtils.getString(params.get("whyA3")));
-		queryMain.setParameter("biNo", biNo);
-		queryMain.setParameter("userId", userId);
-
-		queryMain.executeUpdate();
+		params.put("userId", userId);
+		
+		//입찰 재입찰 상태로 변경
+		generalDao.updateGernal("bidStatus.updateRebidTBiInfoMat", params);
 
 		//입찰 hist 테이블 insert
 		this.bidHist(biNo);
 		
 		//재입찰 대상 초기화
-		StringBuilder sbReCust = new StringBuilder(
-			  "UPDATE	t_bi_info_mat_cust "
-			+ "SET		REBID_ATT = 'N' "
-			+ "WHERE	BI_NO = :biNo "
-		);
-		
-		Query queryReCust = entityManager.createNativeQuery(sbReCust.toString());
-		queryReCust.setParameter("biNo", biNo);
-		queryReCust.executeUpdate();
+		generalDao.updateGernal("bidStatus.updateRebidAttN", params);
 		
 		//협력사 상세내역 삭제
-		
-		ArrayList<Integer> reCustList = (ArrayList<Integer>) params.get("reCustList");
-		
-		StringBuilder sbCustDetailDel = new StringBuilder(
-			  "DELETE FROM t_bi_detail_mat_cust "
-			+ "WHERE BI_NO = :biNo "
-			+ "AND	CUST_CODE IN ( :custCode )"
-		);
-		
-		Query queryCustDetailDel = entityManager.createNativeQuery(sbCustDetailDel.toString());
-		queryCustDetailDel.setParameter("biNo", biNo);
-		queryCustDetailDel.setParameter("custCode", reCustList);
-		queryCustDetailDel.executeUpdate();
+		generalDao.deleteGernal("bidStatus.deleteTBiDetailMatCustCustCode", params);
 		
 		//협력사 재입찰대상만 업데이트
-		StringBuilder sbCustUpdate = new StringBuilder(
-			  "UPDATE t_bi_info_mat_cust "
-			+ "SET		REBID_ATT = 'Y' "
-			+ ",		ESMT_YN = '0' "
-			+ ",		ESMT_CURR = NULL "
-			+ ",		ESMT_AMT = 0 "
-			+ ",		ENC_QUTN = '0' "
-			+ ",		ENC_ESMT_SPEC = NULL "
-			+ ",		FILE_ID = NULL "
-			+ ",		SUBMIT_DATE = NULL "
-			+ ",		FILE_HASH_VALUE = NULL "
-			+ ",		UPDATE_USER = :userId "
-			+ ",		UPDATE_DATE = sysdate() "
-			+ ",		BI_ORDER = (select MAX(BI_ORDER)+1 from t_bi_info_mat_cust where BI_NO = :biNo) "
-			+ "WHERE	BI_NO = :biNo "
-			+ "AND		CUST_CODE IN ( :custCode ) "
-		);
+		generalDao.updateGernal("bidStatus.updateRebidTBiInfoMatCustCustCode", params);
 		
-		Query queryCustUpdate = entityManager.createNativeQuery(sbCustUpdate.toString());
-		queryCustUpdate.setParameter("biNo", biNo);
-		queryCustUpdate.setParameter("custCode", reCustList);
-		queryCustUpdate.setParameter("userId", userId);
-		queryCustUpdate.executeUpdate();
-		
-		//로그 입력
-		Map<String, String> logParams = new HashMap<>();
-		logParams.put("msg", "[본사] 재입찰");
-		logParams.put("biNo", biNo);
-		bidProgressService.updateLog(logParams);
-		
+		//로그입력
+		this.insertTBiLog("[본사] 재입찰", biNo, userId);
+				
 		//메일, 문자 전송
 		try {
-			StringBuilder sbMail = new StringBuilder("");
+			List<Object> list = null;
+			params.put("custList", params.get("reCustList"));
 			
 			if(biMode.equals("A")) {
-				sbMail.append(
-					  "select	tccu.USER_EMAIL "
-					+ ",		a.from_email "
-					+ ",		REGEXP_REPLACE(tccu.USER_HP , '[^0-9]+', '') as USER_HP "
-					+ ",		tccu.USER_NAME "
-					+ "from "
-					+ "( "
-					+ "	select	jb.datas as user_id "
-					+ "	,		tcu.USER_EMAIL as from_email "
-					+ "	from t_bi_info_mat_cust tbimc "
-					+ "	inner join json_table( "
-					+ "		replace(json_array(tbimc.USEMAIL_ID), ',', '\",\"'), "
-					+ "		'$[*]' columns (datas varchar(50) path '$') "
-					+ "	) jb "
-					+ "	inner join t_bi_info_mat tbim "
-					+ "		on tbimc.bi_no = tbim.bi_no "
-					+ "	left outer join t_co_user tcu "
-					+ "		on tbim.create_user = tcu.user_id "
-					+ "	where tbimc.bi_no = :biNo "
-					+ "	and tbimc.cust_code IN ( :custCode ) "
-					+ ") a "
-					+ "inner join t_co_cust_user tccu "
-					+ "	on a.user_id = tccu.user_id "
-					+ "	and tccu.USE_YN = 'Y' "
-					+ "group by tccu.USER_EMAIL "	
-				);
+				list = generalDao.selectGernalList("bidStatus.selectEbidBiModeASendInfoCustList", params);
 			}else if(biMode.equals("B")) {
-				sbMail.append(
-					"select	tccu.user_email "
-					+ ",	tcu.user_email as from_email "
-					+ ",	REGEXP_REPLACE(tccu.USER_HP , '[^0-9]+', '') as USER_HP "
-					+ ",	tccu.USER_NAME "
-					+ "from t_bi_info_mat_cust tbimc "
-					+ "inner join t_co_cust_master tccm "
-					+ "	on tbimc.cust_code = tccm.cust_code "
-					+ "inner join t_co_cust_user tccu "
-					+ "	on tccm.cust_code = tccu.cust_code "
-					+ "	and tccu.USE_YN = 'Y' "
-					+ "inner join t_bi_info_mat tbim "
-					+ "	on tbimc.bi_no = tbim.bi_no "
-					+ "left outer join t_co_user tcu "
-					+ "	on tbim.create_user = tcu.user_id "
-					+ "where tbimc.bi_no = :biNo "
-					+ "and tccu.CUST_CODE IN ( :custCode ) "
-				);
+				list = generalDao.selectGernalList("bidStatus.selectEbidBiModeBSendInfoCustList", params);
 			}
 			
-			//쿼리 실행
-			Query queryMail = entityManager.createNativeQuery(sbMail.toString());
-			//조건 대입
-			queryMail.setParameter("biNo", biNo);
-			queryMail.setParameter("custCode", reCustList);
-			List<SendDto> sendList = new JpaResultMapper().list(queryMail, SendDto.class);
-			
-			if(sendList.size() != 0) {
+			if(list.size() != 0) {
 				Map<String, Object> emailParam = new HashMap<String, Object>();
 				emailParam.put("type", "rebid");
 				emailParam.put("biName", params.get("biName"));
 				emailParam.put("reason", params.get("whyA3"));
-				emailParam.put("sendList", sendList);
+				emailParam.put("sendList", list);
 				emailParam.put("biNo", biNo);
 				
 				bidProgressService.updateEmail(emailParam);
 				
 				//문자
-				for(SendDto dto : sendList) {
-					messageService.send("일진그룹", dto.getUserHp(), dto.getUserName(), "[일진그룹 전자입찰시스템] 일진씨앤에스에서 재입찰을 공고하였습니다.\r\n확인바랍니다.", biNo);
+				for(Object obj : list) {
+					Map<String, Object> map = (Map<String, Object>) obj;
+					messageService.send("일진그룹", CommonUtils.getString(map.get("userHp")), CommonUtils.getString(map.get("userName")), "[일진그룹 전자입찰시스템] 일진씨앤에스에서 재입찰을 공고하였습니다.\r\n확인바랍니다.", biNo);
 				}
 			}
 		}catch(Exception e) {
@@ -808,27 +520,12 @@ public class BidStatusService {
 	/**
 	 * 입찰 협력업체 차수 등록
 	 */
-	public void insertBiInfoMatCustTemp(String biNo, Integer custCode) {
+	public void insertBiInfoMatCustTemp(String biNo, Integer custCode) throws Exception {
 		if(!StringUtils.isEmpty(biNo) && !StringUtils.isEmpty(custCode)) {
-			StringBuilder sbHist = new StringBuilder( // 입찰 hist 업데이트
-				  "insert into t_bi_info_mat_cust_temp( "
-				+ "BI_NO, CUST_CODE, BI_ORDER, REBID_ATT, ESMT_YN, ESMT_AMT, SUCC_YN "
-				+ ", ENC_QUTN, ENC_ESMT_SPEC, FILE_ID, SUBMIT_DATE, CREATE_USER, CREATE_DATE "
-				+ ", UPDATE_USER, UPDATE_DATE, ESMT_CURR, ETC_B_FILE, FILE_HASH_VALUE, ETC_B_FILE_PATH, USEMAIL_ID "
-				+ ") select  "
-				+ "BI_NO, CUST_CODE, BI_ORDER, REBID_ATT, ESMT_YN, ESMT_AMT, SUCC_YN "
-				+ ", ENC_QUTN, ENC_ESMT_SPEC, FILE_ID, SUBMIT_DATE, CREATE_USER, CREATE_DATE "
-				+ ", UPDATE_USER, UPDATE_DATE, ESMT_CURR, ETC_B_FILE, FILE_HASH_VALUE, ETC_B_FILE_PATH, USEMAIL_ID "
-				+ "from t_bi_info_mat_cust tbimc "
-				+ "where tbimc.BI_NO = :biNo "
-				+ "and tbimc.CUST_CODE = :custCode "
-			);
-	
-			Query histQuery = entityManager.createNativeQuery(sbHist.toString());
-			histQuery.setParameter("biNo", biNo);
-			histQuery.setParameter("custCode", custCode);
-	
-			histQuery.executeUpdate();
+			Map<String, Object> params = new HashMap<String, Object>();
+			params.put("biNo", biNo);
+			params.put("custCode", custCode);
+			generalDao.insertGernal("bidStatus.insertIBiInfoMatCustTemp", params);
 		}
 	}
 	
@@ -837,46 +534,11 @@ public class BidStatusService {
 	 * @param params
 	 * @return
 	 */
-	public ResultBody submitHist(@RequestBody Map<String, Object> params) {
+	@SuppressWarnings({ "rawtypes" })
+	public ResultBody submitHist(@RequestBody Map<String, Object> params) throws Exception {
 		ResultBody resultBody = new ResultBody();
 		
-		String biNo = CommonUtils.getString(params.get("biNo"));
-		String custCode = CommonUtils.getString(params.get("custCode"));
-
-		StringBuilder sbCount = new StringBuilder(
-				  "SELECT count(1) "
-				+ "from t_bi_info_mat_cust_temp "
-				+ "where bi_no = :biNo "
-				+ "and cust_code = :custCode "
-		);
-		StringBuilder sbList = new StringBuilder(
-				  "SELECT	tbimct.bi_order "
-				+ ",		tbimct.esmt_curr "
-				+ ",		tbimct.esmt_amt "
-				+ ",		DATE_FORMAT(tbimct.submit_date, '%Y-%m-%d %H:%i') AS submit_date "
-				+ "from t_bi_info_mat_cust_temp tbimct "
-				+ "left outer join t_co_code tcc "
-				+ "	on tcc.COL_CODE = 'T_CO_RATE' "
-				+ "	and tbimct.ESMT_CURR = tcc.CODE_VAL "
-				+ "where tbimct.bi_no = :biNo "
-				+ "and tbimct.cust_code = :custCode "
-				+ "order by tbimct.bi_order asc ");
-
-		Query queryList = entityManager.createNativeQuery(sbList.toString());
-		Query queryCountList = entityManager.createNativeQuery(sbCount.toString());
-		queryList.setParameter("biNo", biNo);
-		queryCountList.setParameter("biNo", biNo);
-		queryList.setParameter("custCode", custCode);
-		queryCountList.setParameter("custCode", custCode);
-
-		Pageable pageable = PagaUtils.pageable(params);
-		queryList.setFirstResult(pageable.getPageNumber() * pageable.getPageSize())
-				.setMaxResults(pageable.getPageSize()).getResultList();
-		List list = new JpaResultMapper().list(queryList, SubmitHistDto.class);
-
-		BigInteger count = (BigInteger) queryCountList.getSingleResult();
-		Page listPage = new PageImpl(list, pageable, count.intValue());
-		
+		Page listPage = generalDao.selectGernalListPage("bidStatus.selectTBiInfoMatCustTempCustCode", params);
 		resultBody.setData(listPage);
 		
 		return resultBody;
@@ -888,7 +550,7 @@ public class BidStatusService {
 	 * @return
 	 */
 	@Transactional
-	public ResultBody attSign(@RequestBody Map<String, Object> params) {
+	public ResultBody attSign(@RequestBody Map<String, Object> params) throws Exception{
 
 		ResultBody resultBody = new ResultBody();
 		
@@ -899,38 +561,18 @@ public class BidStatusService {
 		if (userOptional.isPresent()) {
 			dbPassword = userOptional.get().getUserPwd();
 		}
+		
+		String whoAtt = CommonUtils.getString(params.get("whoAtt"));
+		if(!whoAtt.equals("1") && !whoAtt.equals("2")) {
+			log.error("attSign error : whoAtt = {}" , whoAtt);
+			resultBody.setCode("fail");
+			return resultBody;
+		}
 
 		Boolean pwCheck = ((BCryptPasswordEncoder) passwordEncoder).matches(password, dbPassword);
 		
 		if(pwCheck) {
-			String whoAtt = CommonUtils.getString(params.get("whoAtt"));
-			String biNo = CommonUtils.getString(params.get("biNo"));
-			
-			if(!whoAtt.equals("1") && !whoAtt.equals("2")) {
-				log.error("attSign error : whoAtt = {}" , whoAtt);
-				resultBody.setCode("fail");
-				return resultBody;
-			}
-			
-			StringBuilder sbMain = new StringBuilder(
-				  "UPDATE t_bi_info_mat SET "
-			);
-			
-			if(whoAtt.equals("1")) {
-				sbMain.append(
-					"OPEN_ATT1_SIGN = 'Y' "
-				);
-			} else if(whoAtt.equals("2")) {
-				sbMain.append(
-					"OPEN_ATT2_SIGN = 'Y' "
-				);
-			}
-			
-			sbMain.append("WHERE BI_NO = :biNo ");
-			
-			Query query = entityManager.createNativeQuery(sbMain.toString());
-			query.setParameter("biNo", biNo);
-			query.executeUpdate();
+			generalDao.updateGernal("bidStatus.updateOpenAttSign", params);
 			
 		}else {
 			resultBody.setCode("inValid");
