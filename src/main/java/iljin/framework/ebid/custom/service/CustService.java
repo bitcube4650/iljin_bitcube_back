@@ -1,34 +1,21 @@
 package iljin.framework.ebid.custom.service;
 
-import java.io.IOException;
-import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
-
-import org.apache.commons.collections.map.HashedMap;
-import org.qlrm.mapper.JpaResultMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import iljin.framework.core.dto.ResultBody;
 import iljin.framework.core.security.user.CustomUserDetails;
-import iljin.framework.ebid.custom.dto.TCoCustMasterDto;
 import iljin.framework.ebid.etc.util.CommonUtils;
 import iljin.framework.ebid.etc.util.GeneralDao;
-import iljin.framework.ebid.etc.util.PagaUtils;
 import iljin.framework.ebid.etc.util.common.consts.DB;
 import iljin.framework.ebid.etc.util.common.file.FileService;
 import iljin.framework.ebid.etc.util.common.mail.service.MailService;
@@ -40,8 +27,6 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @Slf4j
 public class CustService {
-	@PersistenceContext
-	private EntityManager entityManager;
 	@Autowired
 	private FileService fileService;
 	@Autowired
@@ -60,77 +45,16 @@ public class CustService {
 		Page listPage = generalDao.selectGernalListPage("cust.selectTCoCustList", params);
 		
 		return listPage;
-
 	}
 
-	public Page otherCustList(Map<String, Object> params) {
-		StringBuilder sbCount = new StringBuilder("SELECT count(1)\n");
-		StringBuilder sbList = new StringBuilder(
-				"SELECT	a.cust_code\n"
-				+ ",	a.cust_name\n"
-				+ ",	case\n"
-				+ "			when (select ifnull(ITEM_NAME, '') from t_co_item where item_code = a.CUST_TYPE2) != ''\n"
-				+ "			then CONCAT((select CONCAT('1. ', item_name, '<br/>') from t_co_item x where x.item_code = a.cust_type1) , IFNULL((select CONCAT('2. ', item_name) from t_co_item x where x.item_code = a.cust_type2), ''))\n"
-				+ "			else (select CONCAT('1. ', item_name) from t_co_item where ITEM_CODE = a.CUST_TYPE1)\n"
-				+ "		end as cust_type1\n"
-				+ ",	case\n"
-				+ "			when ifnull(regnum, '') != ''\n"
-				+ "			then CONCAT(SUBSTR(regnum, 1, 3), '-', SUBSTR(regnum, 4, 2), '-', SUBSTR(regnum, 6, 5))\n"
-				+ "			else regnum\n"
-				+ "		end as regnum\n"
-				+ ",	pres_name\n"
-				+ ",	(\n"
-				+ "			select GROUP_CONCAT(interrelated_nm separator '<br/>')\n"
-				+ "			from t_co_cust_ir x\n"
-				+ "			,		t_co_interrelated y\n"
-				+ "			where x.cust_code = a.cust_code\n"
-				+ "			and x.interrelated_cust_code = y.interrelated_cust_code\n"
-				+ "		) as interrelated_nm\n"
-		);
-		
-		StringBuilder sbFrom = new StringBuilder(
-				"FROM	t_co_cust_master a\n"
-				+ "WHERE	a.CERT_YN = 'Y'\n"
-				+ "AND	a.cust_code NOT IN\n"
-				+ "(\n"
-				+ "	select tcci.cust_code\n"
-				+ "	from t_co_cust_ir tcci\n"
-				+ "	where tcci.interrelated_cust_code = :custCode\n"
-				+ ")\n"
-		);
-		
+	@SuppressWarnings({ "unused", "rawtypes" })
+	public Page otherCustList(Map<String, Object> params) throws Exception {
+		ResultBody resultBody = new ResultBody();
 
-        if (!StringUtils.isEmpty(params.get("custType"))) {
-        	sbFrom.append("AND	(a.cust_type1 = :custType OR a.cust_type2 = :custType)\n");
-        }
-        if (!StringUtils.isEmpty(params.get("custName"))) {
-        	sbFrom.append("AND	cust_name like concat('%',:custName,'%')\n");
-        }
-        sbList.append(sbFrom);
-        sbList.append("order by create_date desc");
-        Query queryList = entityManager.createNativeQuery(sbList.toString());
-        sbCount.append(sbFrom);
-        Query queryTotal = entityManager.createNativeQuery(sbCount.toString());
+		Page listPage = generalDao.selectGernalListPage("cust.selectOtherCustList", params);
 
-        queryList.setParameter("custCode", params.get("custCode"));
-        queryTotal.setParameter("custCode", params.get("custCode"));
-
-        if (!StringUtils.isEmpty(params.get("custType"))) {
-            queryList.setParameter("custType", params.get("custType"));
-            queryTotal.setParameter("custType", params.get("custType"));
-        }
-        if (!StringUtils.isEmpty(params.get("custName"))) {
-            queryList.setParameter("custName", params.get("custName"));
-            queryTotal.setParameter("custName", params.get("custName"));
-        }
-
-        Pageable pageable = PagaUtils.pageable(params);
-        queryList.setFirstResult(pageable.getPageNumber() * pageable.getPageSize()).setMaxResults(pageable.getPageSize()).getResultList();
-        List list = new JpaResultMapper().list(queryList, TCoCustMasterDto.class);
-
-        BigInteger count = (BigInteger) queryTotal.getSingleResult();
-        return new PageImpl(list, pageable, count.intValue());
-    }
+		return listPage;
+	}
 	
 	@SuppressWarnings("unchecked")
 	public ResultBody custDetail(Map<String, Object> params) throws Exception {
@@ -179,7 +103,7 @@ public class CustService {
 		insertHistory(params);
 
 		// 업체 삭제 처리
-		generalDao.deleteGernal("cust.updateTCoCustMasterCert", params);
+		generalDao.deleteGernal("cust.deleteTCoCustMaster", params);
 		// 매핑 삭제 처리
 		generalDao.deleteGernal("cust.deleteTCoCustIr", params);
 		// 업체 사용자 삭제 처리

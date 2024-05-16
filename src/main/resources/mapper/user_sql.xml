@@ -48,6 +48,21 @@
 		</if>
 	</select>
 	
+	<select id="selectTCoCustUserDetail" resultType="camel">
+		/* user.selectTCoCustUserDetail */
+		SELECT	USER_NAME
+		,		USER_ID
+		,		USER_BUSEO
+		,		USER_POSITION
+		,		USER_EMAIL
+		,		USER_TEL
+		,		USER_HP
+		,		USER_TYPE
+		,		USE_YN
+		FROM	T_CO_CUST_USER
+		WHERE	USER_ID = #{userId}
+	</select>
+	
 	<insert id="insertTCoCustUser">
 		/* user.insertTCoCustUser */
 		INSERT INTO T_CO_CUST_USER (
@@ -94,16 +109,23 @@
 		,		USER_POSITION	= #{userPosition}
 		,		UPDATE_USER		= #{updUserId}
 		,		UPDATE_DATE		= NOW()
+		<if test="userPwd != null and userPwd != ''">
+		,		USER_PWD		= #{userPwd}
+		,		PWD_CHG_DATE	= NOW()
+		</if>
 		WHERE	USER_ID			= #{userId}
 	</update>
 	
 	<update id="updateTCoCustUserUseYn">
 		/* user.updateTCoCustUserUseYn */
 		UPDATE T_CO_CUST_USER
-		SET	USE_YN = #{useYn}
-		,	UPDATE_USER	= #{userId}
+		SET	USE_YN		= #{useYn}
+		,	UPDATE_USER	= #{updUserId}
 		,	UPDATE_DATE	= NOW()
-		WHERE CUST_CODE = #{custCode}
+		WHERE CUST_CODE	= #{custCode}
+		<if test="delUserId != null and delUserId != ''">
+		AND		USER_ID = #{delUserId}
+		</if>
 	</update>
 	
 	<select id="selectComAdminUserList" resultType="camel">

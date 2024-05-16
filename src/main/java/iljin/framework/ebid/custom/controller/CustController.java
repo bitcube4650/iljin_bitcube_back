@@ -46,6 +46,13 @@ public class CustController {
 		return custService.custList(params);
 	}
 
+	/**
+	 * 업체 리스트
+	 * @param params
+	 * @param user
+	 * @return
+	 * @throws Exception
+	 */
 	@SuppressWarnings("rawtypes")
 	@PostMapping("/custList")
 	public Page custList(@RequestBody Map<String, Object> params, @AuthenticationPrincipal CustomUserDetails user) throws Exception {
@@ -53,9 +60,15 @@ public class CustController {
 		return custService.custList(params);
 	}
 
+	/**
+	 * 타 계열사 업체 리스트
+	 * @param params
+	 * @return
+	 * @throws Exception
+	 */
 	@SuppressWarnings("rawtypes")
 	@PostMapping("/otherCustList")
-	public Page otherCustList(@RequestBody Map<String, Object> params) {
+	public Page otherCustList(@RequestBody Map<String, Object> params) throws Exception {
 		return custService.otherCustList(params);
 	}
 	
@@ -157,7 +170,7 @@ public class CustController {
 	@PostMapping("/del")
 	public ResultBody del(@RequestBody Map<String, Object> params, @AuthenticationPrincipal CustomUserDetails user) {
 		ResultBody resultBody = new ResultBody();
-		params.put("userId", user.getUsername());
+		params.put("updUserId", user.getUsername());
 		
 		try {
 			custService.del(params);
