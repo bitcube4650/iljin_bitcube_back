@@ -1,9 +1,11 @@
 package iljin.framework.ebid.custom.controller;
 
+import java.io.IOException;
 import java.util.Map;
 
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.collections.map.HashedMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,7 +20,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import iljin.framework.core.dto.ResultBody;
 import iljin.framework.core.security.user.CustomUserDetails;
-import iljin.framework.ebid.custom.dto.TCoCustMasterDto;
 import iljin.framework.ebid.custom.service.CustService;
 import lombok.extern.slf4j.Slf4j;
 
@@ -59,37 +60,52 @@ public class CustController {
 	}
 	
 	/**
-	 * 승인 대상 업체 상세 조회
-	 * @param id
-	 * @return
-	 */
-	@PostMapping("/approval/{id}")
-	public ResultBody approvalDetail(@PathVariable String id) {
-		ResultBody resultBody = new ResultBody();
-		try {
-			resultBody = custService.custDetail(id);
-		} catch (Exception e) {
-			resultBody.setCode("ERROR");
-			resultBody.setStatus(500);
-			resultBody.setMsg("업체 상세 내용 조회 중 오류가 발생하였습니다.");
-			log.error(e.getMessage());
-		}
-		return resultBody;
-	}
-	
-	/**
 	 * 업체 상세 조회
 	 * @param id
 	 * @return
 	 */
+	@SuppressWarnings("unchecked")
 	@PostMapping("/management/{id}")
-	public TCoCustMasterDto management(@PathVariable String id) {
-		return custService.custDetailForInter(id);
+	public ResultBody management(@PathVariable String id, @AuthenticationPrincipal CustomUserDetails user) {
+		ResultBody resultBody = new ResultBody();
+		
+		Map<String, Object> params = new HashedMap();
+		params.put("custCode", id);
+		params.put("interrelatedCustCode", user.getCustCode());
+		
+		try {
+			resultBody = custService.custDetail(params);
+		} catch (Exception e) {
+			resultBody.setCode("ERROR");
+			resultBody.setStatus(500);
+			resultBody.setMsg("업체 상세 내용 조회 중 오류가 발생하였습니다.");
+			log.error("{} Error : {}", this.getClass(), e.getMessage());
+		}
+		return resultBody;
 	}
 
+	/**
+	 * 업체 자사 정보 조회
+	 * @param user
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
 	@PostMapping("/info")
-	public TCoCustMasterDto info(@AuthenticationPrincipal CustomUserDetails user) {
-		return custService.custDetailForCust(user.getCustCode());
+	public ResultBody info(@AuthenticationPrincipal CustomUserDetails user) {
+		ResultBody resultBody = new ResultBody();
+		
+		Map<String, Object> params = new HashedMap();
+		params.put("custCode", user.getCustCode());
+		
+		try {
+			resultBody = custService.custDetail(params);
+		} catch (Exception e) {
+			resultBody.setCode("ERROR");
+			resultBody.setStatus(500);
+			resultBody.setMsg("업체 상세 내용 조회 중 오류가 발생하였습니다.");
+			log.error("{} Error : {}", this.getClass(), e.getMessage());
+		}
+		return resultBody;
 	}
 
 	/**
@@ -106,11 +122,17 @@ public class CustController {
 			resultBody.setCode("ERROR");
 			resultBody.setStatus(500);
 			resultBody.setMsg("업체 승인 중 오류가 발생하였습니다.");
-			log.error(e.getMessage());
+			log.error("{} Error : {}", this.getClass(), e.getMessage());
 		}
 		return resultBody;
 	}
-
+	
+	/**
+	 * 업체 반려 처리
+	 * @param params
+	 * @param user
+	 * @return
+	 */
 	@PostMapping("/back")
 	public ResultBody back(@RequestBody Map<String, Object> params, @AuthenticationPrincipal CustomUserDetails user) {
 		ResultBody resultBody = new ResultBody();
@@ -120,21 +142,58 @@ public class CustController {
 			resultBody.setCode("ERROR");
 			resultBody.setStatus(500);
 			resultBody.setMsg("업체 반려 중 오류가 발생하였습니다.");
-			log.error(e.getMessage());
+			log.error("{} Error : {}", this.getClass(), e.getMessage());
+		}
+		
+		return resultBody;
+	}
+	
+	/**
+	 * 업체 삭제 처리
+	 * @param params
+	 * @param user
+	 * @return
+	 */
+	@PostMapping("/del")
+	public ResultBody del(@RequestBody Map<String, Object> params, @AuthenticationPrincipal CustomUserDetails user) {
+		ResultBody resultBody = new ResultBody();
+		params.put("userId", user.getUsername());
+		
+		try {
+			custService.del(params);
+		} catch (Exception e) {
+			resultBody.setCode("ERROR");
+			resultBody.setStatus(500);
+			resultBody.setMsg("업체 삭제 중 오류가 발생하였습니다.");
+			log.error("{} Error : {}", this.getClass(), e.getMessage());
 		}
 		
 		return resultBody;
 	}
 
-	@PostMapping("/del")
-	public ResultBody del(@RequestBody Map<String, Object> params) {
-		return custService.del(params);
-	}
-
+	/**
+	 * 업체 탈퇴
+	 * @param params
+	 * @param session
+	 * @param user
+	 * @return
+	 */
 	@PostMapping("/leave")
-	public ResultBody leave(@RequestBody Map<String, Object> params, HttpSession session) {
+	public ResultBody leave(@RequestBody Map<String, Object> params, HttpSession session, @AuthenticationPrincipal CustomUserDetails user) {
 		session.invalidate();
-		return custService.del(params);
+		ResultBody resultBody = new ResultBody();
+		params.put("userId", user.getUsername());
+		
+		try {
+			custService.del(params);
+		} catch (Exception e) {
+			resultBody.setCode("ERROR");
+			resultBody.setStatus(500);
+			resultBody.setMsg("탈퇴 중 오류가 발생하였습니다.");
+			log.error("{} Error : {}", this.getClass(), e.getMessage());
+		}
+		
+		return resultBody;
 	}
 
 //	@PostMapping("/idcheck")
@@ -147,14 +206,34 @@ public class CustController {
 		return custService.pwdcheck(params);
 	}
 
+	/**
+	 * 업체 등록(회원가입) 및 수정
+	 * @param regnumFile
+	 * @param bFile
+	 * @param params
+	 * @param user
+	 * @return
+	 */
 	@PostMapping("/save")
 	public ResultBody save(@RequestPart(value = "regnumFile", required = false) MultipartFile regnumFile,
 			@RequestPart(value = "bFile", required = false) MultipartFile bFile,
-			@RequestPart("data") Map<String, Object> params) {
-		if (params.get("custCode") == null) {
-			return custService.insert(params, regnumFile, bFile);
-		} else {
-			return custService.update(params, regnumFile, bFile);
+			@RequestPart("data") Map<String, Object> params,
+			@AuthenticationPrincipal CustomUserDetails user) {
+		ResultBody resultBody = new ResultBody();
+
+		try {
+				custService.save(params, regnumFile, bFile, user);
+		} catch (IOException e) {
+			resultBody.setCode("UPLOAD");
+			resultBody.setStatus(500);
+			resultBody.setMsg("파일 업로드시 오류가 발생했습니다.");
+			log.error("{} Error : {}", this.getClass(), e.getMessage());
+		} catch (Exception e) {
+			resultBody.setCode("ERROR");
+			resultBody.setStatus(500);
+			resultBody.setMsg("업체 저장 중 오류가 발생하였습니다.");
+			log.error("{} Error : {}", this.getClass(), e.getMessage());
 		}
+		return resultBody;
 	}
 }

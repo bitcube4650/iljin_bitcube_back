@@ -66,7 +66,9 @@
 		/* cust.selectTCoCustDetail */
 		SELECT	A.CUST_CODE
 		,		A.CUST_NAME
-		,		(SELECT INTERRELATED_NM FROM T_CO_INTERRELATED X WHERE X.INTERRELATED_CUST_CODE = A.INTERRELATED_CUST_CODE)	AS INTERRELATED_NM
+		<![CDATA[
+		,		GROUP_CONCAT(E.INTERRELATED_NM SEPARATOR '<br/>')	AS INTERRELATED_NM
+		]]>
 		,		CUST_TYPE1
 		,		CUST_TYPE2
 		,		C.ITEM_NAME				AS CUST_TYPE_NM1
@@ -87,6 +89,9 @@
 		,		A.B_FILE_PATH
 		,		A.CERT_YN
 		,		A.ETC
+		,		D.CUST_LEVEL
+		,		D.CUST_VALUATION
+		,		D.CARE_CONTENT
 		,		B.USER_NAME
 		,		B.USER_EMAIL
 		,		B.USER_ID
@@ -111,21 +116,106 @@
 			LIMIT 1
 		) B
 			ON A.CUST_CODE = B.CUST_CODE
+		LEFT OUTER JOIN T_CO_CUST_IR D
+			ON A.CUST_CODE = D.CUST_CODE
+		LEFT OUTER JOIN T_CO_INTERRELATED E
+			ON D.INTERRELATED_CUST_CODE = E.INTERRELATED_CUST_CODE
 		LEFT OUTER JOIN T_CO_ITEM C
 			ON A.CUST_TYPE1 = C.ITEM_CODE
 		LEFT OUTER JOIN T_CO_ITEM C2
 			ON A.CUST_TYPE2 = C2.ITEM_CODE
 		WHERE A.CUST_CODE = #{custCode}
+		<if test="interrelatedCustCode != null and interrelatedCustCode != ''">
+		AND D.INTERRELATED_CUST_CODE = #{interrelatedCustCode}
+		</if>
 	</select>
+	
+	<insert id="insertTCoCustMaster" parameterType="map" useGeneratedKeys="true" keyProperty="custCode">
+		/* cust.insertTCoCustMaster */
+		INSERT INTO T_CO_CUST_MASTER(
+					CUST_TYPE1
+		,			CUST_TYPE2
+		,			CUST_NAME
+		,			REGNUM
+		,			PRES_NAME
+		,			PRES_JUMIN_NO
+		,			TEL
+		,			FAX
+		,			ZIPCODE
+		,			ADDR
+		,			ADDR_DETAIL
+		,			CAPITAL
+		,			FOUND_YEAR
+		,			CERT_YN
+		,			ETC
+		,			CREATE_USER
+		,			CREATE_DATE
+		,			UPDATE_USER
+		,			UPDATE_DATE
+		,			INTERRELATED_CUST_CODE
+		,			B_FILE
+		,			B_FILE_PATH
+		,			REGNUM_FILE
+		,			REGNUM_PATH
+		) VALUES (
+					#{custType1}
+		,			#{custType2}
+		,			#{custName}
+		,			#{regnum}
+		,			#{presName}
+		,			#{presJuminNo}
+		,			#{tel}
+		,			#{fax}
+		,			#{zipcode}
+		,			#{addr}
+		,			#{addrDetail}
+		,			#{capital}
+		,			#{foundYear}
+		,			#{certYn}
+		,			#{etc}
+		,			#{userId}
+		,			NOW()
+		,			#{userId}
+		,			NOW()
+		,			#{interrelatedCustCode}
+		,			#{bFile}
+		,			#{bFilePath}
+		,			#{regnumFile}
+		,			#{regnumPath}
+		)
+	</insert>
 	
 	<update id="updateTCoCustMasterCert">
 		/* cust.updateTCoCustMasterCert */
 		UPDATE T_CO_CUST_MASTER
-		SET		CERT_YN = #{certYn}
-		,		ETC = #{etc}
-		,		UPDATE_USER = #{userId}
-		,		UPDATE_DATE = NOW()
-		WHERE CUST_CODE = #{custCode}
+		SET		CERT_YN		= #{certYn}
+		,		ETC			= #{etc}
+		,		UPDATE_USER	= #{userId}
+		,		UPDATE_DATE	= NOW()
+		WHERE CUST_CODE		= #{custCode}
+	</update>
+	
+	<update id="updateTCoCustMaster">
+		/* cust.updateTCoCustMaster */
+		UPDATE T_CO_CUST_MASTER
+		SET		CUST_NAME		= #{custName}
+		,		REGNUM			= #{regnum}
+		,		PRES_NAME		= #{presName}
+		,		PRES_JUMIN_NO	= #{presJuminNo}
+		,		TEL				= #{tel}
+		,		FAX				= #{fax}
+		,		ZIPCODE			= #{zipcode}
+		,		ADDR			= #{addr}
+		,		ADDR_DETAIL		= #{addrDetail}
+		,		CAPITAL			= #{capital}
+		,		FOUND_YEAR		= #{foundYear}
+		,		B_FILE			= #{bFile}
+		,		B_FILE_PATH		= #{bFilePath}
+		,		REGNUM_FILE		= #{regnumFile}
+		,		REGNUM_PATH		= #{regnumPath}
+		,		UPDATE_USER		= #{userId}
+		,		UPDATE_DATE		= NOW()
+		WHERE CUST_CODE			= #{custCode}
 	</update>
 	
 	<delete id="deleteTCoCustMaster">
@@ -202,5 +292,29 @@
 		,		REGNUM_PATH
 		FROM T_CO_CUST_MASTER
 		WHERE CUST_CODE = #{custCode}
+	</insert>
+	
+	<insert id="mergeTCoCustIR">
+		/* cust.mergeTCoCustIR */
+		INSERT INTO T_CO_CUST_IR (
+				CUST_CODE
+		,		INTERRELATED_CUST_CODE
+		,		CUST_LEVEL
+		,		CUST_VALUATION
+		,		CARE_CONTENT
+		,		CERT_DATE
+		) VALUES (
+				#{custCode}
+		,		#{interrelatedCustCode}
+		,		#{custLevel}
+		,		#{custValuation}
+		,		#{careContent}
+		,		NOW()
+		)
+		ON DUPLICATE KEY
+		UPDATE	CUST_LEVEL		= #{custLevel}
+		,		CUST_VALUATION	= #{custValuation}
+		,		CARE_CONTENT	= #{careContent}
+		,		CERT_DATE		= NOW() 
 	</insert>
 </mapper>

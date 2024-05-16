@@ -21,31 +21,42 @@ import java.util.Map;
 @CrossOrigin
 public class CustUserController {
 
-    @Autowired
-    private CustUserService custUserService;
+	@Autowired
+	private CustUserService custUserService;
 
+	@PostMapping("/userList")
+	public Page userList(@RequestBody Map<String, Object> params) throws Exception {
+		return custUserService.userList(params);
+	}
 
-    @PostMapping("/userList")
-    public Page userList(@RequestBody Map<String, Object> params) {
-        return custUserService.userList(params);
-    }
-    @PostMapping("/userListForCust")
-    public Page userListForCust(@RequestBody Map<String, Object> params, @AuthenticationPrincipal CustomUserDetails user) {
-        if(params.get("custCode") == null){
-            params.put("custCode", Integer.parseInt(user.getCustCode()));
-        }     
-        return custUserService.userList(params);
-    }
-    @PostMapping("/{id}")
-    public TCoCustUserDto detail(@PathVariable String id, @AuthenticationPrincipal CustomUserDetails user) {
-        return custUserService.detail(user.getCustCode(), id);
-    }
-    @PostMapping("/save")
-    public ResultBody save(@RequestBody Map<String, Object> params) {
-        return custUserService.save(params);
-    }
-    @PostMapping("/del")
-    public ResultBody del(@RequestBody Map<String, Object> params) {
-        return custUserService.del(params);
-    }
+	/**
+	 * 업체 사용자 조회
+	 * 
+	 * @param params
+	 * @param user
+	 * @return
+	 * @throws Exception 
+	 */
+	@PostMapping("/userListForCust")
+	public Page userListForCust(@RequestBody Map<String, Object> params, @AuthenticationPrincipal CustomUserDetails user) throws Exception {
+		if (params.get("custCode") == null) {
+			params.put("custCode", Integer.parseInt(user.getCustCode()));
+		}
+		return custUserService.userList(params);
+	}
+	
+	@PostMapping("/{id}")
+	public TCoCustUserDto detail(@PathVariable String id, @AuthenticationPrincipal CustomUserDetails user) {
+		return custUserService.detail(user.getCustCode(), id);
+	}
+
+	@PostMapping("/save")
+	public ResultBody save(@RequestBody Map<String, Object> params) {
+		return custUserService.save(params);
+	}
+
+	@PostMapping("/del")
+	public ResultBody del(@RequestBody Map<String, Object> params) {
+		return custUserService.del(params);
+	}
 }

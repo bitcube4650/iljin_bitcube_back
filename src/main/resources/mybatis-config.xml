@@ -11,5 +11,6 @@
 		<mapper resource="mapper/etc_sql.xml"/>
 		<mapper resource="mapper/item_sql.xml"/>
 		<mapper resource="mapper/cust_sql.xml"/>
+		<mapper resource="mapper/user_sql.xml"/>
 	</mappers>
 </configuration>
