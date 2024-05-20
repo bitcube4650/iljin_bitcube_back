@@ -599,7 +599,7 @@ public class MainService {
 		Map<String, Object> paramMap = new HashMap<String, Object>();
 		UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		paramMap.put("userId", principal.getUsername());
-		Map<String, Object> custMap = (Map<String, Object>) generalDao.selectGernalObject(DB.QRY_SELECT_CUST_USER_DETAIL, paramMap);
+		Map<String, Object> custMap = (Map<String, Object>) generalDao.selectGernalObject(DB.QRY_SELECT_COMMON_CUST_USER_DETAIL, paramMap);
 		return CommonUtils.getInt(custMap.get("custCode"));
 	}
 

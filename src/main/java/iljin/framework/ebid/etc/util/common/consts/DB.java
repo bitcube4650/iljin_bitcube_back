@@ -12,10 +12,25 @@ public class DB {
 	public final static String QRY_SELECT_LOGIN_USER_INFO_DETAIL = "login.selectLoginUserInfoDetail";
 	public final static String QRY_SELECT_INTERRELATED_LIST = "login.selectInterrelatedList";
 	
+	// 공통
+	public final static String QRY_SELECT_COMMON_CUST_USER_DETAIL = "common.selectCustUserDetail";
+	
 	// 품목
 	public final static String QRY_SELECT_ITEM_GRP_LIST = "item.selectItemGrpList";
 	public final static String QRY_SELECT_ITEM_LIST = "item.selectItemList";
 	public final static String QRY_SELECT_ITEM_LIST_CNT = "item.selectItemListCnt";
+	
+	// 메인
+	public final static String QRY_SELECT_BID_NOTICING_CNT = "main.selectBidNoticingCnt";
+	public final static String QRY_SELECT_BID_SUBMITTED_CNT = "main.selectBidSubmittedCnt";
+	public final static String QRY_SELECT_BID_AWARDED_CNT = "main.selectBidAwardedCnt";
+	public final static String QRY_SELECT_BID_UNSUCCESSFUL_CNT = "main.selectBidUnsuccessfulCnt";
+	public final static String QRY_SELECT_COMPLETE_POSTED_CNT = "main.selectCompletePostedCnt";
+	public final static String QRY_SELECT_COMPLETE_SUBMITTED_CNT = "main.selectCompleteSubmittedCnt";
+	public final static String QRY_SELECT_COMPLETE_AWARDED_CNT = "main.selectCompleteAwardedCnt";
+	public final static String QRY_SELECT_GROUP_PWD_EDIT_DATE = "main.selectGroupPwdEditDate";
+	public final static String QRY_SELECT_PWD_CHG_DATE = "main.selectPwdChgDate";
+	
 	
 	// cust
 	public final static String QRY_SELECT_DUP_USER_CNT = "cust.selectDupUserCnt";
