@@ -134,82 +134,24 @@ public class BidProgressService {
         return new PageImpl(list, pageable, count.intValue());
     }
 
-    public Page pastBidList(@RequestBody Map<String, Object> params) {
+    public ResultBody pastBidList(@RequestBody Map<String, Object> params) throws Exception {
         UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Optional<TCoUser> userOptional = tCoUserRepository.findById(principal.getUsername());
 
         String interrelatedCode = userOptional.get().getInterrelatedCustCode();
         String userId = principal.getUsername();
+        params.put("interrelatedCode", interrelatedCode);
+        params.put("userId", userId);
+        
+		ResultBody resultBody = new ResultBody();
+		Page listPage = generalDao.selectGernalListPage("bid.selectPastBidList", params);
+		
+		resultBody.setData(listPage);
 
-        StringBuilder sbCount = new StringBuilder(
-                "SELECT count(1) " +
-                        "FROM t_bi_info_mat a " +
-                        "WHERE a.interrelated_cust_code = :interrelatedCode " +
-                        "and (a.create_user = :userId " +
-                        "or a.open_att1 = :userId " +
-                        "or a.open_att2 = :userId " +
-                        "or a.gongo_id = :userId " +
-                        "or a.est_bidder = :userId " +
-                        "or a.est_opener = :userId)");
-
-        StringBuilder sbList = new StringBuilder(
-                "SELECT a.bi_no AS bi_no, a.bi_name AS bi_name, " +
-                        "CASE WHEN a.bi_mode = 'A' THEN '지명경쟁입찰' ELSE '일반경쟁입찰' END AS bi_mode, " +
-                        "CASE WHEN a.ins_mode = '1' THEN '파일등록' ELSE '직접입력' END AS ins_mode, " +
-                        "DATE_FORMAT(a.est_close_date, '%Y-%m-%d %H:%i') AS est_close_date, " +
-                        "CASE WHEN a.ing_tag = 'A0' THEN '입찰계획' WHEN a.ing_tag = 'A1' THEN '입찰진행' " +
-                        "WHEN a.ing_tag = 'A2' THEN '개찰' WHEN ing_tag = 'A3' THEN '재입찰' " +
-                        "WHEN a.ing_tag = 'A5' THEN '입찰완료' ELSE '유찰' END AS ing_tag " +
-                        "FROM t_bi_info_mat a " +
-                        "WHERE a.interrelated_cust_code = :interrelatedCode " +
-                        "and (a.create_user = :userId " +
-                        "or a.open_att1 = :userId " +
-                        "or a.open_att2 = :userId " +
-                        "or a.gongo_id = :userId " +
-                        "or a.est_bidder = :userId " +
-                        "or a.est_opener = :userId)");
-
-        StringBuilder sbWhere = new StringBuilder();
-
-        if (!StringUtils.isEmpty(params.get("biNo"))) {
-            sbWhere.append(" and a.bi_no like concat('%',:biNo,'%') ");
-        }
-
-        if (!StringUtils.isEmpty(params.get("biName"))) {
-            sbWhere.append(" and a.bi_name like concat('%',:biName,'%') ");
-        }
-
-        sbList.append(sbWhere);
-        sbList.append(" order by a.bi_no desc");
-        sbCount.append(sbWhere);
-        Query queryList = entityManager.createNativeQuery(sbList.toString());
-        Query queryCountList = entityManager.createNativeQuery(sbCount.toString());
-
-        queryList.setParameter("interrelatedCode", interrelatedCode);
-        queryCountList.setParameter("interrelatedCode", interrelatedCode);
-        queryList.setParameter("userId", userId);
-        queryCountList.setParameter("userId", userId);
-
-        if (!StringUtils.isEmpty(params.get("biNo"))) {
-            queryList.setParameter("biNo", params.get("biNo"));
-            queryCountList.setParameter("biNo", params.get("biNo"));
-        }
-
-        if (!StringUtils.isEmpty(params.get("biName"))) {
-            queryList.setParameter("biName", params.get("biName"));
-            queryCountList.setParameter("biName", params.get("biName"));
-        }
-
-        Pageable pageable = PagaUtils.pageable(params);
-        queryList.setFirstResult(pageable.getPageNumber() * pageable.getPageSize())
-                .setMaxResults(pageable.getPageSize()).getResultList();
-        List list = new JpaResultMapper().list(queryList, BidPastDto.class);
-
-        BigInteger count = (BigInteger) queryCountList.getSingleResult();
-        return new PageImpl(list, pageable, count.intValue());
+        return resultBody;
     }
 
-	public Page progresslist(@RequestBody Map<String, Object> params) {
+	public ResultBody progresslist(@RequestBody Map<String, Object> params) {
 		ResultBody resultBody = new ResultBody();
 		
 		try {
@@ -239,7 +181,7 @@ public class BidProgressService {
 			Page listPage = generalDao.selectGernalListPage("bid.selectProgresslist", params);
 			resultBody.setData(listPage);
 			
-			return listPage;
+			return resultBody;
 		} catch (Exception e) {
 			log.error("BidProgressService progresslist error : ", e);
 			resultBody.setCode("fail");
@@ -251,110 +193,12 @@ public class BidProgressService {
 		//return resultBody;	//TODO : 추후 return type을 ResultBody로 바꾸며 수정작업 예정
 	}
 
-    public List<List<?>> progresslistDetail(String param, CustomUserDetails user) {
-    	int custCode = Integer.parseInt(user.getCustCode());//협력사 번호 
-    	
-        StringBuilder sbList = new StringBuilder(
-                "SELECT a.bi_no AS bi_no, a.bi_name AS bi_name, " +
-                        "CASE WHEN a.bi_mode = 'A' THEN '지명경쟁입찰' ELSE '일반경쟁입찰' END AS bi_mode, a.bi_mode AS bi_mode_code, "
-                        +
-                        "CASE WHEN a.ins_mode = '1' THEN '파일등록' ELSE '직접입력' END AS ins_mode, a.ins_mode AS ins_mode_code, "
-                        +
-                        "a.bid_join_spec AS bid_join_spec, a.special_cond AS special_cond, a.supply_cond AS supply_cond, "
-                        +
-                        "DATE_FORMAT(a.spot_date, '%Y-%m-%d %H:%i') AS spot_date, a.spot_area AS spot_area, " +
-                        "CASE WHEN a.succ_deci_meth = '1' THEN '최저가' WHEN a.succ_deci_meth = '2' THEN '최고가' " +
-                        "WHEN a.succ_deci_meth = '3' THEN '내부적격심사' WHEN a.succ_deci_meth = '4' THEN '최고가&내부적격심사' " +
-                        "ELSE '최저가&내부적격심사' END AS succ_deci_meth, a.succ_deci_meth AS succ_deci_meth_code, DATE_FORMAT(a.est_start_date, '%Y-%m-%d %H:%i') AS est_start_date, "
-                        +
-                        "DATE_FORMAT(a.est_close_date, '%Y-%m-%d %H:%i') AS est_close_date, b.user_name AS est_opener, a.est_opener AS est_opener_code, i.user_name AS cuser, a.create_user AS cuser_code, "
-                        +
-                        "IFNULL(DATE_FORMAT(a.est_open_date, '%Y-%m-%d %H:%i'),'') AS est_open_date, c.user_name AS open_att1, a.open_att1 AS open_att1_code, a.est_bidder AS est_bidder_code, ( select tcu.user_name from t_co_user tcu   where a.est_bidder = tcu.user_id  ) AS est_bidder, "
-                        +
-                        "a.open_att1_sign AS open_att1_sign, d.user_name AS open_att2, a.open_att2 AS open_att2_code, a.open_att2_sign AS open_att2_sign, "
-                        +
-                        "a.ing_tag AS ing_tag, a.item_code AS item_code, f.item_name AS item_name, e.user_name AS gongo_id, a.gongo_id AS gongo_id_code, i.dept_name AS cuser_dept, a.pay_cond AS pay_cond, IFNULL(a.why_A3,'') AS why_A3, "
-                        +
-                        "IFNULL(a.why_A7,'') AS why_A7, a.bi_open AS bi_open, a.interrelated_cust_code AS interrelated_cust_code, h.interrelated_nm AS interrelated_nm, IFNULL(a.real_amt,0) AS real_amt, a.amt_basis AS amt_basis, a.bd_amt AS bd_amt,"
-                        +
-                        "IFNULL(a.add_accept,'') AS add_accept, a.mat_dept AS mat_dept, a.mat_proc AS mat_proc, a.mat_cls AS mat_cls, "
-                        +
-                        "a.mat_factory AS mat_factory, a.mat_factory_line AS mat_factory_line, a.mat_factory_cnt AS mat_factory_cnt "
-                        +
-                        "FROM t_bi_info_mat a " +
-                        "LEFT JOIN t_co_user b ON a.est_opener = b.user_id " +
-                        "LEFT JOIN t_co_user c ON a.open_att1 = c.user_id " +
-                        "LEFT JOIN t_co_user d ON a.open_att2 = d.user_id " +
-                        "LEFT JOIN t_co_user e ON a.gongo_id = e.user_id " +
-                        "LEFT JOIN t_co_item f ON a.item_code = f.item_code " +
-                        "LEFT JOIN t_co_user g ON a.gongo_id = g.user_id " +
-                        "JOIN t_co_interrelated h ON a.interrelated_cust_code = h.interrelated_cust_code " +
-                        "LEFT JOIN t_co_user i ON a.create_user = i.user_id " +
-                        "WHERE 1=1 ");
+    public ResultBody progresslistDetail(String param, CustomUserDetails user) throws Exception {
 
-        StringBuilder sbTableList = new StringBuilder(
-                "SELECT a.bi_no AS bi_no, a.seq AS seq, a.name AS name, a.ssize AS ssize, " +
-                        "a.order_qty AS order_qty, a.unitcode AS unitcode, ifnull(a.order_uc, 0) AS order_uc " +
-                        "FROM t_bi_spec_mat a " +
-                        "WHERE 1=1 ");
 
-        StringBuilder sbFileList = new StringBuilder(
-                "SELECT a.bi_no AS bi_no, a.file_flag AS file_flag, " +
-                        "CASE WHEN a.file_flag = 'K' THEN '세부내역' WHEN a.file_flag = '0' THEN '대내용' WHEN a.file_flag = '1' THEN '대외용' END AS file_flag_ko, "
-                        +
-                        "a.file_nm AS file_NM, a.file_path AS file_path " +
-                        "FROM t_bi_upload a " +
-                        "WHERE a.use_yn = 'Y' "
-        		);
-
-        StringBuilder sbCustList = new StringBuilder(
-                "SELECT a.bi_no AS bi_no, CAST(a.cust_code AS CHAR) AS cust_code, b.cust_name AS cust_name, d.code_name AS esmt_curr, a.esmt_amt AS esmt_amt, e.user_name AS user_name, "
-                        +
-                        "a.esmt_yn AS esmt_yn, c.file_nm AS file_nm, c.file_path AS file_path, a.etc_b_file AS etc_file, a.etc_b_file_path AS etc_path, a.succ_yn AS succ_yn, "
-                        +
-                        "DATE_FORMAT(a.submit_date, '%Y-%m-%d %H:%i') AS submit_date, "
-                        + "IFNULL(a.usemail_id,'') AS usemail_id " +
-                        "FROM t_bi_info_mat_cust a " +
-                        "LEFT JOIN t_co_cust_master b ON a.cust_code = b.cust_code " +
-                        "LEFT JOIN t_bi_upload c ON a.file_id = c.file_id " +
-                        "left join t_co_code d on a.esmt_curr = d.code_val " +
-                        "left join t_co_cust_user e on a.cust_code = e.cust_code AND e.user_type = '1' " +
-                        "WHERE 1=1 ");
-       
-
-        StringBuilder sbWhere = new StringBuilder();
-        sbWhere.append(" and a.bi_no = :param ");
-        sbList.append(sbWhere);
-        sbCustList.append(sbWhere);
-        
-        sbList.append("GROUP BY a.BI_NO");
-        sbCustList.append(" GROUP BY CUST_CODE");
-        
-        sbTableList.append(sbWhere);
-        sbFileList.append(sbWhere);
-
-        Query queryList = entityManager.createNativeQuery(sbList.toString());
-        Query queryTableList = entityManager.createNativeQuery(sbTableList.toString());
-        Query queryFileList = entityManager.createNativeQuery(sbFileList.toString());
-        Query queryCustList = entityManager.createNativeQuery(sbCustList.toString());
-        
-        queryList.setParameter("param", param);
-        queryTableList.setParameter("param", param);
-        queryFileList.setParameter("param", param);
-        queryCustList.setParameter("param", param);
-        
-        List<BidProgressListDetailDto> resultList = new JpaResultMapper().list(queryList, BidProgressListDetailDto.class);
-        List<BidProgressTableDto> tableList = new JpaResultMapper().list(queryTableList, BidProgressTableDto.class);
-        List<BidProgressFileDto> fileList = new JpaResultMapper().list(queryFileList, BidProgressFileDto.class);
-        List<BidProgressCustDto> custList = new JpaResultMapper().list(queryCustList, BidProgressCustDto.class);
-
-        List<List<?>> combinedResults = new ArrayList<>();
-        combinedResults.add(resultList);
-        combinedResults.add(tableList);
-        combinedResults.add(fileList);
-        combinedResults.add(custList);
-        
+    	/*
         if(custList.size() >0) {
+        	
         	
 	        String usemailIdFilter = "";
 	        for (int i = 0; i < custList.size(); i++) {
@@ -387,9 +231,54 @@ public class BidProgressService {
             List<BidProgressCustUserDto> custUserList = new JpaResultMapper().list(queryCustUserList, BidProgressCustUserDto.class);
             combinedResults.add(custUserList);
         }
+        */
+    	Map<String,Object> paramMap = new HashMap<>();
+    	paramMap.put("biNo", param);
+		List<Object> selectProgressDetailList = generalDao.selectGernalList("bid.selectProgressDetailList", paramMap);
+		List<Object> selectProgressDetailTableList = generalDao.selectGernalList("bid.selectProgressDetailTableList", paramMap);
+		List<Object> selectProgressDetaiFileList = generalDao.selectGernalList("bid.selectProgressDetaiFileList", paramMap);
+		List<Object> selectProgressDetaiCustList = generalDao.selectGernalList("bid.selectProgressDetaiCustList", paramMap);
+        
+		List<Object> result = new ArrayList<>();
+        result.add(selectProgressDetailList);
+        result.add(selectProgressDetailTableList);
+        result.add(selectProgressDetaiFileList);
+        result.add(selectProgressDetaiCustList);
+        
+		int selectProgressDetaiCustListSize = selectProgressDetaiCustList.size(); 
+        StringBuilder usemailIds = new StringBuilder();
+        
+        if(selectProgressDetaiCustListSize >0) {
+  
+	        String usemailIdFilter = "";
+	        for (int i = 0; i < selectProgressDetaiCustListSize; i++) {
+	           Map<String,Object> selectProgressDetaiCustListMap = (Map<String, Object>) selectProgressDetaiCustList.get(i);
+	
+	            if (i < selectProgressDetaiCustListSize - 1) {
+	            	usemailIdFilter +=(selectProgressDetaiCustListMap.get("usemailId").toString()+ ",");
+	            }else {
+	            	usemailIdFilter += (selectProgressDetaiCustListMap.get("usemailId").toString());
+	            }
+	        }
+            
+	        /*
+	        String[] usemailIdArray = usemailIdFilter.split(",");
+	
+	        for (int i = 0; i < usemailIdArray.length; i++) {
+	            if (i < usemailIdArray.length - 1) {
+	           	 usemailIds.append(",");
+	            }
+	        }
+	        */
+	    	paramMap.put("usemailIds", usemailIdFilter.split(","));
+	    	List<Object> selectProgressDetaiCustUserList = generalDao.selectGernalList("bid.selectProgressDetaiCustUserList", paramMap);
+	        result.add(selectProgressDetaiCustUserList);
+        }
 
-
-        return combinedResults;
+        
+		ResultBody resultBody = new ResultBody();
+		resultBody.setData(result);
+        return resultBody;
     }
 
     public Page findCoUserInfo(@RequestBody Map<String, Object> params) {

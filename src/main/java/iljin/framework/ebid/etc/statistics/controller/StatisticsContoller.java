@@ -1,7 +1,11 @@
 package iljin.framework.ebid.etc.statistics.controller;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -9,9 +13,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.ModelAndView;
 
 import iljin.framework.core.dto.ResultBody;
 import iljin.framework.ebid.etc.statistics.service.StatisticsService;
+import iljin.framework.ebid.etc.util.GeneralDao;
 
 @RestController
 @RequestMapping("/api/v1/statistics")
@@ -21,46 +27,23 @@ public class StatisticsContoller {
 	@Autowired
     private StatisticsService statisticsService;
 		
+    @Autowired
+    GeneralDao generalDao;
+    
 	//계열사 리스트 조회
+	
 	@PostMapping("/coInterList")
-	public List<List<?>> selectCoInterList() {
+	public ResultBody selectCoInterList(@RequestBody Map<String, Object> params) throws Exception {
 
-		return statisticsService.selectCoInterList();
+		return statisticsService.selectCoInterList(params);
 	}
 	
-	/**
-	 * 계열사리스트 조회 v2
-	 * @param params
-	 * @return
-	 */
-	@PostMapping("/interrelatedCustCodeList")
-	public ResultBody interrelatedCustCodeList(@RequestBody Map<String, Object> params) {
-		return statisticsService.interrelatedCustCodeList(params);
-	}
 	
-	//입찰실적 리스트 조회
+	//회사별 입찰실적 리스트 조회
 	@PostMapping("/biInfoList")
-	public List<List<?>> selectBiInfoList(@RequestBody Map<String, Object> params) {
+	public ResultBody selectBiInfoList(@RequestBody Map<String, Object> params) throws Exception {
 
 		return statisticsService.selectBiInfoList(params);
-	}
-	
-	/**
-	 * 입찰 상세내역 리스트
-	 * @param params
-	 * @return
-	 */
-	@PostMapping("/bidDetailList")
-	public ResultBody bidDetailList(@RequestBody Map<String, Object> params) {
-
-		return statisticsService.bidDetailList(params);
-	}
-	
-	
-	@PostMapping("/bidPresentList")
-	public List<List<?>> bidPresentList(@RequestBody Map<String, Object> params) {
-
-		return statisticsService.bidPresentList(params);
 	}
 	
 	/**
@@ -72,6 +55,30 @@ public class StatisticsContoller {
 	public ResultBody biInfoDetailList(@RequestBody Map<String, Object> params) {
 
 		return statisticsService.biInfoDetailList(params);
+	}
+	
+	
+	/**
+	 * 입찰현황
+	 * @param params
+	 * @return
+	 * @throws Exception
+	 */
+	@PostMapping("/bidPresentList")
+	public ResultBody bidPresentList(@RequestBody Map<String, Object> params) throws Exception {
+
+		return statisticsService.bidPresentList(params);
+	}
+
+	/**
+	 * 입찰 상세내역 리스트
+	 * @param params
+	 * @return
+	 */
+	@PostMapping("/bidDetailList")
+	public ResultBody bidDetailList(@RequestBody Map<String, Object> params) {
+
+		return statisticsService.bidDetailList(params);
 	}
 
 }

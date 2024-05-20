@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="statistics">
+	
+	<select id="selectCoInterList" resultType="camel">
+		/* statistics.selectCoInterList */
+		<if test='userAuth == "1"'>
+		SELECT 	INTERRELATED_CUST_CODE
+		,		INTERRELATED_NM  
+		FROM t_co_interrelated
+		ORDER BY INTERRELATED_NM
+		</if>
+		
+		<if test='userAuth == "4"'>
+		SELECT	tci.INTERRELATED_CUST_CODE  
+	 	,		tci.INTERRELATED_NM 
+	 	FROM t_co_interrelated tci 
+	 	INNER JOIN t_co_user_interrelated tcui 
+	 	ON tci.INTERRELATED_CUST_CODE = tcui.INTERRELATED_CUST_CODE 
+	 	INNER join t_co_user tcu 
+	 	ON tcui.USER_ID = tcu.USER_ID 
+	 	WHERE tcu.USER_ID = #{userId}
+	 	ORDER BY INTERRELATED_NM 
+	 	</if>
+	</select>
+	
+	<select id="selectBiInfoList" resultType="camel">
+		/* statistics.selectBiInfoList */
+		SELECT
+        IF(is_rollup = 1,
+        '계',
+        INTERRELATED_NM) AS INTERRELATED_NM,
+        CNT,
+        BD_AMT,
+        SUCC_AMT,
+        M_AMT,
+        INTERRELATED_CUST_CODE   
+    	FROM
+        (	SELECT
+            IFNULL(A.INTERRELATED_NM,
+            'Gye') AS INTERRELATED_NM,
+            COUNT(BI_NO) AS CNT,
+            SUM(A.BD_AMT) as BD_AMT,
+            SUM(A.SUCC_AMT) as SUCC_AMT,
+            SUM(A.BD_AMT) - SUM(A.SUCC_AMT) as M_AMT,
+            A.INTERRELATED_CUST_CODE,
+            CASE               
+                WHEN A.INTERRELATED_CUST_CODE IS NULL THEN 1              
+                ELSE 0          
+            END AS is_rollup      
+        	FROM
+            (  SELECT
+                AA.BI_NO,
+                BB.INTERRELATED_NM,
+                AA.BD_AMT,
+                AA.SUCC_AMT,
+                AA.INTERRELATED_CUST_CODE               
+            	FROM
+                t_bi_info_mat AA                   
+            	inner join
+                t_co_interrelated BB 
+                    on AA.INTERRELATED_CUST_CODE = BB.INTERRELATED_CUST_CODE                
+            	WHERE
+                AA.ING_TAG = 'A5'                  
+                AND DATE(AA.UPDATE_DATE) BETWEEN #{startDay} AND #{endDay}  
+                <if test="coInters != null and coInters.size() > 0">
+	                AND AA.INTERRELATED_CUST_CODE IN(
+	                <foreach item="coInter" collection="coInters" separator=",">
+						#{coInter}
+					</foreach>
+                	)  
+                </if>
+            	GROUP BY
+                AA.INTERRELATED_CUST_CODE,
+                AA.bi_no          
+            ) AS A      
+        	GROUP BY
+            A.INTERRELATED_CUST_CODE WITH ROLLUP  
+        ) AS B  
+        ORDER BY
+            is_rollup,
+            INTERRELATED_NM
+	</select>
+	
+	<select id="biInfoDetailList_count" resultType="int">
+		/* statistics.biInfoDetailList_count */
+		SELECT
+	        COUNT(*) AS TOTAL_COUNT  
+	    FROM
+        (   SELECT 1       
+	        FROM t_bi_info_mat tbim          
+	        INNER JOIN	t_co_interrelated tci 
+                ON tbim.INTERRELATED_CUST_CODE = tci.INTERRELATED_CUST_CODE          
+	        INNER JOIN	t_co_item tcitem 
+                ON tbim.ITEM_CODE = tcitem.ITEM_CODE          
+	        INNER JOIN t_bi_info_mat_cust tbimc 
+                ON tbim.BI_NO = tbimc.BI_NO    
+	        WHERE  tbim.ING_TAG = 'A5'          
+            AND DATE(tbim.UPDATE_DATE) BETWEEN #{startDay} AND #{endDay}
+            <if test="coInters != null and coInters.size() > 0">
+           		AND tbim.INTERRELATED_CUST_CODE IN(
+	            <foreach item="coInter" collection="coInters" separator=",">
+					#{coInter}
+				</foreach>
+	            )  
+            </if>
+           <if test="itemCode != null and itemCode != ''">
+            AND tbim.ITEM_CODE = #{itemCode}
+            </if>
+	        GROUP BY tbim.BI_NO   
+        ) AS cnt
+	
+	</select>
+	
+	<select id="biInfoDetailList" resultType="camel">
+		/* statistics.biInfoDetailList*/
+		SELECT
+        tbim.BI_NO AS BI_NO,
+        tbim.BI_NAME AS BI_NAME,
+        tcitem.ITEM_NAME AS ITEM_NAME,
+        IFNULL(tbim.BD_AMT,0) AS BD_AMT,
+        IFNULL(tbim.SUCC_AMT,0) AS SUCC_AMT,
+        IFNULL(tbim.REAL_AMT, 0) AS REAL_AMT,
+        (
+            SELECT COUNT(*)
+            FROM t_bi_info_mat_cust tbimc3
+            WHERE tbimc3.BI_NO = tbim.BI_NO
+            GROUP BY BI_NO
+        ) AS CUST_CNT,
+        (
+            SELECT MAX(tccm2.CUST_NAME)
+            FROM t_co_cust_master tccm2
+            INNER JOIN t_bi_info_mat_cust tbimc2 ON tccm2.CUST_CODE = tbimc2.CUST_CODE
+            WHERE tbimc2.BI_NO = tbimc.BI_NO
+            AND tbimc2.SUCC_YN = 'Y'
+        ) AS CUST_NAME,
+        DATE_FORMAT(tbim.EST_START_DATE, '%Y-%m-%d') AS EST_START_DATE,
+        DATE_FORMAT(tbim.EST_CLOSE_DATE, '%Y-%m-%d') AS EST_CLOSE_DATE,
+        IFNULL(MAX(tbimc.ESMT_AMT),0) AS ESMT_AMT_MAX,
+       IFNULL( CASE
+            WHEN MAX(tbimc.ESMT_AMT) = MIN(tbimc.ESMT_AMT) THEN 0
+            ELSE MIN(tbimc.ESMT_AMT)
+        END,0) AS ESMT_AMT_MIN,
+         IFNULL((
+	        MAX(tbimc.ESMT_AMT) 			-	
+            CASE
+		        WHEN MAX(tbimc.ESMT_AMT) = MIN(tbimc.ESMT_AMT) THEN 0
+		        ELSE MIN(tbimc.ESMT_AMT)
+       		END 
+       	),0) AS ESMT_AMT_DEV,
+         IFNULL((
+            SELECT SUM(tbimc1.BI_ORDER)
+            FROM t_bi_info_mat_cust tbimc1
+            WHERE tbimc1.BI_NO = tbimc.BI_NO
+            AND tbimc1.SUCC_YN = 'Y'
+        ),0) AS RE_BID_CNT
+    	FROM t_bi_info_mat tbim
+        INNER JOIN t_co_interrelated tci ON tbim.INTERRELATED_CUST_CODE = tci.INTERRELATED_CUST_CODE
+        INNER JOIN t_co_item tcitem ON tbim.ITEM_CODE = tcitem.ITEM_CODE
+        INNER JOIN t_bi_info_mat_cust tbimc ON tbim.BI_NO = tbimc.BI_NO    WHERE
+        tbim.ING_TAG = 'A5'
+         AND DATE(tbim.UPDATE_DATE) BETWEEN #{startDay} AND #{endDay}
+         <if test="coInters != null and coInters.size() > 0">
+	         AND tbim.INTERRELATED_CUST_CODE IN(
+	         <foreach item="coInter" collection="coInters" separator=",">
+				#{coInter}
+			</foreach>
+	         )  
+         </if>
+        <if test="itemCode != null and itemCode != ''">
+         AND tbim.ITEM_CODE = #{itemCode}
+         </if>
+		GROUP BY tbim.BI_NO   
+		LIMIT ${offset}, ${pageSize}
+	</select>
+	
+	<select id="bidPresentList" resultType="camel">
+		/*statistics.bidPresentList*/
+		select	IF(INTERRELATED_CUST_CODE IS NULL, '계', (SELECT INTERRELATED_NM FROM T_CO_INTERRELATED AAA WHERE AAA.INTERRELATED_CUST_CODE = BID_LIST.INTERRELATED_CUST_CODE)) AS INTERRELATED_NM
+		,		sum(BID_LIST.PLAN_CNT) as PLAN_CNT
+		,		sum(BID_LIST.PLAN_AMT) as PLAN_AMT
+		,		sum(BID_LIST.ING_CNT) as ING_CNT
+		,		sum(BID_LIST.ING_AMT) as ING_AMT
+		,		sum(BID_LIST.SUCC_CNT) as SUCC_CNT
+		,		sum(BID_LIST.SUCC_AMT) as SUCC_AMT
+		,		ifnull(round(sum(BID_LIST.cust_cnt)/sum(BID_LIST.SUCC_CNT), 1), 0) as cust_cnt
+		,		sum(BID_LIST.REG_CUST_CNT) as REG_CUST_CNT
+		from (	
+				select	max(A.INTERRELATED_NM ) as INTERRELATED_NM 
+				,		A.INTERRELATED_CUST_CODE
+				,		sum(B.PLAN_CNT) as PLAN_CNT
+				,		ifnull(sum(B.PLAN_AMT), 0) as PLAN_AMT
+				,		sum(B.ING_CNT) as ING_CNT
+				,		ifnull(sum(B.ING_AMT), 0) as ING_AMT
+				,		sum(B.SUCC_CNT) as SUCC_CNT
+				,		ifnull(sum(B.SUCC_AMT), 0) as SUCC_AMT 
+				,		D.CUST_CNT as CUST_CNT
+				,		ifnull(max(C.REG_CUST_cnt), 0) as REG_CUST_CNT
+				from t_co_interrelated A 
+				INNER JOIN (
+					select	BB.BI_NO
+					,		BB.INTERRELATED_CUST_CODE
+					,		CASE WHEN BB.ING_TAG = 'A0' THEN 1 ELSE 0 END AS PLAN_CNT
+					,		CASE WHEN BB.ING_TAG = 'A0' THEN BB.BD_AMT ELSE 0 END AS PLAN_AMT
+					,		CASE WHEN BB.ING_TAG = 'A1' THEN 1 ELSE 0 END AS ING_CNT
+					,		CASE WHEN BB.ING_TAG = 'A1' THEN BB.BD_AMT ELSE 0 END AS ING_AMT
+					,		CASE WHEN BB.ING_TAG = 'A5' THEN 1 ELSE 0 END AS SUCC_CNT
+					,		CASE WHEN BB.ING_TAG = 'A5' THEN BB.SUCC_AMT ELSE 0 END AS SUCC_AMT
+					from T_BI_INFO_MAT BB			-- 입찰서내용
+					where DATE(BB.UPDATE_DATE) BETWEEN #{startDay} AND #{endDay}
+					and BB.ING_TAG in ('A0', 'A1', 'A5')
+				) B
+					on A.INTERRELATED_CUST_CODE = B.INTERRELATED_CUST_CODE
+				left outer join (
+					select AA.INTERRELATED_CUST_CODE
+					,		count(1) as REG_CUST_cnt
+					from t_co_interrelated AA
+					inner join t_co_cust_master BB
+						on AA.INTERRELATED_CUST_CODE = BB.INTERRELATED_CUST_CODE
+					group by AA.INTERRELATED_CUST_CODE
+				) C
+					on a.INTERRELATED_CUST_CODE = c.INTERRELATED_CUST_CODE
+			 	left outer join (
+					select	INTERRELATED_CUST_CODE
+					,		COUNT(CD.BI_NO) as CUST_CNT
+					from T_BI_INFO_MAT CC
+					inner join t_bi_info_mat_cust CD
+						on CC.BI_NO = CD.BI_NO
+					where CC.ING_TAG = 'A5'
+					AND DATE(CC.UPDATE_DATE) BETWEEN #{startDay} AND #{endDay}
+					group by CC.INTERRELATED_CUST_CODE
+				) D
+					on D.INTERRELATED_CUST_CODE = A.INTERRELATED_CUST_CODE
+				<if test='userAuth == "4"'>
+					inner join t_co_user_interrelated tcui 
+				 	on A.INTERRELATED_CUST_CODE = tcui.INTERRELATED_CUST_CODE 
+				 	and tcui.USER_ID = #{userId} 
+				</if>
+				 <if test="coInters != null and coInters.size() > 0">
+		         	where A.INTERRELATED_CUST_CODE IN(
+		         <foreach item="coInter" collection="coInters" separator=",">
+					#{coInter}
+				</foreach>
+		         )  
+	         	</if>
+			 	group by A.INTERRELATED_CUST_CODE
+			 ) BID_LIST
+		 group by BID_LIST.INTERRELATED_CUST_CODE with rollup
+	</select>
+	
+	<select id="bidDetailList_count" resultType="int">
+		/*statistics.bidDetailList_count*/
+		select count(1) 
+	    from t_bi_info_mat tbim 
+	    inner join t_bi_info_mat_cust tbimc  
+          on tbim.BI_NO = tbimc.BI_NO  
+          and tbimc.SUCC_YN = 'Y' 
+	    inner join	t_co_cust_master tccm  
+	      on tbimc.CUST_CODE = tccm.CUST_CODE 
+	    inner join
+        (
+            select
+                tbimc.BI_NO  ,
+                COUNT(1) as CNT  
+            from
+                t_bi_info_mat_cust tbimc  
+            where
+                tbimc.ESMT_YN = '2'  
+            group by
+                tbimc.BI_NO 
+        ) c  
+         on tbim.BI_NO = c.BI_NO
+         <if test='userAuth == "4"'>
+         	inner join t_co_user_interrelated tcui 
+		 	on tbim.INTERRELATED_CUST_CODE = tcui.INTERRELATED_CUST_CODE 
+		 	and tcui.USER_ID = #{userId}
+         </if>
+    	where tbim.ING_TAG = 'A5' 
+        and DATE(tbim.UPDATE_DATE) BETWEEN #{startDay} AND #{endDay}
+         <if test="coInters != null and coInters.size() > 0">
+         	and tbim.INTERRELATED_CUST_CODE IN(
+	         <foreach item="coInter" collection="coInters" separator=",">
+				#{coInter}
+			</foreach>
+	         )  
+        </if>
+	</select>
+	
+	<select id="bidDetailList" resultType="camel">
+		/*statistics.bidDetailList*/
+		select	tbim.BI_NO 
+		 ,		tbim.BI_NAME 
+		 ,		tbim.BD_AMT 
+		 ,		tbim.SUCC_AMT 
+		 ,		tccm.CUST_NAME 
+		 ,		c.CNT as JOIN_CUST_CNT 
+		 ,		DATE_FORMAT(tbim.EST_START_DATE, '%Y-%m-%d %H:%i') as EST_START_DATE 
+		 ,		DATE_FORMAT(tbim.EST_CLOSE_DATE, '%Y-%m-%d %H:%i') as EST_CLOSE_DATE 
+		 ,		tcu.USER_NAME 
+	    from t_bi_info_mat tbim 
+		 inner join t_bi_info_mat_cust tbimc 
+		 	on tbim.BI_NO = tbimc.BI_NO 
+		 	and tbimc.SUCC_YN = 'Y' 
+		 inner join t_co_cust_master tccm 
+		 	on tbimc.CUST_CODE = tccm.CUST_CODE 
+		 left outer join t_co_user tcu 
+		 	on tbim.CREATE_USER = tcu.USER_ID 
+		inner join ( 
+		 	select	tbimc.BI_NO 
+		 	,		COUNT(1) as CNT 
+		 	from t_bi_info_mat_cust tbimc 
+		 	where tbimc.ESMT_YN = '2' 
+		 	group by tbimc.BI_NO 
+		) c 
+	 	on tbim.BI_NO = c.BI_NO 
+        <if test='userAuth == "4"'>
+		    inner join t_co_user_interrelated tcui 
+		 	on tbim.INTERRELATED_CUST_CODE = tcui.INTERRELATED_CUST_CODE 
+		 	and tcui.USER_ID = #{userId}
+       </if>
+       where	tbim.ING_TAG = 'A5' 
+        and DATE(tbim.UPDATE_DATE) BETWEEN #{startDay} AND #{endDay}
+        <if test="coInters != null and coInters.size() > 0">
+        	and tbim.INTERRELATED_CUST_CODE IN(
+	         <foreach item="coInter" collection="coInters" separator=",">
+				#{coInter}
+			</foreach>
+	         )  
+     	</if>
+	   order by tbim.UPDATE_DATE desc 
+	   LIMIT ${offset}, ${pageSize}
+	</select>
+	
+</mapper>

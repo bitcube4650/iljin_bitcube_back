@@ -29,12 +29,12 @@ public class BidProgressController {
     private BidProgressService bidProgressService;
 
     @PostMapping("/progresslist")
-    public Page progresslist(@RequestBody Map<String, Object> params) {
+    public ResultBody progresslist(@RequestBody Map<String, Object> params) {
         return bidProgressService.progresslist(params);
     }
 
     @PostMapping("/progresslistDetail")
-    public List<List<?>> progresslistDetail(@RequestBody String param, @AuthenticationPrincipal CustomUserDetails user) {
+    public ResultBody progresslistDetail(@RequestBody String param, @AuthenticationPrincipal CustomUserDetails user) throws Exception {
         return bidProgressService.progresslistDetail(param, user);
     }
 
@@ -151,7 +151,7 @@ public class BidProgressController {
     }
 
     @PostMapping("/pastBidList")
-    public Page pastBidList(@RequestBody Map<String, Object> params) {
+    public ResultBody pastBidList(@RequestBody Map<String, Object> params) throws Exception {
         return bidProgressService.pastBidList(params);
     }
     @PostMapping("/progressCodeList")

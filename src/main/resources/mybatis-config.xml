@@ -6,5 +6,6 @@
 	</typeAliases>
 	<mappers>
 		<mapper resource="mapper/bid_sql.xml"/>
+		<mapper resource="mapper/statistics_sql.xml"/>
 	</mappers>
 </configuration>
