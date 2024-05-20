@@ -13,5 +13,7 @@
 		<mapper resource="mapper/item_sql.xml"/>
 		<mapper resource="mapper/cust_sql.xml"/>
 		<mapper resource="mapper/user_sql.xml"/>
+		<mapper resource="mapper/main_sql.xml"/>
+		<mapper resource="mapper/common_sql.xml"/>
 	</mappers>
 </configuration>

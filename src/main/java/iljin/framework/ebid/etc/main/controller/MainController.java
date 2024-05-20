@@ -54,17 +54,33 @@ public class MainController {
 	
 	//협력사 전자입찰 건수 조회
 	@PostMapping("/selectPartnerBidCnt")
-    public PartnerBidCntDto selectPartnerBidCnt(@RequestBody Map<String, Object> params) throws IOException {
-
-        return mainService.selectPartnerBidCnt(params);
-    }
+	public ResultBody selectPartnerBidCnt(@RequestBody Map<String, Object> params) throws IOException {
+		ResultBody resultBody = new ResultBody();
+		try {
+			resultBody = mainService.selectPartnerBidCnt(params);
+		} catch (Exception e) {
+			resultBody.setCode("ERROR");
+			resultBody.setStatus(500);
+			resultBody.setMsg("전자입찰 건수 조회에 실패하였습니다.");
+			log.error("{} Error : {}", this.getClass(), e.getMessage());
+		}
+		return resultBody;
+	}
 	
 	//입찰완료 조회
 	@PostMapping("/selectCompletedBidCnt")
-    public PartnerCompletedBidCntDto selectCompletedBidCnt(@RequestBody Map<String, Object> params) throws IOException {
-
-        return mainService.selectCompletedBidCnt(params);
-    }
+	public ResultBody selectCompletedBidCnt(@RequestBody Map<String, Object> params) throws IOException {
+		ResultBody resultBody = new ResultBody();
+		try {
+			resultBody = mainService.selectCompletedBidCnt(params);
+		} catch (Exception e) {
+			resultBody.setCode("ERROR");
+			resultBody.setStatus(500);
+			resultBody.setMsg("입찰완료 조회에 실패하였습니다.");
+			log.error("{} Error : {}", this.getClass(), e.getMessage());
+		}
+		return resultBody;
+	}
 	
 	//비밀번호 확인
 	@PostMapping("/checkPwd")

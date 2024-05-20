@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="main">
+	<select id="selectBidNoticingCnt" resultType="int">
+		/* main.selectNoticingCnt */
+		SELECT	COUNT(1)
+		FROM	T_BI_INFO_MAT tbim
+		INNER JOIN T_CO_CUST_IR tcci
+			ON	tbim.INTERRELATED_CUST_CODE = tcci.INTERRELATED_CUST_CODE
+			AND	tcci.CUST_CODE = #{custCode}
+		LEFT OUTER JOIN T_BI_INFO_MAT_CUST tbimc
+			ON	tbim.BI_NO = tbimc.BI_NO
+			AND	tbimc.CUST_CODE = #{custCode}
+		WHERE	tbim.ING_TAG IN ('A1', 'A2', 'A3')
+		AND		((tbim.BI_MODE = 'A' AND tbimc.CUST_CODE = #{custCode}) OR tbim.BI_MODE = 'B')
+		AND		(tbimc.ESMT_YN IS NULL or tbimc.ESMT_YN IN ('0', '1'))
+	</select>
+	
+	<select id="selectBidSubmittedCnt" resultType="int">
+		/* main.selectSubmittedCnt */
+		SELECT	COUNT(1)
+		FROM T_BI_INFO_MAT tbim
+		INNER JOIN T_CO_CUST_IR tcci
+			ON	tbim.INTERRELATED_CUST_CODE = tcci.INTERRELATED_CUST_CODE
+			AND	tcci.CUST_CODE = #{custCode}
+		LEFT OUTER JOIN T_BI_INFO_MAT_CUST tbimc
+			ON	tbim.BI_NO = tbimc.BI_NO
+			AND	tbimc.CUST_CODE = #{custCode}
+		LEFT OUTER JOIN T_CO_USER tcu
+			ON	tbim.CREATE_USER = tcu.USER_ID
+		WHERE	tbim.BI_MODE IN ('A', 'B')
+		AND		tbim.ING_TAG IN ('A1', 'A2', 'A3')
+		AND		tbimc.ESMT_YN IN ('2')
+		
+	</select>
+	
+	<select id="selectBidAwardedCnt" resultType="int">
+		/* main.selectAwardedCnt */
+		SELECT	COUNT(1)
+		FROM	T_BI_INFO_MAT tbim
+		INNER JOIN T_BI_INFO_MAT_CUST tbimc
+			ON	tbim.BI_NO = tbimc.BI_NO
+		WHERE	tbim.ING_TAG = 'A5'
+		AND		tbimc.SUCC_YN = 'Y'
+		AND		tbimc.CUST_CODE = #{custCode}
+		AND		tbim.UPDATE_DATE >= CURDATE() - INTERVAL 12 MONTH
+	</select>
+	
+	<select id="selectBidUnsuccessfulCnt" resultType="int">
+		/* main.selectUnsuccessfulCnt */
+		SELECT	COUNT(1) 
+		FROM	T_BI_INFO_MAT tbim
+		INNER JOIN T_BI_INFO_MAT_CUST tbimc
+			ON	tbim.BI_NO = tbimc.BI_NO
+		WHERE	tbim.ING_TAG IN ('A5', 'A7')
+		AND		tbimc.CUST_CODE = #{custCode}
+		AND		tbimc.SUCC_YN = 'N' 
+		AND		tbim.UPDATE_DATE >= CURDATE() - INTERVAL 12 MONTH
+	</select>
+	
+	<select id="selectCompletePostedCnt" resultType="int">
+		/* main.selectCompletePostedCnt */
+		SELECT	COUNT(1)
+		FROM	T_BI_INFO_MAT tbim
+		LEFT OUTER JOIN T_BI_INFO_MAT_CUST tbimc
+			ON	tbim.BI_NO = tbimc.BI_NO
+			AND	tbimc.CUST_CODE = #{custCode}
+		WHERE	tbim.ING_TAG IN ('A5', 'A7')
+		AND		(tbim.UPDATE_DATE >= CURDATE() - INTERVAL 12 MONTH)
+		AND		(tbim.BI_MODE = 'B' OR (tbim.BI_MODE = 'A' AND tbimc.CUST_CODE = #{custCode}))
+	</select>
+	
+	<select id="selectCompleteSubmittedCnt" resultType="int">
+		/* main.selectCompleteSubmittedCnt */
+		SELECT	COUNT(1)
+		FROM	T_BI_INFO_MAT tbim
+		INNER JOIN T_BI_INFO_MAT_CUST tbimc
+			ON	tbim.BI_NO = tbimc.BI_NO
+		WHERE	tbim.ING_TAG IN ('A5', 'A7')
+		AND		tbimc.ESMT_YN IN('2' , '3') 
+		AND		(tbim.UPDATE_DATE >= CURDATE() - INTERVAL 12 MONTH)
+		AND		tbimc.CUST_CODE = #{custCode}
+	</select>
+	
+	<select id="selectCompleteAwardedCnt" resultType="int">
+		/* main.selectCompleteAwardedCnt */
+		SELECT	COUNT(1)
+		FROM	T_BI_INFO_MAT tbim
+		INNER JOIN T_BI_INFO_MAT_CUST tbimc
+			ON	tbim.BI_NO = tbimc.BI_NO
+		WHERE	tbim.ING_TAG IN ('A5') 
+		AND		(tbim.UPDATE_DATE >= CURDATE() - INTERVAL 12 MONTH) 
+		AND		tbimc.SUCC_YN = 'Y' 
+		AND		tbimc.CUST_CODE = #{custCode}
+	</select>
+	
+	<select id="selectGroupPwdEditDate" resultType="String">
+		/* main.selectGroupPwdEditDate */
+		SELECT	DATE_FORMAT(PWD_EDIT_DATE, '%Y-%m-%d %H:%i:%s') AS PWD_EDIT_DATE
+		FROM	T_CO_USER
+		WHERE	USER_ID = #{userId}
+	</select>
+	
+	<select id="selectPwdChgDate" resultType="String">
+		/* main.selectPwdChgDate */
+		SELECT	DATE_FORMAT(PWD_CHG_DATE, '%Y-%m-%d %H:%i:%s') AS PWD_CHG_DATE
+		FROM	T_CO_CUST_USER
+		WHERE	USER_ID = #{userId}
+	</select>
+	
+</mapper>
