@@ -71,11 +71,9 @@ public class BidStatusService {
 		
 		params.put("userAuth", userAuth);
 		params.put("userId", userId);
-		params.put("interrelatedCode", interrelatedCode);
+		params.put("interrelatedCustCode", interrelatedCode);
 		
 		Page listPage = generalDao.selectGernalListPage("bidStatus.selectEbidStatusList", params);
-		resultBody.setData(listPage);
-		
 		resultBody.setData(listPage);
 		
 		return resultBody;

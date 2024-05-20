@@ -20,6 +20,7 @@ import iljin.framework.core.security.user.CustomUserDetails;
 import iljin.framework.ebid.custom.repository.TCoUserRepository;
 import iljin.framework.ebid.etc.util.CommonUtils;
 import iljin.framework.ebid.etc.util.GeneralDao;
+import iljin.framework.ebid.etc.util.common.consts.DB;
 import iljin.framework.ebid.etc.util.common.file.FileService;
 import lombok.extern.slf4j.Slf4j;
 
@@ -58,7 +59,7 @@ public class NoticeService {
 			if(!"".equals(bno)) {
 				this.updateClickNum(params);
 			}
-			Page listPage = generalDao.selectGernalListPage("etc.selectNoticeList", params);
+			Page listPage = generalDao.selectGernalListPage(DB.QRY_SELECT_NOTICE_LIST, params);
 			resultBody.setData(listPage);
 			
 			return listPage;
@@ -78,17 +79,17 @@ public class NoticeService {
 	// 조회수 +1
 	@Transactional
 	public void updateClickNum(Map<String, Object> params) throws Exception {
-		generalDao.updateGernal("etc.updateNoticeBCount", params);
+		generalDao.updateGernal(DB.QRY_UPDATE_NOTICE_BCNT, params);
 	}
 
 	// 공지사항 삭제
 	@Transactional
 	public void deleteNotice(Map<String, Object> params) throws Exception {
 		// 공지 대상 계열사 정보 delete
-		generalDao.deleteGernal("etc.deleteNoticeCust", params);
+		generalDao.deleteGernal(DB.QRY_DELETE_NOTICE_CUST, params);
 		
 		// 공지 삭제
-		generalDao.deleteGernal("etc.deleteNotice", params);
+		generalDao.deleteGernal(DB.QRY_DELETE_NOTICE, params);
 	}
 	
 	// 공지사항 수정
@@ -114,10 +115,10 @@ public class NoticeService {
 		params.put("uploadedPath", uploadedPath);
 		
 		// 공지 수정
-		generalDao.updateGernal("etc.updateNotice", params);
+		generalDao.updateGernal(DB.QRY_UPDATE_NOTICE, params);
 		
 		// 공지 대상 계열사 정보 delete
-		generalDao.deleteGernal("etc.deleteNoticeCust", params);
+		generalDao.deleteGernal(DB.QRY_DELETE_NOTICE_CUST, params);
 
 		ArrayList<String> custCodeList = (ArrayList<String>) params.get("interrelatedCustCodeArr");// 등록할 공지 계열사
 
@@ -127,7 +128,7 @@ public class NoticeService {
 			custParams.put("bno", bno);
 			custParams.put("custCode", custCodeList.get(i));
 			
-			generalDao.insertGernal("etc.insertNoticeCust", custParams);
+			generalDao.insertGernal(DB.QRY_INSERT_NOTICE_CUST, custParams);
 		}
 	}
 
@@ -148,7 +149,7 @@ public class NoticeService {
 		params.put("fileName", fileName);
 		params.put("uploadedPath", uploadedPath);
 		
-		generalDao.insertGernal("etc.insertNotice", params);
+		generalDao.insertGernal(DB.QRY_INSERT_NOTICE, params);
 
 		
 		// 계열사 대상 공지인 경우
@@ -162,7 +163,7 @@ public class NoticeService {
 				custParams.put("custCode", custCodeList.get(i));
 				
 				// 공지 대상 계열사 정보 insert
-				generalDao.insertGernal("etc.insertNoticeCust", custParams);
+				generalDao.insertGernal(DB.QRY_INSERT_NOTICE_CUST, custParams);
 			}
 		}
 	}

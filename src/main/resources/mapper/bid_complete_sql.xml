@@ -34,6 +34,7 @@
 		</if>
 		<include refid="selectCompleteEbidList_sql" />
 		order by tbim.UPDATE_DATE desc
+		LIMIT ${offset}, ${pageSize}
 	</select>
 	
 	<sql id="selectCompleteEbidList_sql">
@@ -289,6 +290,7 @@
 		</if>
 		<include refid="selectCompleteEbidHistoryList_sql" />
 		order by tbim.EST_CLOSE_DATE desc
+		LIMIT ${offset}, ${pageSize}
 	</select>
 	
 	<sql id="selectCompleteEbidHistoryList_sql">
@@ -365,6 +367,7 @@
 			on tbim.CREATE_USER = tcu.USER_ID 
 		<include refid="selectPartnerCompleteEbidList_sql" />
 		order by tbim.BID_OPEN_DATE desc
+		LIMIT ${offset}, ${pageSize}
 	</select>
 	
 	<sql id="selectPartnerCompleteEbidList_sql">

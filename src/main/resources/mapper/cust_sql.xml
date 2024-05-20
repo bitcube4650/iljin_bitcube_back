@@ -304,12 +304,6 @@
 		WHERE CUST_CODE = #{custCode}
 	</delete>
 	
-	<delete id="deleteTCoCustUser">
-		/* cust.deleteTCoCustUser */
-		DELETE FROM T_CO_CUST_USER
-		WHERE CUST_CODE = #{custCode}
-	</delete>
-	
 	<insert id="insertTCoCustHistory">
 		/* cust.insertTCoCustHistory */
 		INSERT INTO T_CO_CUST_MASTER_HIST (

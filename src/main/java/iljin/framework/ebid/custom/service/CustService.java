@@ -42,7 +42,7 @@ public class CustService {
 	public Page custList(Map<String, Object> params) throws Exception {
 		ResultBody resultBody = new ResultBody();
 
-		Page listPage = generalDao.selectGernalListPage("cust.selectTCoCustList", params);
+		Page listPage = generalDao.selectGernalListPage(DB.QRY_SELECT_CUST_LIST, params);
 		
 		return listPage;
 	}
@@ -51,7 +51,7 @@ public class CustService {
 	public Page otherCustList(Map<String, Object> params) throws Exception {
 		ResultBody resultBody = new ResultBody();
 
-		Page listPage = generalDao.selectGernalListPage("cust.selectOtherCustList", params);
+		Page listPage = generalDao.selectGernalListPage(DB.QRY_SELECT_OTHER_CUST_LIST, params);
 
 		return listPage;
 	}
@@ -60,7 +60,7 @@ public class CustService {
 	public ResultBody custDetail(Map<String, Object> params) throws Exception {
 		ResultBody resultBody = new ResultBody();
 		
-		Map<String, Object> custObj = (Map<String, Object>) generalDao.selectGernalObject("cust.selectTCoCustDetail", params);
+		Map<String, Object> custObj = (Map<String, Object>) generalDao.selectGernalObject(DB.QRY_SELECT_CUST_DETAIL, params);
 		resultBody.setData(custObj);
 		
 		return resultBody;
@@ -72,7 +72,7 @@ public class CustService {
 		params.put("userId", user.getUsername());
 		params.put("certYn", "Y");
 		// 업체 승인 처리
-		generalDao.updateGernal("cust.updateTCoCustMasterCert", params);
+		generalDao.updateGernal(DB.QRY_UPDATE_CUST_CERT, params);
 
 		// 업체 이력 등록
 		insertHistory(params);
@@ -97,17 +97,17 @@ public class CustService {
 		params.put("userId", user.getUsername());
 		params.put("certYn", "D");
 		// 업체 반려 처리
-		generalDao.updateGernal("cust.updateTCoCustMasterCert", params);
+		generalDao.updateGernal(DB.QRY_UPDATE_CUST_CERT, params);
 
 		// 업체 이력 등록
 		insertHistory(params);
 
 		// 업체 삭제 처리
-		generalDao.deleteGernal("cust.deleteTCoCustMaster", params);
+		generalDao.deleteGernal(DB.QRY_DELETE_CUST_MASTER, params);
 		// 매핑 삭제 처리
-		generalDao.deleteGernal("cust.deleteTCoCustIr", params);
+		generalDao.deleteGernal(DB.QRY_DELETE_CUST_IR, params);
 		// 업체 사용자 삭제 처리
-		generalDao.deleteGernal("cust.deleteTCoCustUser", params);
+		generalDao.deleteGernal(DB.QRY_DELETE_CUST_USER, params);
 		
 		// 반려 메일 저장 처리
 		mailService.saveMailInfo("[일진그룹 e-bidding] 회원가입 반려",
@@ -120,14 +120,14 @@ public class CustService {
 	public void del(Map<String, Object> params) throws Exception {
 		ResultBody resultBody = new ResultBody();
 		params.put("certYn", "D");
-		generalDao.deleteGernal("cust.updateTCoCustMasterCert", params);
+		generalDao.updateGernal(DB.QRY_UPDATE_CUST_CERT, params);
 
 		// 협력사 이력 등록
 		insertHistory(params);
 
 		// 사용자 삭제 처리
 		params.put("useYn", "N");
-		generalDao.updateGernal("user.updateTCoCustUserUseYn", params);
+		generalDao.updateGernal(DB.QRY_UPDATE_CUST_USER_USEYN, params);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -164,16 +164,16 @@ public class CustService {
 			params.put("useYn",			"Y");																// 사용여부
 			
 			// 업체 등록
-			generalDao.insertGernal("cust.insertTCoCustMaster", params);
+			generalDao.insertGernal(DB.QRY_INSERT_CUST_MASTER, params);
 
 			// 업체 이력 등록
 			insertHistory(params);
 
 			// 계열사_협력사_매핑 등록
-			generalDao.insertGernal("cust.mergeTCoCustIR", params);
+			generalDao.insertGernal(DB.QRY_MERGE_CUST_IR, params);
 
 			// 업체 관리자 계정 생성
-			generalDao.insertGernal("user.insertTCoCustUser", params);
+			generalDao.insertGernal(DB.QRY_INSERT_CUST_USER, params);
 			
 			// 회원가입을 통한 업체등록인 경우
 			if (user == null) {
@@ -183,7 +183,8 @@ public class CustService {
 						+ "감사합니다.";
 				
 				// 회원가입시 승인요청 메일 수신자 리스트(계열사의 각사관리자 권한 사용자)
-				List<Object> comAdmUserList = generalDao.selectGernalList("user.selectComAdminUserList", params);
+				params.put("userAuth", "2");
+				List<Object> comAdmUserList = generalDao.selectGernalList(DB.QRY_SELECT_ADMIN_USER_LIST, params);
 				
 				for(Object obj : comAdmUserList) {
 					Map<String, Object> userMap = (Map<String, Object>) obj;
@@ -211,7 +212,7 @@ public class CustService {
 			// 업체 수정
 
 			// 업체 정보 update
-			generalDao.updateGernal("cust.updateTCoCustMaster", params);
+			generalDao.updateGernal(DB.QRY_UPDATE_CUST_MASTER, params);
 
 			// 업체 이력 등록
 			insertHistory(params);
@@ -221,10 +222,10 @@ public class CustService {
 				params.put("interrelatedCustCode", user.getCustCode());
 				
 				// 계열사_협력사_매핑 수정
-				generalDao.insertGernal("cust.mergeTCoCustIR", params);
+				generalDao.insertGernal(DB.QRY_MERGE_CUST_IR, params);
 				
 				// 사용자정보 수정
-				generalDao.updateGernal("user.updateTCoCustUser", params);
+				generalDao.updateGernal(DB.QRY_UPDATE_CUST_USER, params);
 			}
 		}
 	}
@@ -249,6 +250,6 @@ public class CustService {
 
 	// 업체 이력 insert
 	public void insertHistory(Map<String, Object> params) throws Exception {
-		generalDao.insertGernal("cust.insertTCoCustHistory", params);
+		generalDao.insertGernal(DB.QRY_INSERT_CUST_HIST, params);
 	}
 }

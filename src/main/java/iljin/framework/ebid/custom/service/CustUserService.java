@@ -13,6 +13,7 @@ import iljin.framework.core.dto.ResultBody;
 import iljin.framework.core.security.user.CustomUserDetails;
 import iljin.framework.ebid.etc.util.CommonUtils;
 import iljin.framework.ebid.etc.util.GeneralDao;
+import iljin.framework.ebid.etc.util.common.consts.DB;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -29,7 +30,7 @@ public class CustUserService {
 	public Page userList(Map<String, Object> params) throws Exception {
 		ResultBody resultBody = new ResultBody();
 
-		Page listPage = generalDao.selectGernalListPage("user.selectTCoCustUserList", params);
+		Page listPage = generalDao.selectGernalListPage(DB.QRY_SELECT_CUST_USER_LIST, params);
 
 		return listPage;
 	}
@@ -38,7 +39,7 @@ public class CustUserService {
 	public Map<String, Object> detail(Map<String, Object> params) throws Exception {
 		Map<String, Object>  userMap = new HashedMap();
 		
-		userMap = (Map<String, Object>) generalDao.selectGernalObject("user.selectTCoCustUserDetail", params);
+		userMap = (Map<String, Object>) generalDao.selectGernalObject(DB.QRY_SELECT_CUST_USER_DETAIL, params);
 
 		return userMap;
 	}
@@ -62,10 +63,10 @@ public class CustUserService {
 			params.put("custCode",	user.getCustCode());			// 업체코드
 
 			// 사용자 등록
-			generalDao.insertGernal("user.insertTCoCustUser", params);
+			generalDao.insertGernal(DB.QRY_INSERT_CUST_USER, params);
 		} else {
 			// 사용자 수정
-			generalDao.updateGernal("user.updateTCoCustUser", params);
+			generalDao.updateGernal(DB.QRY_UPDATE_CUST_USER, params);
 		}
 
 		return resultBody;
@@ -80,7 +81,7 @@ public class CustUserService {
 		params.put("updUserId",	user.getUsername());
 		params.put("custCode",	user.getCustCode());
 
-		generalDao.updateGernal("user.updateTCoCustUserUseYn", params);
+		generalDao.updateGernal(DB.QRY_UPDATE_CUST_USER_USEYN, params);
 		return resultBody;
 	}
 }
