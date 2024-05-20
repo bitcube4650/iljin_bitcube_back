@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="login">
+	<select id="selectLoginUserInfo" resultType="camel">
+		/* login.selectLoginuserInfo */
+		SELECT	b.cert_yn
+		,		a.user_pwd
+		FROM	t_co_cust_user a
+		,		t_co_cust_master b
+		WHERE	a.cust_code = b.cust_code
+		AND		a.user_id = #{loginId}
+	</select>
+	
+	<select id="selectLoginUserTokenInfo" resultType="iljin.framework.core.security.user.UserDto">
+		/* login.selectLoginUserTokenInfo */
+		SELECT	'inter'						AS custType
+		,		a.interrelated_cust_code	AS custCode
+		,		interrelated_nm				AS custName
+		,		user_name					AS userName
+		,		user_id						AS loginId
+		,		user_pwd					AS userPwd
+		,		user_auth					AS userAuth
+		,		'token'						AS token
+		FROM	t_co_user a
+		,		t_co_interrelated b
+		WHERE	a.interrelated_cust_code = b.interrelated_cust_code
+		AND		user_id = #{loginId}
+		AND		a.use_yn  = 'Y'
+		AND		b.use_yn  = 'Y'
+		UNION ALL
+		SELECT	'cust'						AS custType
+		,		a.cust_code					AS custCode
+		,		cust_name					AS custName
+		,		user_name					AS userName
+		,		user_id						AS loginId
+		,		user_pwd					AS userPwd
+		,		user_type					AS userType
+		,		'token'						AS token
+		FROM	t_co_cust_user a
+		,		t_co_cust_master b
+		WHERE	a.cust_code = b.cust_code
+		AND		user_id = #{loginId}
+		AND		a.use_yn  = 'Y'
+		AND		b.cert_yn = 'Y' 
+	</select>
+	
+	<select id="selectLoginUserSearch" resultType="camel">
+		/* login.selectLoginUserSearch */
+		SELECT	user_id
+		,		user_hp
+		,		user_name
+		FROM	t_co_cust_user a
+		,		t_co_cust_master b
+		WHERE	a.cust_code = b.cust_code
+		AND		b.regnum = #{regnum}
+		AND		a.user_name = #{userName}
+		AND		a.user_email = #{userEmail}
+		AND		a.use_yn = 'Y'
+		AND		b.cert_yn = 'Y'
+	</select>
+	
+	<update id="updateLoginUserSearchPwd">
+		/* login.updateLoginUserSearchPwd */
+		UPDATE	t_co_cust_user a
+		SET		user_pwd = #{userPwd}
+		,		pwd_chg_date = null
+		WHERE	user_id = #{userId}
+		AND		user_name = #{userName}
+		AND		user_email = #{userEmail}
+		AND		a.use_yn = 'Y'
+		AND		EXISTS (SELECT cust_code FROM t_co_cust_master x WHERE x.cust_code = a.cust_code AND x.regnum = #{regnum} AND x.cert_yn = 'Y')
+	</update>
+	
+	<select id="selectLoginUserSearchNewPwd" resultType="String">
+		/* login.selectLoginUserSearchNewPwd */
+		SELECT	user_hp
+		FROM	t_co_cust_user   a
+		,		t_co_cust_master b
+		WHERE	a.cust_code = b.cust_code
+		AND		b.regnum  = #{regnum}
+		AND		a.user_name = #{userName}
+		AND		a.user_email = #{userEmail}
+		AND		a.use_yn  = 'Y'
+		AND		b.cert_yn = 'Y'
+	</select>
+	
+	<select id="selectInterrelatedList" resultType="camel">
+		/* login.selectInterrelatedList */
+		SELECT	interrelated_cust_code
+		,		img_path2
+		,		interrelated_nm
+		,		logo_path
+		FROM T_CO_INTERRELATED
+	</select>
+	
+	<select id="selectItemGrpList" resultType="camel">
+		/* login.selectItemGrpList */
+		SELECT	item_grp_cd
+		,		grp_nm 
+		FROM	T_CO_ITEM_GRP
+	</select>
+</mapper>

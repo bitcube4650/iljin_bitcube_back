@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="user">
+	<select id="selectTCoCustUserList_count" resultType="int">
+		/* user.selectTCoCustUserList_count */
+		SELECT	COUNT(1)
+		FROM	T_CO_CUST_USER
+		WHERE	CUST_CODE = #{custCode}
+		<if test="userName != null and nuserName != ''">
+		AND		USER_NAME LIKE CONCAT('%', #{userName}, '%')
+		</if>
+		<if test="userId != null and userId != ''">
+		AND		USER_ID LIKE CONCAT('%', #{userId}, '%')
+		</if>
+		
+		<if test="useYn != null and useYn != ''">
+		AND		USE_YN = #{useYn}
+		</if>
+	</select>
+	
+	<select id="selectTCoCustUserList" resultType="camel">
+		/* user.selectTCoCustUserList_count */
+		SELECT	USER_NAME
+		,		USER_ID
+		,		USER_BUSEO
+		,		USER_POSITION
+		,		USER_EMAIL
+		,		USER_TEL
+		,		USER_HP
+		,		USER_TYPE
+		,		USE_YN
+		FROM	T_CO_CUST_USER
+		WHERE	CUST_CODE = #{custCode}
+		<if test="userName != null and nuserName != ''">
+		AND		USER_NAME LIKE CONCAT('%', #{userName}, '%')
+		</if>
+		<if test="userId != null and userId != ''">
+		AND		USER_ID LIKE CONCAT('%', #{userId}, '%')
+		</if>
+		
+		<if test="useYn != null and useYn != ''">
+		AND		USE_YN = #{useYn}
+		</if>
+		ORDER BY CREATE_DATE
+		<if test="pageSize != null and pageSize != ''">
+		LIMIT ${offset}, ${pageSize}
+		</if>
+	</select>
+	
+	<select id="selectTCoCustUserDetail" resultType="camel">
+		/* user.selectTCoCustUserDetail */
+		SELECT	USER_NAME
+		,		USER_ID
+		,		USER_BUSEO
+		,		USER_POSITION
+		,		USER_EMAIL
+		,		USER_TEL
+		,		USER_HP
+		,		USER_TYPE
+		,		USE_YN
+		FROM	T_CO_CUST_USER
+		WHERE	USER_ID = #{userId}
+	</select>
+	
+	<insert id="insertTCoCustUser">
+		/* user.insertTCoCustUser */
+		INSERT INTO T_CO_CUST_USER (
+					USER_ID
+		,			CUST_CODE
+		,			USER_PWD
+		,			USER_NAME
+		,			USER_TEL
+		,			USER_HP
+		,			USER_EMAIL
+		,			USER_TYPE
+		,			USER_BUSEO
+		,			USER_POSITION
+		,			CREATE_USER
+		,			CREATE_DATE
+		,			PWD_CHG_DATE
+		,			USE_YN
+		) VALUES (
+					#{userId}
+		,			#{custCode}
+		,			#{userPwd}
+		,			#{userName}
+		,			#{userTel}
+		,			#{userHp}
+		,			#{userEmail}
+		,			#{userType}
+		,			#{userBuseo}
+		,			#{userPosition}
+		,			#{updUserId}
+		,			NOW()
+		,			NOW()
+		,			#{useYn}
+		)
+	</insert>
+	
+	<update id="updateTCoCustUser">
+		/* user.updateTCoCustUser */
+		UPDATE T_CO_CUST_USER
+		SET		USER_NAME		= #{userName}
+		,		USER_TEL		= #{userTel}
+		,		USER_HP			= #{userHp}
+		,		USER_EMAIL		= #{userEmail}
+		,		USER_BUSEO		= #{userBuseo}
+		,		USER_POSITION	= #{userPosition}
+		,		UPDATE_USER		= #{updUserId}
+		,		UPDATE_DATE		= NOW()
+		<if test="userPwd != null and userPwd != ''">
+		,		USER_PWD		= #{userPwd}
+		,		PWD_CHG_DATE	= NOW()
+		</if>
+		WHERE	USER_ID			= #{userId}
+	</update>
+	
+	<update id="updateTCoCustUserUseYn">
+		/* user.updateTCoCustUserUseYn */
+		UPDATE T_CO_CUST_USER
+		SET	USE_YN		= #{useYn}
+		,	UPDATE_USER	= #{updUserId}
+		,	UPDATE_DATE	= NOW()
+		WHERE CUST_CODE	= #{custCode}
+		<if test="delUserId != null and delUserId != ''">
+		AND		USER_ID = #{delUserId}
+		</if>
+	</update>
+	
+	<select id="selectAdminUserList" resultType="camel">
+		/* user.selectAdminUserList */
+		SELECT	USER_EMAIL
+		FROM	T_CO_USER
+		WHERE	USER_AUTH = #{userAuth}
+		AND		USE_YN = 'Y'
+		AND		INTERRELATED_CUST_CODE = #{interrelatedCustCode}
+	</select>
+	
+	<delete id="deleteTCoCustUser">
+		/* user.deleteTCoCustUser */
+		DELETE FROM T_CO_CUST_USER
+		WHERE CUST_CODE = #{custCode}
+	</delete>
+</mapper>

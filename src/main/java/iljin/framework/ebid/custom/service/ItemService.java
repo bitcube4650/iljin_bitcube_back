@@ -33,7 +33,10 @@ import iljin.framework.ebid.custom.entity.TCoUser;
 import iljin.framework.ebid.custom.repository.TCoItemGrpRepository;
 import iljin.framework.ebid.custom.repository.TCoItemRepository;
 import iljin.framework.ebid.custom.repository.TCoUserRepository;
+import iljin.framework.ebid.etc.util.CommonUtils;
+import iljin.framework.ebid.etc.util.GeneralDao;
 import iljin.framework.ebid.etc.util.PagaUtils;
+import iljin.framework.ebid.etc.util.common.consts.DB;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -41,76 +44,33 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ItemService {
 
-    @PersistenceContext
-    private EntityManager entityManager;
-    
-    @Autowired
-    private TCoItemRepository tCoItemRepository;
-    @Autowired
-    private TCoItemGrpRepository tCoItemGrpRepository;
-    @Autowired
-    private TCoUserRepository tCoUserRepository;
+	@PersistenceContext
+	private EntityManager entityManager;
+	
+	@Autowired
+	private TCoItemRepository tCoItemRepository;
+	@Autowired
+	private TCoItemGrpRepository tCoItemGrpRepository;
+	@Autowired
+	private TCoUserRepository tCoUserRepository;
+	@Autowired
+	private GeneralDao generalDao;
+	
+	public List itemGrpList() {
+		return tCoItemGrpRepository.findAll();
+	}
 
-    public List itemGrpList() {
-        return tCoItemGrpRepository.findAll();
-    }
+	public Page itemList(Map<String, Object> params) throws Exception {
+		params.put("offset", CommonUtils.getInt(params.get("size")) * CommonUtils.getInt(params.get("page")));
+		params.put("size", CommonUtils.getInt(params.get("size")));
+		
+		List list = generalDao.selectGernalList(DB.QRY_SELECT_ITEM_LIST, params);
+		int count = CommonUtils.getInt(generalDao.selectGernalCount(DB.QRY_SELECT_ITEM_LIST_CNT, params));
 
-    public Page itemList(Map<String, Object> params) {
-    	StringBuilder sbCount = new StringBuilder(" SELECT COUNT(1) FROM T_CO_ITEM A LEFT OUTER JOIN T_CO_USER B ON A.CREATE_USER = B.USER_ID INNER JOIN T_CO_ITEM_GRP C ON A.ITEM_GRP_CD = C.ITEM_GRP_CD WHERE 1=1  ");
-        StringBuilder sbList = new StringBuilder(" SELECT A.ITEM_CODE , A.ITEM_NAME , C.GRP_NM , A.USE_YN , B.USER_NAME AS CREATE_USER , DATE_FORMAT(A.CREATE_DATE, '%Y-%m-%d %h:%m:%s') AS CREATE_DATE  FROM T_CO_ITEM A LEFT OUTER JOIN T_CO_USER B ON A.CREATE_USER = B.USER_ID INNER JOIN T_CO_ITEM_GRP C ON A.ITEM_GRP_CD = C.ITEM_GRP_CD WHERE 1=1 ");
-        StringBuilder sbWhere = new StringBuilder();
+		Pageable pageable = PagaUtils.pageable(params);
 
-        if (!StringUtils.isEmpty(params.get("itemGrp"))) {
-            sbWhere.append(" and A.ITEM_GRP_CD = :itemGrp");
-        }
-        if (!StringUtils.isEmpty(params.get("useYn"))) {
-            sbWhere.append(" and a.use_yn = :useYn");
-        }
-        
-        if(params.containsKey("nonPopYn")) {
-            if (!StringUtils.isEmpty(params.get("itemCode"))) {
-                sbWhere.append(" and A.ITEM_CODE like concat('%',:itemCode,'%')");
-            }
-            if (!StringUtils.isEmpty(params.get("itemName"))) {
-                sbWhere.append(" and A.ITEM_NAME like concat('%',:itemName,'%')");
-            }
-        }else if(!params.containsKey("nonPopYn") && !StringUtils.isEmpty(params.get("itemName"))) {
-        	sbWhere.append(" and ( A.ITEM_CODE like concat('%',:itemName,'%')  or A.ITEM_NAME like concat('%',:itemName,'%'))");
-        }
-
-        
-        sbList.append(sbWhere);
-        sbList.append(" order by A.ITEM_CODE ");
-        Query queryList = entityManager.createNativeQuery(sbList.toString());
-        sbCount.append(sbWhere);
-        Query queryTotal = entityManager.createNativeQuery(sbCount.toString());
-
-        if (!StringUtils.isEmpty(params.get("itemGrp"))) {
-            queryList.setParameter("itemGrp", params.get("itemGrp"));
-            queryTotal.setParameter("itemGrp", params.get("itemGrp"));
-        }
-        if (!StringUtils.isEmpty(params.get("useYn"))) {
-            queryList.setParameter("useYn", params.get("useYn"));
-            queryTotal.setParameter("useYn", params.get("useYn"));
-        }
-        if (!StringUtils.isEmpty(params.get("itemCode"))) {
-            queryList.setParameter("itemCode", params.get("itemCode"));
-            queryTotal.setParameter("itemCode", params.get("itemCode"));
-        }
-        if (!StringUtils.isEmpty(params.get("itemName"))) {
-            queryList.setParameter("itemName", params.get("itemName"));
-            queryTotal.setParameter("itemName", params.get("itemName"));
-        }
-
-        Pageable pageable = PagaUtils.pageable(params);
-        queryList.setFirstResult(pageable.getPageNumber() * pageable.getPageSize()).setMaxResults(pageable.getPageSize()).getResultList();
-        List list = new JpaResultMapper().list(queryList, TCoItemDto.class);
-
-        BigInteger count = (BigInteger) queryTotal.getSingleResult();
-        return new PageImpl(list, pageable, count.intValue());
-    	
-        //return tCoItemRepository.findAll(searchWith(params), PagaUtils.pageable(params, "itemCode"));
-    }
+		return new PageImpl(list, pageable, count);
+	}
 
     public Specification<TCoItem> searchWith(Map<String, Object> params) {
         return (Specification<TCoItem>) ((root, query, builder) -> {

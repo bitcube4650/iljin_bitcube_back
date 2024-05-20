@@ -32,7 +32,7 @@ import iljin.framework.ebid.etc.util.CommonUtils;
 import iljin.framework.ebid.etc.util.PagaUtils;
 import lombok.extern.slf4j.Slf4j;
 
-@Service
+@Service("custom.service")
 @Slf4j
 public class UserService {
 

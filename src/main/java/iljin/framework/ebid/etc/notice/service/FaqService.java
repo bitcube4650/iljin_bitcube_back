@@ -1,193 +1,78 @@
 package iljin.framework.ebid.etc.notice.service;
 
-import java.math.BigInteger;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
 
-import org.qlrm.mapper.JpaResultMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import iljin.framework.core.dto.ResultBody;
-import iljin.framework.ebid.custom.entity.TCoUser;
-import iljin.framework.ebid.custom.repository.TCoUserRepository;
-import iljin.framework.ebid.etc.notice.dto.FaqDto;
-import iljin.framework.ebid.etc.notice.entity.TCoBoardCustCode;
-import iljin.framework.ebid.etc.notice.entity.TCoBoardNotice;
-import iljin.framework.ebid.etc.notice.entity.TFaq;
-import iljin.framework.ebid.etc.util.PagaUtils;
+import iljin.framework.core.security.user.CustomUserDetails;
+import iljin.framework.ebid.etc.util.CommonUtils;
+import iljin.framework.ebid.etc.util.GeneralDao;
+import iljin.framework.ebid.etc.util.common.consts.DB;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
 public class FaqService {
-	
-	@Autowired
-    private TCoUserRepository tCoUserRepository;
-	
-	@PersistenceContext
-    private EntityManager entityManager;
 
-	//faq 목록 조회
+	@PersistenceContext
+	private EntityManager entityManager;
+
+	@Autowired
+	GeneralDao generalDao;
+
+	// faq 목록 조회
+	@SuppressWarnings("rawtypes")
 	@Transactional
 	public Page faqList(Map<String, Object> params) {
 
+		ResultBody resultBody = new ResultBody();
+
 		try {
-			StringBuilder sbCount = new StringBuilder(" select count(1) "
-												    + " from t_faq tf"
-												    + " left outer join t_co_user tcu "
-												    + " on(tf.create_user = tcu.USER_ID) "
-												    + " where 1 = 1 ");
-			
-			StringBuilder sbList = new StringBuilder(" select tf.faq_id , "
-												   		  + " tf.faq_type , "
-												   		  + " CASE "
-													   		  + " WHEN tf.faq_type = 1 THEN '가입관련' "
-													   		  + " WHEN tf.faq_type = 2 THEN '입찰관련' "
-													   		  + " WHEN tf.faq_type = 3 THEN '인증서관련' "
-													   		  + " ELSE '기타' "
-												   		  + " END AS faq_type_description , "
-												   		  + " tf.title , "
-												   		  + " tf.answer , "
-												   		  + " tf.create_user , "
-												   		  + " tcu.user_name , "
-												   		  + " DATE_FORMAT( tf.create_date , '%Y-%m-%d %H:%i') as createDate "
-											   	   + " from t_faq tf"
-											   	   + " left outer join t_co_user tcu "
-											   	   + " on(tf.create_user = tcu.USER_ID) "
-											   	   + " where 1 = 1 ");
-			
-			StringBuilder sbWhere = new StringBuilder();
-			String adminYn = "";
-			if (!StringUtils.isEmpty(params.get("admin"))) {
-				adminYn = (String) params.get("admin");
-			}
-			
-			if (!StringUtils.isEmpty(params.get("title"))) {
-				sbWhere.append(" and tf.title like concat('%',:title,'%') ");
-			}
-			if (!StringUtils.isEmpty(params.get("faqType"))) {
-				sbWhere.append(" and tf.faq_type = :faqType ");
-			}
+			Page listPage = generalDao.selectGernalListPage(DB.QRY_SELECT_FAQ_LIST, params);
+			resultBody.setData(listPage);
 
-			sbList.append(sbWhere);
-			sbList.append(" order by tf.create_date desc ");
-			
-			Query queryList = entityManager.createNativeQuery(sbList.toString());
-			sbCount.append(sbWhere);
-			Query queryTotal = entityManager.createNativeQuery(sbCount.toString());
-			
-			if (!StringUtils.isEmpty(params.get("title"))) {
-				queryList.setParameter("title", params.get("title"));
-	            queryTotal.setParameter("title", params.get("title"));
-			}
-			if (!StringUtils.isEmpty(params.get("faqType"))) {
-				queryList.setParameter("faqType", params.get("faqType"));
-	            queryTotal.setParameter("faqType", params.get("faqType"));
-			}
-			
-			Pageable pageable = PagaUtils.pageable(params);
-			
-			if(adminYn.equals("Y")) {//관리자 faq 화면은 페이징 처리하여 불러오고 일반 유저 faq 화면은 한번 모든 faq 불러옴
-				queryList.setFirstResult(pageable.getPageNumber() * pageable.getPageSize()).setMaxResults(pageable.getPageSize()).getResultList();
-			}
-		
-			List list = new JpaResultMapper().list(queryList, FaqDto.class);
+			return listPage;
+		} catch (Exception e) {
+			e.printStackTrace();
+			resultBody.setCode("ERROR");
+			resultBody.setStatus(500);
+			resultBody.setMsg("An error occurred while updating the click count.");
+			resultBody.setData(e.getMessage());
 
-			BigInteger count = (BigInteger) queryTotal.getSingleResult();
-			return new PageImpl(list, pageable, count.intValue());
-		}catch(Exception e) {
-			e.printStackTrace(); 
-			return new PageImpl(new ArrayList<>());
+			return null;
 		}
-		
+
+//		return resultBody;
 	}
+	
 
 	//faq 저장
 	@Transactional
-	public ResultBody save(Map<String, Object> params) {
-
-		ResultBody resultBody = new ResultBody();
-		UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        TCoUser user = tCoUserRepository.findById(principal.getUsername()).get();//로그인한 유저정보
-
+	public void save(Map<String, Object> params, CustomUserDetails user) throws Exception {
+		String updateInsert = CommonUtils.getString(params.get("updateInsert"));
+		String userId = user.getUsername();
 		
-		String title = (String) params.get("title");
-		String answer = (String) params.get("answer");
-		String faqType = (String) params.get("faqType");
-		String updateInsert = (String) params.get("updateInsert");
-		String userId = user.getUserId();
-		LocalDateTime currentDate = LocalDateTime.now();
+		params.put("userId" , userId);
 		
-		//faq update
-		if(updateInsert.equals("update")) {//수정하는 경우
-
-			int faqId = (int) params.get("faqId");
-			TFaq faq = entityManager.find(TFaq.class, faqId);
-			
-			if(faq != null) {
-				//파라미터 set
-				faq.setTitle(title);
-				faq.setAnswer(answer);
-				faq.setFaqType(faqType);
-				faq.setCreateUser(userId);
-				faq.setCreateDate(currentDate);
-			}
-			
-		}else {//등록하는 경우
-			
-			TFaq newFaq = new TFaq();
-			
-			newFaq.setTitle(title);
-			newFaq.setAnswer(answer);
-			newFaq.setFaqType(faqType);
-			newFaq.setCreateUser(userId);
-			newFaq.setCreateDate(currentDate);
-			
-			entityManager.persist(newFaq);
+		if(updateInsert.equals("update")) {
+			// 수정
+			generalDao.updateGernal(DB.QRY_UPDATE_FAQ, params);
+		}else {
+			// 등록
+			generalDao.insertGernal(DB.QRY_INSERT_FAQ, params);
 		}
-
-		return resultBody;
 	}
 
 	//faq 삭제
 	@Transactional
-	public ResultBody delete(Map<String, Object> params) {
-		ResultBody resultBody = new ResultBody();
-
-		try {
-			//faq id
-	        int faqId = (int) params.get("faqId");
-
-	        //faq 정보
-	        TFaq tFaq = entityManager.find(TFaq.class, faqId);
-	        
-	        entityManager.remove(tFaq);
-
-	    } catch (Exception e) {
-	    	e.printStackTrace();
-	        resultBody.setCode("ERROR");
-	        resultBody.setStatus(500);
-	        resultBody.setMsg("An error occurred while deleting the faq.");
-	        resultBody.setData(e.getMessage()); 
-	    }
-
-		
-		return resultBody;
+	public void delete(Map<String, Object> params) throws Exception {
+		generalDao.deleteGernal(DB.QRY_DELETE_FAQ, params);
 	}
-
 }

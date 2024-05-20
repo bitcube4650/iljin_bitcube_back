@@ -55,7 +55,10 @@ public class FileService {
 	        // 파일 저장 경로 설정
 	        filePath = Paths.get(monthPath.toString().replace("\\", "/"), uniqueFileName);
         } else {
-	        Path path = Paths.get(Constances.FILE_UPLOAD_DIRECTORY);
+	        Path path = Paths.get(Constances.FILE_UPLOAD_DIRECTORY, "intro");
+	        if (!Files.exists(path)) {
+	            Files.createDirectories(path);
+	        }
         	filePath = Paths.get(path.toString().replace("\\", "/"), uniqueFileName);
         }
 

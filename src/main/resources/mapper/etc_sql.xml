@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="etc">
+	<select id="selectNoticeList_count" resultType="int">
+		/* etc.selectNoticeList_count*/
+		SELECT COUNT(1)
+		FROM (
+			SELECT	A.B_NO
+				<include refid="selectNoticeListSql" />
+		) A1
+	</select>
+	
+	<select id="selectNoticeList" resultType="hashMap">
+		/* etc.selectNoticeList*/
+		SELECT	A.B_NO										AS bno
+		,		A.B_USERID									AS buserId
+		,		A.B_TITLE									AS btitle
+		,		DATE_FORMAT(A.B_DATE , '%Y-%m-%d %H:%i')	AS bdate
+		,		A.B_COUNT									AS bcount
+		,		A.B_CONTENT									AS bcontent
+		,		A.B_FILE									AS bfile
+		,		A.B_FILE_PATH								AS bfilePath
+		,		A.B_CO										AS bco
+		,		D.USER_NAME									AS buserName
+		,		ROW_NUMBER() OVER(ORDER BY A.B_DATE DESC)	AS rowNo
+		,		GROUP_CONCAT(B1.INTERRELATED_CUST_CODE)		AS interrelatedCodes
+		,		GROUP_CONCAT(B1.INTERRELATED_NM)			AS interrelatedNms
+		<include refid="selectNoticeListSql" />
+		ORDER BY A.B_DATE DESC
+		<if test="pageSize != null and pageSize != ''">
+		LIMIT ${offset}, ${pageSize}
+		</if>
+	</select>
+	
+	<sql id="selectNoticeListSql">
+		FROM	T_CO_BOARD_NOTICE A
+		LEFT OUTER JOIN T_CO_BOARD_CUST B
+			ON A.B_NO = B.B_NO
+		LEFT OUTER JOIN T_CO_INTERRELATED B1
+			ON B.INTERRELATED_CUST_CODE = B1.INTERRELATED_CUST_CODE
+		LEFT OUTER JOIN T_CO_USER D
+			ON	A.B_USERID = D.USER_ID
+		WHERE 1=1
+		<if test="title != '' and title != null">
+			AND A.B_TITLE LIKE CONCAT ('%', #{title}, '%')
+		</if>
+		<if test="content != '' and content != null">
+			AND A.B_CONTENT LIKE CONCAT ('%', #{content}, '%')
+		</if>
+		<if test="userName != '' and userName != null">
+			AND D.USER_NAME LIKE CONCAT ('%', #{userName}, '%')
+		</if>
+		<if test="bno != '' and bno != null">
+			AND A.B_NO = #{bno}
+		</if>
+		<choose>
+		<when test="custType eq 'inter'.toString() and userAuth eq '1'.toString()" >
+		</when>
+		<otherwise>
+			AND (A.B_CO = 'ALL' 
+				OR (A.B_CO = 'CUST'
+				<choose>
+				<when test="custType eq 'cust'.toString()" >
+					AND B.INTERRELATED_CUST_CODE IN (SELECT INTERRELATED_CUST_CODE from T_CO_CUST_IR A1  WHERE A1.CUST_CODE = #{custCode})
+				</when>
+				<when test="custType eq 'inter'.toString() and userAuth eq '4'.toString()" >
+					AND B.INTERRELATED_CUST_CODE IN (SELECT INTERRELATED_CUST_CODE from T_CO_USER_INTERRELATED A1 WHERE  A1.USER_ID = #{userId})
+				</when>
+				<otherwise>
+					AND B.INTERRELATED_CUST_CODE = #{custCode}
+				</otherwise>
+				</choose>
+				)
+			)
+		</otherwise>
+		</choose>
+		GROUP BY A.B_NO
+	</sql>
+	
+	<insert id="insertNotice" parameterType="map" useGeneratedKeys="true" keyProperty="bno">
+		/* etc.insertNotice */
+		INSERT INTO T_CO_BOARD_NOTICE (
+					B_USERID
+			,		B_TITLE
+			,		B_DATE
+			,		B_COUNT
+			,		B_CONTENT
+			,		B_FILE
+			,		B_FILE_PATH
+			,		B_CO
+		) VALUES (
+					#{buserid}
+			,		#{btitle}
+			,		NOW()
+			,		0
+			,		#{bcontent}
+			,		#{fileName}
+			,		#{uploadedPath}
+			,		#{bco}
+		)
+	</insert>
+	
+	
+	<update id="updateNotice">
+		/* etc.updateNotice */
+		UPDATE T_CO_BOARD_NOTICE
+		SET	B_TITLE = #{btitle}
+		,	B_DATE = NOW()
+		,	B_CONTENT = #{bcontent}
+		,	B_FILE = #{fileName}
+		,	B_FILE_PATH = #{uploadedPath}
+		,	B_CO = #{bco}
+		WHERE B_NO = #{bno}
+	</update>
+	
+	<update id="updateNoticeBCount">
+		/* etc.updateNoticeBCount */
+		UPDATE T_CO_BOARD_NOTICE
+		SET B_COUNT = B_COUNT + 1
+		WHERE B_NO = #{bno}
+	</update>
+	
+	<insert id="insertNoticeCust">
+		/* etc.insertNoticeCust */
+		INSERT INTO T_CO_BOARD_CUST (
+					B_NO
+			,		INTERRELATED_CUST_CODE
+		) VALUE (
+					#{bno}
+			,		#{custCode}
+		)
+	</insert>
+	
+	<delete id="deleteNoticeCust">
+		/* etc.deleteNoticeCust */
+		DELETE FROM T_CO_BOARD_CUST
+		WHERE B_NO = #{bno}
+	</delete>
+	
+	<delete id="deleteNotice">
+		/* etc.deleteNotice */
+		DELETE FROM T_CO_BOARD_NOTICE
+		WHERE B_NO = #{bno}
+	</delete>
+	
+	<select id="selectFaqList_count" resultType="int">
+		/* etc.selectFaqList_count*/
+		SELECT COUNT(1)
+		FROM T_FAQ A
+		LEFT OUTER JOIN T_CO_USER B
+			ON A.CREATE_USER = B.USER_ID
+		WHERE 1=1 
+	</select>
+	
+	<select id="selectFaqList" resultType="camel">
+		/* etc.selectFaqList*/
+		SELECT	A.FAQ_ID
+		,		A.FAQ_TYPE
+		,		CASE
+					WHEN A.FAQ_TYPE = 1 THEN '가입관련'
+					WHEN A.FAQ_TYPE = 2 THEN '입찰관련'
+					WHEN A.FAQ_TYPE = 3 THEN '인증서관련'
+					ELSE '기타'
+				END											AS FAQ_TYPE_DESCRIPTION
+		,		A.TITLE
+		,		A.ANSWER
+		,		A.CREATE_USER
+		,		B.USER_NAME
+		,		DATE_FORMAT(A.CREATE_DATE, '%Y-%m-%d %H:%i')	AS CREATE_DATE
+		FROM T_FAQ A
+		LEFT OUTER JOIN T_CO_USER B
+			ON A.CREATE_USER = B.USER_ID
+		WHERE 1=1 
+		<if test="title != '' and title != null">
+			AND A.TITLE LIKE CONCAT('%', #{title}, '%')
+		</if>
+		<if test="faqType != '' and faqType != null">
+			AND A.FAQ_TYPE = #{faqType}
+		</if>
+		ORDER BY A.CREATE_DATE DESC
+		<if test="admin eq 'Y'.toString()">
+		LIMIT ${offset}, ${pageSize}
+		</if>
+	</select>
+	
+	<insert id="insertFaq">
+		/* etc.insertFaq */
+		INSERT INTO T_FAQ (
+				FAQ_TYPE
+		,		TITLE
+		,		ANSWER
+		,		CREATE_USER
+		,		CREATE_DATE
+		) VALUES (
+				#{faqType}
+		,		#{title}
+		,		#{answer}
+		,		#{userId}
+		,		NOW()
+		)
+	</insert>
+	
+	<update id="updateFaq">
+		/* etc.updateFaq */
+		UPDATE T_FAQ
+		SET	FAQ_TYPE = #{faqType}
+		,	TITLE = #{title}
+		,	ANSWER = #{answer}
+		,	CREATE_USER = #{userId}
+		,	CREATE_DATE = NOW()
+		WHERE FAQ_ID = #{faqId}
+	</update>
+	
+	<delete id="deleteFaq">
+		/* etc.deleteFaq */
+		DELETE FROM T_FAQ
+		WHERE FAQ_ID = #{faqId}
+	</delete>
+</mapper>

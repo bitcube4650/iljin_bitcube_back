@@ -25,10 +25,10 @@ public class ItemController {
     }
 
 
-    @PostMapping("/itemList")
-    public Page itemList(@RequestBody Map<String, Object> params) {
-        return itemService.itemList(params);
-    }
+//    @PostMapping("/itemList")
+//    public Page itemList(@RequestBody Map<String, Object> params) {
+//        return itemService.itemList(params);
+//    }
 
 
     @PostMapping("/{id}")

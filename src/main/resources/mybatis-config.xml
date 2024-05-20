@@ -5,7 +5,14 @@
 		<typeAlias alias="camel" type="iljin.framework.ebid.etc.util.CamelMap" />
 	</typeAliases>
 	<mappers>
+		<mapper resource="mapper/login_sql.xml"/>
 		<mapper resource="mapper/bid_sql.xml"/>
+		<mapper resource="mapper/bid_status_sql.xml"/>
+		<mapper resource="mapper/bid_complete_sql.xml"/>
+		<mapper resource="mapper/etc_sql.xml"/>
+		<mapper resource="mapper/item_sql.xml"/>
+		<mapper resource="mapper/cust_sql.xml"/>
+		<mapper resource="mapper/user_sql.xml"/>
 		<mapper resource="mapper/statistics_sql.xml"/>
 	</mappers>
 </configuration>
