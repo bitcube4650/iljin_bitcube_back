@@ -60,7 +60,7 @@ public class CustService {
 	public ResultBody custDetail(Map<String, Object> params) throws Exception {
 		ResultBody resultBody = new ResultBody();
 		
-		Map<String, Object> custObj = (Map<String, Object>) generalDao.selectGernalObject("cust.selectTCoCustDetail", params);
+		Map<String, Object> custObj = (Map<String, Object>) (generalDao.selectGernalList("cust.selectTCoCustDetail", params)).get(0);
 		resultBody.setData(custObj);
 		
 		return resultBody;

@@ -96,6 +96,31 @@ public class CustController {
 		}
 		return resultBody;
 	}
+	
+	/**
+	 * 타계열사 정보 상세 조회
+	 * @param id
+	 * @param user
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	@PostMapping("/otherCustManagement/{id}")
+	public ResultBody otherCustManagement(@PathVariable String id, @AuthenticationPrincipal CustomUserDetails user) {
+		ResultBody resultBody = new ResultBody();
+		
+		Map<String, Object> params = new HashedMap();
+		params.put("custCode", id);
+		
+		try {
+			resultBody = custService.custDetail(params);
+		} catch (Exception e) {
+			resultBody.setCode("ERROR");
+			resultBody.setStatus(500);
+			resultBody.setMsg("업체 상세 내용 조회 중 오류가 발생하였습니다.");
+			log.error("{} Error : {}", this.getClass(), e.getMessage());
+		}
+		return resultBody;
+	}
 
 	/**
 	 * 업체 자사 정보 조회
