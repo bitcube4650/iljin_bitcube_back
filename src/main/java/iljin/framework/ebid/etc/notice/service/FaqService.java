@@ -14,6 +14,7 @@ import iljin.framework.core.dto.ResultBody;
 import iljin.framework.core.security.user.CustomUserDetails;
 import iljin.framework.ebid.etc.util.CommonUtils;
 import iljin.framework.ebid.etc.util.GeneralDao;
+import iljin.framework.ebid.etc.util.common.consts.DB;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -34,7 +35,7 @@ public class FaqService {
 		ResultBody resultBody = new ResultBody();
 
 		try {
-			Page listPage = generalDao.selectGernalListPage("etc.selectFaqList", params);
+			Page listPage = generalDao.selectGernalListPage(DB.QRY_SELECT_FAQ_LIST, params);
 			resultBody.setData(listPage);
 
 			return listPage;
@@ -62,16 +63,16 @@ public class FaqService {
 		
 		if(updateInsert.equals("update")) {
 			// 수정
-			generalDao.updateGernal("etc.updateFaq", params);
+			generalDao.updateGernal(DB.QRY_INSERT_FAQ, params);
 		}else {
 			// 등록
-			generalDao.insertGernal("etc.insertFaq", params);
+			generalDao.insertGernal(DB.QRY_UPDATE_FAQ, params);
 		}
 	}
 
 	//faq 삭제
 	@Transactional
 	public void delete(Map<String, Object> params) throws Exception {
-		generalDao.deleteGernal("etc.deleteFaq", params);
+		generalDao.deleteGernal(DB.QRY_DELETE_FAQ, params);
 	}
 }

@@ -128,12 +128,18 @@
 		</if>
 	</update>
 	
-	<select id="selectComAdminUserList" resultType="camel">
-		/* user.selectComAdminUserList */
+	<select id="selectAdminUserList" resultType="camel">
+		/* user.selectAdminUserList */
 		SELECT	USER_EMAIL
 		FROM	T_CO_USER
-		WHERE	USER_AUTH = '2'		-- 각사관리자
+		WHERE	USER_AUTH = #{userAuth}
 		AND		USE_YN = 'Y'
 		AND		INTERRELATED_CUST_CODE = #{interrelatedCustCode}
 	</select>
+	
+	<delete id="deleteTCoCustUser">
+		/* user.deleteTCoCustUser */
+		DELETE FROM T_CO_CUST_USER
+		WHERE CUST_CODE = #{custCode}
+	</delete>
 </mapper>
