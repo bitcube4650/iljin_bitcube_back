@@ -234,10 +234,16 @@ public class CustController {
 		return resultBody;
 	}
 
-//	@PostMapping("/idcheck")
-//	public ResultBody idcheck(@RequestBody Map<String, Object> params) {
-//		return custService.idcheck(params);
-//	}
+	@PostMapping("/idcheck")
+	public ResultBody idcheck(@RequestBody Map<String, Object> params) {
+		ResultBody resultBody = new ResultBody();
+		try {
+			resultBody = custService.idcheck(params);
+		} catch (Exception e) {
+			log.error("custController idcheck error : {}", e);
+		}
+		return resultBody;
+	}
 
 	@PostMapping("/pwdcheck")
 	public ResultBody pwdcheck(@RequestBody Map<String, Object> params) {

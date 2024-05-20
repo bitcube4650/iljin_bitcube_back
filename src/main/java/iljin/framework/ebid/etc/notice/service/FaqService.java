@@ -63,10 +63,10 @@ public class FaqService {
 		
 		if(updateInsert.equals("update")) {
 			// 수정
-			generalDao.updateGernal(DB.QRY_INSERT_FAQ, params);
+			generalDao.updateGernal(DB.QRY_UPDATE_FAQ, params);
 		}else {
 			// 등록
-			generalDao.insertGernal(DB.QRY_UPDATE_FAQ, params);
+			generalDao.insertGernal(DB.QRY_INSERT_FAQ, params);
 		}
 	}
 
