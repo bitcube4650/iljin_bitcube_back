@@ -2,6 +2,56 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="user">
+	<select id="selectInterrelatedList" resultType="camel">
+		SELECT	INTERRELATED_CUST_CODE
+		,		INTERRELATED_NM
+		FROM	T_CO_INTERRELATED
+		WHERE	USE_YN = 'Y'
+		ORDER BY INTERRELATED_NM
+	</select>
+
+	<sql id="selectUserList_sql">
+		WHERE	1=1
+		<if test="interrelatedCustCode != null and interrelatedCustCode != ''">
+			AND A.INTERRELATED_CUST_CODE = #{interrelatedCustCode}
+		</if>
+		<if test="useYn != null and useYn != ''">
+			AND A.USE_YN = #{useYn}
+		</if>
+		<if test="userName != null and userName != ''">
+			AND A.USER_NAME LIKE CONCAT('%',#{userName},'%')
+		</if>
+		<if test="userId != null and userId != ''">
+			AND A.USER_ID LIKE CONCAT('%',#{userId},'%')
+		</if>
+	</sql>
+
+	<select id="selectUserList_count" resultType="int">
+		SELECT	COUNT(1)
+		FROM	T_CO_USER A
+		INNER JOIN T_CO_INTERRELATED B
+		ON A.INTERRELATED_CUST_CODE = B.INTERRELATED_CUST_CODE
+		<include refid="selectUserList_sql" />
+	</select>
+
+	<select id="selectUserList" resultType="camel">
+		SELECT	A.USER_NAME
+		,		A.USER_ID
+		,		A.USER_POSITION
+		,		A.DEPT_NAME
+		,		A.USER_TEL
+		,		A.USER_HP
+		,		A.USER_AUTH
+		,		A.USE_YN
+		,		B.INTERRELATED_NM
+		FROM	T_CO_USER A
+		INNER JOIN T_CO_INTERRELATED B
+			ON A.INTERRELATED_CUST_CODE = B.INTERRELATED_CUST_CODE
+		<include refid="selectUserList_sql" />
+		ORDER BY A.CREATE_DATE DESC
+		LIMIT ${offset}, ${pageSize}
+	</select>
+
 	<select id="selectTCoCustUserList_count" resultType="int">
 		/* user.selectTCoCustUserList_count */
 		SELECT	COUNT(1)
@@ -13,12 +63,44 @@
 		<if test="userId != null and userId != ''">
 		AND		USER_ID LIKE CONCAT('%', #{userId}, '%')
 		</if>
-		
+
 		<if test="useYn != null and useYn != ''">
 		AND		USE_YN = #{useYn}
 		</if>
 	</select>
 	
+	<select id="selectUserDetail" resultType="camel">
+		SELECT	A.USER_ID
+		,	A.USER_NAME
+		,	A.USER_POSITION
+		,	A.DEPT_NAME
+		,	A.USER_TEL
+		,	A.USER_HP
+		,	A.USER_AUTH
+		,	A.USE_YN
+		,	A.INTERRELATED_CUST_CODE
+		,	IFNULL(A.OPENAUTH, '') AS OPENAUTH
+		,	IFNULL(A.BIDAUTH, '') AS BIDAUTH
+		,	A.USER_EMAIL
+		,	DATE_FORMAT(A.PWD_EDIT_DATE, '%Y-%m-%d') AS PWD_EDIT_DATE_STR
+		,	B.INTERRELATED_NM
+		 FROM T_CO_USER A
+		 INNER JOIN T_CO_INTERRELATED B
+		 	ON A.INTERRELATED_CUST_CODE = B.INTERRELATED_CUST_CODE
+		 WHERE A.USER_ID = #{userId}
+	</select>
+
+	<select id="selectInterrelatedListByUser" resultType="camel">
+		SELECT 	A.INTERRELATED_CUST_CODE
+		,	INTERRELATED_NM
+		FROM T_CO_INTERRELATED A
+		INNER JOIN T_CO_USER_INTERRELATED B
+			ON A.INTERRELATED_CUST_CODE = B.INTERRELATED_CUST_CODE
+		WHERE	A.USE_YN = 'Y'
+		AND		B.USER_ID = #{userId}
+		ORDER BY A.INTERRELATED_CUST_CODE
+	</select>
+
 	<select id="selectTCoCustUserList" resultType="camel">
 		/* user.selectTCoCustUserList_count */
 		SELECT	USER_NAME
@@ -38,7 +120,7 @@
 		<if test="userId != null and userId != ''">
 		AND		USER_ID LIKE CONCAT('%', #{userId}, '%')
 		</if>
-		
+
 		<if test="useYn != null and useYn != ''">
 		AND		USE_YN = #{useYn}
 		</if>
@@ -47,7 +129,7 @@
 		LIMIT ${offset}, ${pageSize}
 		</if>
 	</select>
-	
+
 	<select id="selectTCoCustUserDetail" resultType="camel">
 		/* user.selectTCoCustUserDetail */
 		SELECT	USER_NAME
@@ -62,7 +144,7 @@
 		FROM	T_CO_CUST_USER
 		WHERE	USER_ID = #{userId}
 	</select>
-	
+
 	<insert id="insertTCoCustUser">
 		/* user.insertTCoCustUser */
 		INSERT INTO T_CO_CUST_USER (
@@ -97,7 +179,7 @@
 		,			#{useYn}
 		)
 	</insert>
-	
+
 	<update id="updateTCoCustUser">
 		/* user.updateTCoCustUser */
 		UPDATE T_CO_CUST_USER
@@ -115,7 +197,7 @@
 		</if>
 		WHERE	USER_ID			= #{userId}
 	</update>
-	
+
 	<update id="updateTCoCustUserUseYn">
 		/* user.updateTCoCustUserUseYn */
 		UPDATE T_CO_CUST_USER
@@ -127,7 +209,7 @@
 		AND		USER_ID = #{delUserId}
 		</if>
 	</update>
-	
+
 	<select id="selectAdminUserList" resultType="camel">
 		/* user.selectAdminUserList */
 		SELECT	USER_EMAIL
@@ -136,7 +218,7 @@
 		AND		USE_YN = 'Y'
 		AND		INTERRELATED_CUST_CODE = #{interrelatedCustCode}
 	</select>
-	
+
 	<delete id="deleteTCoCustUser">
 		/* user.deleteTCoCustUser */
 		DELETE FROM T_CO_CUST_USER

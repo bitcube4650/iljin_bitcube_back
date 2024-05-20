@@ -1,6 +1,7 @@
 package iljin.framework.ebid.custom.service;
 
 import java.math.BigInteger;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -9,6 +10,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
+import iljin.framework.ebid.etc.util.GeneralDao;
 import org.qlrm.mapper.JpaResultMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -23,7 +25,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import iljin.framework.core.dto.ResultBody;
-import iljin.framework.core.security.user.UserServiceImpl;
 import iljin.framework.core.util.Pair;
 import iljin.framework.ebid.custom.dto.TCoUserDto;
 import iljin.framework.ebid.custom.entity.TCoUser;
@@ -32,111 +33,61 @@ import iljin.framework.ebid.etc.util.CommonUtils;
 import iljin.framework.ebid.etc.util.PagaUtils;
 import lombok.extern.slf4j.Slf4j;
 
-@Service("custom.service")
+@Service
 @Slf4j
 public class UserService {
 
     @PersistenceContext
     private EntityManager entityManager;
-    
-    @Autowired
-    private UserServiceImpl userServiceImpl;
-    
+
 	@Autowired
-    private PasswordEncoder passwordEncoder;
+	private PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private TCoUserRepository tCoUserRepository;
+	@Autowired
+	private TCoUserRepository tCoUserRepository;
 
-    public List interrelatedList() {
-        StringBuilder sb = new StringBuilder(" select interrelated_cust_code, interrelated_nm from t_co_interrelated where use_yn = 'Y' order by interrelated_nm");
-        Query query = entityManager.createNativeQuery(sb.toString());
-        return new JpaResultMapper().list(query, Pair.class);
-    }
+	@Autowired
+	private GeneralDao generalDao;
 
-    public Page userList(Map<String, Object> params) {
-        StringBuilder sbCount = new StringBuilder(" select count(1) from t_co_user x where 1=1");
-        StringBuilder sbList = new StringBuilder(" select user_name, user_id, user_position, dept_name, user_tel, user_hp, user_auth, use_yn, (select interrelated_nm from t_co_interrelated x where x.interrelated_cust_code = a.interrelated_cust_code) as interrelated_cust_nm from t_co_user a where 1=1");
-        StringBuilder sbWhere = new StringBuilder();
+	public ResultBody interrelatedList() throws Exception {
+		ResultBody resultBody = new ResultBody();
 
-        if (!StringUtils.isEmpty(params.get("interrelatedCustCode"))) {
-            sbWhere.append(" and interrelated_cust_code = :interrelatedCustCode");
-        }
-        if (!StringUtils.isEmpty(params.get("useYn"))) {
-            sbWhere.append(" and use_yn = :useYn");
-        }
-        if (!StringUtils.isEmpty(params.get("userName"))) {
-            sbWhere.append(" and user_name like concat('%',:userName,'%')");
-        }
-        if (!StringUtils.isEmpty(params.get("userId"))) {
-            sbWhere.append(" and user_id like concat('%',:userId,'%')");
-        }
-        sbList.append(sbWhere);
-        sbList.append(" order by create_date desc");
-        Query queryList = entityManager.createNativeQuery(sbList.toString());
-        sbCount.append(sbWhere);
-        Query queryTotal = entityManager.createNativeQuery(sbCount.toString());
+		List<Object> list = generalDao.selectGernalList("user.selectInterrelatedList", null);
+		resultBody.setData(list);
 
-        if (!StringUtils.isEmpty(params.get("interrelatedCustCode"))) {
-            queryList.setParameter("interrelatedCustCode", params.get("interrelatedCustCode"));
-            queryTotal.setParameter("interrelatedCustCode", params.get("interrelatedCustCode"));
-        }
-        if (!StringUtils.isEmpty(params.get("useYn"))) {
-            queryList.setParameter("useYn", params.get("useYn"));
-            queryTotal.setParameter("useYn", params.get("useYn"));
-        }
-        if (!StringUtils.isEmpty(params.get("userName"))) {
-            queryList.setParameter("userName", params.get("userName"));
-            queryTotal.setParameter("userName", params.get("userName"));
-        }
-        if (!StringUtils.isEmpty(params.get("userId"))) {
-            queryList.setParameter("userId", params.get("userId"));
-            queryTotal.setParameter("userId", params.get("userId"));
-        }
+		return resultBody;
+	}
 
-        Pageable pageable = PagaUtils.pageable(params);
-        queryList.setFirstResult(pageable.getPageNumber() * pageable.getPageSize()).setMaxResults(pageable.getPageSize()).getResultList();
-        List list = new JpaResultMapper().list(queryList, TCoUserDto.class);
+	public ResultBody userList(Map<String, Object> params) throws Exception {
+		ResultBody resultBody = new ResultBody();
 
-        BigInteger count = (BigInteger) queryTotal.getSingleResult();
-        return new PageImpl(list, pageable, count.intValue());
-    }
+		Page listPage = generalDao.selectGernalListPage("user.selectUserList", params);
+		resultBody.setData(listPage);
 
-    public TCoUserDto detail(String id) {
-    	StringBuilder sb = new StringBuilder(" select a.user_id"
-				+ ", a.user_name"
-				+ ", a.user_position"
-				+ ", a.dept_name"
-				+ ", a.user_tel"
-				+ ", a.user_hp"
-				+ ", a.user_auth"
-				+ ", a.use_yn"
-				+ ", a.interrelated_cust_code"
-				+ ", ifnull(a.openauth, '') as openauth"
-				+ ", ifnull(a.bidauth, '') as bidauth"
-				+ ", a.user_email"
-				+ ", date_format(a.pwd_edit_date, '%Y-%m-%d') as pwd_edit_date_str"
-				+ ", b.interrelated_nm"
-				+ " from t_co_user a "
-				+ " inner join t_co_interrelated b "
-				+ " on a.interrelated_cust_code = b.interrelated_cust_code"
-				+ " where a.user_id = :userId");
-        Query query = entityManager.createNativeQuery(sb.toString());
-        query.setParameter("userId", id);
-        TCoUserDto data = new JpaResultMapper().uniqueResult(query, TCoUserDto.class);
-        if ("4".equals(data.getUserAuth())) { // 감사사용자의 경우 감사 계열사 조회
-            data.setUserInterrelated(this.interrelatedListByUser(id));
-        }
-        return data;
-    }
+		return resultBody;
+	}
 
-    public List interrelatedListByUser(String id) {
-        StringBuilder sb = new StringBuilder(" select a.interrelated_cust_code, interrelated_nm from t_co_interrelated a, t_co_user_interrelated b where a.use_yn = 'Y' and a.interrelated_cust_code = b.interrelated_cust_code and b.user_id = :userId order by interrelated_nm");
-        Query query = entityManager.createNativeQuery(sb.toString());
-        query.setParameter("userId", id);
-        return new JpaResultMapper().list(query, Pair.class);
-    }
-    
+	/**
+	 * @param params : userId
+	 * @return
+	 * @throws Exception
+	 */
+	public ResultBody userDetail(Map<String, Object> params) throws Exception {
+		ResultBody resultBody = new ResultBody();
+		Map<String, Object> userDetail = (Map<String, Object>) generalDao.selectGernalObject("user.selectUserDetail", params);
+
+		// 감사사용자의 경우 감사 계열사 조회
+		String userAuthCode = (String) userDetail.get("userAuth");
+		if("4".equals(userAuthCode)){
+			List<Object> userInterrelated = generalDao.selectGernalList("selectInterrelatedListByUser", userDetail);
+			userDetail.put("user_interrelated", userInterrelated);
+		}
+
+		resultBody.setData(userDetail);
+
+		return resultBody;
+	}
+
     @Transactional
     public ResultBody save(Map<String, Object> params) {
         ResultBody resultBody = new ResultBody();
