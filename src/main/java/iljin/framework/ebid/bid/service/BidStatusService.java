@@ -264,6 +264,9 @@ public class BidStatusService {
 				continue;
 			}
 			
+			/* tradeSign 라이센스 문제로 복호화 및 데이터 검증 부분 주석처리
+			 * 
+			================================================복호화 및 검증 주석 시작========================================== 
 			//복호화 시작
 			ResultBody decryptResult = certificateService.decryptData(decryptData, interrelatedCustCode, certPwd);
 			if(decryptResult.getCode().equals("ERROR")) {//복호화 실패
@@ -287,6 +290,16 @@ public class BidStatusService {
 			
 			//데이터 검증
 			ResultBody fixedResult = certificateService.signDataFix(decryptData);
+			
+			================================================복호화 및 검증 주석 끝==========================================
+			*/
+			
+			//원래 암호화된 금액 복호화 후 데이터 검증된 결과가 fixedResult에 나와야 하는데 복호화 부분 제거로 new ResultBody()로 넣어줌 
+			//====================================================================================================
+			ResultBody fixedResult = new ResultBody();
+			fixedResult.setData(decryptData);
+			//====================================================================================================
+			
 			
 			if(fixedResult.getCode().equals("ERROR")) {//복호화 한 데이터 검증 실패
 				return fixedResult;

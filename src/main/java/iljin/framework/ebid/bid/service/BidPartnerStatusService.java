@@ -536,6 +536,10 @@ public class BidPartnerStatusService {
 			return resultBody;
 		}
 			
+		/* ===========================================암호화 주석 시작==========================================
+		 * tradeSign 라이센스가 없음으로 암호화 부분 주석 처리
+		 
+		 
 		//암호화
 		try {
 			
@@ -560,6 +564,8 @@ public class BidPartnerStatusService {
 			
 			return resultBody;
 		}
+		===========================================암호화 주석 끝==========================================
+		*/
 	
 		//입찰협력업체(t_bi_info_mat_cust)에 반영
 		TBiInfoMatCustID tBiInfoMatCustId = new TBiInfoMatCustID();
