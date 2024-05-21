@@ -24,7 +24,7 @@ import iljin.framework.ebid.custom.entity.TCoCustUser;
 import iljin.framework.ebid.custom.repository.TCoCustUserRepository;
 import iljin.framework.ebid.etc.util.CommonUtils;
 import iljin.framework.ebid.etc.util.GeneralDao;
-import iljin.framework.ebid.etc.util.common.certificate.service.CertificateService;
+//import iljin.framework.ebid.etc.util.common.certificate.service.CertificateService;
 import iljin.framework.ebid.etc.util.common.file.FileService;
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,8 +35,8 @@ public class BidPartnerStatusService {
     @Autowired
     private FileService fileService;
     
-    @Autowired
-    private CertificateService certificateService;
+//    @Autowired
+//    private CertificateService certificateService;
     
     @Autowired
     private TCoCustUserRepository tCoCustUserRepository; 
@@ -173,7 +173,7 @@ public class BidPartnerStatusService {
 		ResultBody resultBody = new ResultBody();
 		String userId = user.getUsername();
 		int custCode = Integer.parseInt(user.getCustCode());//협력사 번호 
-		String interrelatedCustCode = "";//입찰에 해당하는 계열사 번호
+//		String interrelatedCustCode = "";//입찰에 해당하는 계열사 번호
 		String biNo = CommonUtils.getString(params.get("biNo"));//입찰번호
 		String insModeCode = CommonUtils.getString(params.get("insModeCode"));//입력방식
 		String amt = "";//견적금액
@@ -209,7 +209,7 @@ public class BidPartnerStatusService {
 			}
 			
 			//암호화에 필요한 계열사코드
-			interrelatedCustCode = CommonUtils.getString(biInfo.get("interrelatedCustCode"));
+//			interrelatedCustCode = CommonUtils.getString(biInfo.get("interrelatedCustCode"));
 			
 		}
 		

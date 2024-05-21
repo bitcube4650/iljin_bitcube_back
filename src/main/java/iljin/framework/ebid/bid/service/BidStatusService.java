@@ -26,7 +26,7 @@ import iljin.framework.ebid.custom.entity.TCoUser;
 import iljin.framework.ebid.custom.repository.TCoUserRepository;
 import iljin.framework.ebid.etc.util.CommonUtils;
 import iljin.framework.ebid.etc.util.GeneralDao;
-import iljin.framework.ebid.etc.util.common.certificate.service.CertificateService;
+//import iljin.framework.ebid.etc.util.common.certificate.service.CertificateService;
 import iljin.framework.ebid.etc.util.common.message.MessageService;
 import lombok.extern.slf4j.Slf4j;
 
@@ -45,8 +45,8 @@ public class BidStatusService {
 	@Autowired
 	private BidProgressService bidProgressService;
 	
-	@Autowired
-	private CertificateService certificateService;
+//	@Autowired
+//	private CertificateService certificateService;
 
 	@Autowired
 	private MessageService messageService;
@@ -228,9 +228,9 @@ public class BidStatusService {
 		UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		Optional<TCoUser> userOptional = tCoUserRepository.findById(principal.getUsername());
 		String userId = userOptional.get().getUserId();
-		String interrelatedCustCode = userOptional.get().getInterrelatedCustCode();
+//		String interrelatedCustCode = userOptional.get().getInterrelatedCustCode();
 		String biNo = CommonUtils.getString(params.get("biNo"));
-		String certPwd = CommonUtils.getString(params.get("certPwd"));
+//		String certPwd = CommonUtils.getString(params.get("certPwd"));
 		
 		params.put("userId", userId);
 		
