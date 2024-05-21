@@ -10,6 +10,7 @@
 		FROM T_BI_INFO_MAT tbim
 		where tbim.BI_NO = #{biNo}
 	</select>
+	
 	<select id="selectEbidStatusList_count" resultType="int">
 		/* bidStatus.selectEbidStatusList_count */
 		SELECT COUNT(1) 
@@ -21,6 +22,7 @@
 		</if>
 		<include refid="selectEbidStatusList_sql" />
 	</select>
+	
 	<select id="selectEbidStatusList" resultType="camel">
 		/* bidStatus.selectEbidStatusList */
 		SELECT	tbim.bi_no
@@ -237,6 +239,7 @@
 		,		tbsm.UNITCODE 
 		,		tbsm.ORDER_UC 
 		,		tbsm.ORDER_QTY 
+		,		tbsm.SEQ
 		from t_bi_spec_mat tbsm 
 		where tbsm.BI_NO = #{biNo}
 		order by tbsm.SEQ
@@ -563,6 +566,7 @@
 		where tbimct.bi_no = #{biNo} 
 		and tbimct.cust_code = #{custCode} 
 		order by tbimct.bi_order asc 
+		LIMIT ${offset}, ${pageSize}
 	</select>
 	
 	<update id="updateOpenAttSign">
@@ -579,4 +583,231 @@
 		</choose>
 		WHERE BI_NO = #{biNo} 
 	</update>
+	
+	<select id="selectPartnerEbidStatusList_count" resultType="int">
+		/* bidStatus.selectPartnerEbidStatusList_count */
+		select count(1) 
+		from t_bi_info_mat tbim 
+		inner join t_co_cust_ir tcci 
+			on tbim.INTERRELATED_CUST_CODE = tcci.INTERRELATED_CUST_CODE 
+			and tcci.CUST_CODE = #{custCode} 
+		left outer join t_bi_info_mat_cust tbimc 
+			on tbim.BI_NO = tbimc.BI_NO 
+			and tbimc.CUST_CODE = #{custCode}
+		<include refid="selectPartnerEbidStatusList_sql" /> 
+	</select>
+	
+	<select id="selectPartnerEbidStatusList" resultType="camel">
+		/* bidStatus.selectPartnerEbidStatusList */
+		select	tbim.BI_NO 
+		,		tbim.BI_NAME 
+		,		DATE_FORMAT(tbim.EST_START_DATE, '%Y-%m-%d %H:%i') AS est_start_date 
+		,		DATE_FORMAT(tbim.EST_CLOSE_DATE, '%Y-%m-%d %H:%i') AS est_close_date 
+		,		tbim.BI_MODE 
+		,		tbim.ING_TAG 
+		,		tbim.INS_MODE 
+		,		tcu.USER_NAME as DAMDANG_NAME 
+		,		tcu.USER_EMAIL as DAMDANG_EMAIL 
+		,		tbimc.ESMT_YN 
+		,		tbimc.REBID_ATT 
+		from t_bi_info_mat tbim 
+		inner join t_co_cust_ir tcci 
+			on tbim.INTERRELATED_CUST_CODE = tcci.INTERRELATED_CUST_CODE 
+			and tcci.CUST_CODE = #{custCode} 
+		left outer join t_bi_info_mat_cust tbimc 
+			on tbim.BI_NO = tbimc.BI_NO 
+			and tbimc.CUST_CODE = #{custCode} 
+		left outer join t_co_user tcu 
+			on tbim.CREATE_USER = tcu.USER_ID 
+		<include refid="selectPartnerEbidStatusList_sql" />
+		order by tbim.EST_START_DATE desc
+		
+	</select>
+	
+	<sql id="selectPartnerEbidStatusList_sql">
+		where 1=1
+		and (tbim.BI_MODE = 'B' OR (tbim.BI_MODE = 'A' AND tbimc.CUST_CODE = #{custCode}))
+		<if test="bidNo != null and bidNo != ''">
+		and tbim.BI_NO like concat('%',#{bidNo},'%')
+		</if>
+		<if test="bidName != null and bidName != ''">
+		and tbim.BI_NAME like concat('%',#{bidName},'%')
+		</if>
+		<choose>
+			<when test="bidModeA and !bidModeB">
+		and tbim.BI_MODE = 'A'
+			</when>
+			<when test="!bidModeA and bidModeB">
+		and tbim.BI_MODE = 'B' 
+			</when>
+			<otherwise>
+		and tbim.BI_MODE IN ('A', 'B')
+			</otherwise>
+		</choose>
+		<choose>
+			<when test="esmtYnN and !esmtYnY">
+		and tbim.ING_TAG IN ('A1', 'A2', 'A3') 
+		and (tbimc.ESMT_YN IS NULL or tbimc.ESMT_YN IN ('0', '1')) 
+			</when>
+			<when test="!esmtYnN and esmtYnY">
+		and tbim.ING_TAG IN ('A1', 'A2', 'A3') 
+		and tbimc.ESMT_YN IN ('2') 
+			</when>
+			<otherwise>
+		and tbim.ING_TAG IN ('A1', 'A2', 'A3')
+			</otherwise>
+		</choose>
+	</sql>
+	
+	<insert id="updateEbidTBiInfoMatCustConfirm">
+		/* bidStatus.updateEbidTBiInfoMatCustConfirm */
+		UPDATE T_BI_INFO_MAT_CUST
+		SET	ESMT_YN = '1'
+		,	ESMT_AMT = NULL
+		,	SUCC_YN = 'N'
+		,	UPDATE_USER = #{userId}
+		,	UPDATE_DATE = NOW()
+		,	SUBMIT_DATE = NULL
+		,	FILE_ID = NULL
+		,	ENC_QUTN = NULL
+		,	ENC_ESMT_SPEC = NULL
+		,	FILE_HASH_VALUE = NULL
+		,	ETC_B_FILE = NULL
+		,	ETC_B_FILE_PATH = NULL
+		WHERE BI_NO = #{biNo}
+		and CUST_CODE = #{custCode}
+		AND (ESMT_YN IS NULL OR ESMT_YN = '0' OR ESMT_YN = '')
+	</insert>
+	
+	<select id="selectPartnerEbidStatusDetail" resultType="camel">
+		/* bidStatus.selectPartnerEbidStatusDetail */
+		select	tbim.BI_NO 
+		,		tbim.BI_NAME 
+		,		tci.ITEM_NAME 
+		,		tbim.BI_MODE 
+		,		tcc.CODE_NAME as SUCC_DECI_METH 
+		,		tbim.BID_JOIN_SPEC 
+		,		DATE_FORMAT(tbim.SPOT_DATE, '%Y-%m-%d %H:%i') as SPOT_DATE 
+		,		tbim.SPOT_AREA 
+		,		tbim.SPECIAL_COND 
+		,		tbim.SUPPLY_COND 
+		,		tbim.AMT_BASIS 
+		,		tbim.PAY_COND 
+		,		tcu.USER_NAME as DAMDANG_NAME 
+		,		tcu.DEPT_NAME
+		,		tbim.WHY_A3 
+		,		tbim.WHY_A7 
+		,		DATE_FORMAT(tbim.EST_START_DATE, '%Y-%m-%d %H:%i') as EST_START_DATE 
+		,		DATE_FORMAT(tbim.EST_CLOSE_DATE, '%Y-%m-%d %H:%i') as EST_CLOSE_DATE 
+		,		tbim.INS_MODE 
+		,		tbim.ADD_ACCEPT 
+		,		tbim.ING_TAG 
+		,		IFNULL((select REBID_ATT from t_bi_info_mat_cust tbimc where tbimc.BI_NO = #{biNo} and tbimc.CUST_CODE = #{custCode}), 'N') as CUST_REBID_YN 
+		,		IFNULL((select ESMT_YN from t_bi_info_mat_cust tbimc where tbimc.BI_NO = #{biNo} and tbimc.CUST_CODE = #{custCode}), '1') as CUST_ESMT_YN 
+		,		IFNULL((select DATE_FORMAT(tbimc.SUBMIT_DATE, '%Y-%m-%d %H:%i') from t_bi_info_mat_cust tbimc where tbimc.BI_NO = #{biNo} and tbimc.CUST_CODE = #{custCode}), '') as CUST_ESMT_UPDATE_DATE 
+		from t_bi_info_mat tbim 
+		left outer join t_co_user tcu 
+			on tbim.CREATE_USER = tcu.USER_ID 
+		left outer join t_co_item tci  
+			on tbim.ITEM_CODE = tci.ITEM_CODE 
+		left outer join t_co_code tcc  
+			on tbim.SUCC_DECI_METH = tcc.CODE_VAL 
+			and tcc.COL_CODE = 'T_CO_SUCC_METHOD'
+		where tbim.BI_NO = #{biNo}
+	</select>
+	
+	<select id="selectCodeRateList" resultType="camel">
+		/* bidStatus.selectCodeRateList */
+		SELECT	code_val
+		,		code_name
+		from t_co_code 
+		where col_code = 'T_CO_RATE' 
+		order by SORT_NO asc
+	</select>
+	
+	<insert id="mergedTBiInfoMatCust">
+		/* bidStatus.mergedTBiInfoMatCust */
+		INSERT INTO T_BI_INFO_MAT_CUST(
+			BI_NO
+		,	CUST_CODE
+		,	ESMT_YN
+		,	SUBMIT_DATE
+		,	CREATE_USER
+		,	UPDATE_USER
+		,	UPDATE_DATE
+		,	ENC_QUTN
+		,	REBID_ATT
+		,	BI_ORDER
+		,	ESMT_CURR
+		,	ETC_B_FILE
+		,	ETC_B_FILE_PATH
+		<choose>
+			<when test="insModeCode == '1'">
+		,	FILE_ID
+			</when>
+			<otherwise>
+		,	ENC_ESMT_SPEC
+			</otherwise>
+		</choose>
+		) VALUES (
+			#{biNo}
+		,	#{custCode}
+		,	'2'
+		,	NOW()
+		,	#{userId}
+		,	#{userId}
+		,	NOW()
+		,	#{amt}
+		,	'N'
+		,	'1'
+		,	#{esmtCurr}
+		,	#{etcFileName}
+		,	#{etcFilePath}
+		<choose>
+			<when test="insModeCode == '1'">
+		,	#{fileId}
+			</when>
+			<otherwise>
+		,	#{amt}
+			</otherwise>
+		</choose>
+		)ON DUPLICATE KEY UPDATE
+			ESMT_YN = '2'
+		,	SUBMIT_DATE = NOW()
+		,	UPDATE_USER = #{userId}
+		,	UPDATE_DATE = NOW()
+		,	ENC_QUTN = #{amt}
+		,	ESMT_CURR = #{esmtCurr}
+		,	ETC_B_FILE = #{etcFileName}
+		,	ETC_B_FILE_PATH = #{etcFilePath}
+		<choose>
+			<when test="insModeCode == '1'">
+		,	FILE_ID = #{fileId}
+			</when>
+			<otherwise>
+		,	ENC_ESMT_SPEC = #{amt}
+			</otherwise>
+		</choose>
+	</insert>
+	
+	<insert id="insertTBiUploadC" useGeneratedKeys="true" keyProperty="fileId">
+		/* bidStatus.insertTBiUploadC */
+		INSERT INTO T_BI_UPLOAD(
+			BI_NO
+		,	FILE_FLAG
+		,	F_CUST_CODE
+		,	FILE_NM
+		,	FILE_PATH
+		,	CREATE_DATE
+		,	USE_YN
+		) VALUES (
+			#{biNo}
+		,	'C'
+		,	#{custCode}
+		,	#{fileName}
+		,	#{filePath}
+		,	NOW()
+		,	'Y'
+		)
+	</insert>
 </mapper>
