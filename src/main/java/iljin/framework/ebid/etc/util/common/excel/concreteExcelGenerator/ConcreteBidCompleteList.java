@@ -22,6 +22,7 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -214,7 +215,7 @@ public class ConcreteBidCompleteList extends ExcelSupportV2 {
 			for(int i = 0; i < dataList.size(); i++) {
 				Map<String, Object> data = (Map<String, Object>) dataList.get(i);
 				if(!tmpBiNo.equals(data.get("biNo"))) {
-					Map<String , Object> dto = new HashMap<String, Object>();
+					Map<String , Object> dto = new LinkedHashMap<String, Object>();
 					dto.put("biNo", data.get("biNo"));
 					if("02".equals(interrelatedCustCode)) {
 						dto.put("matDept", data.get("matDept"));
@@ -238,7 +239,7 @@ public class ConcreteBidCompleteList extends ExcelSupportV2 {
 
 					tmpBiNo = CommonUtils.getString(data.get("biNo"));
 				} else {
-					Map<String , Object> dto = new HashMap<String, Object>();
+					Map<String , Object> dto = new LinkedHashMap<String, Object>();
 					dto.put("biNo", "");
 					if("02".equals(interrelatedCustCode)) {
 						dto.put("matDept", data.get("matDept"));
@@ -255,9 +256,10 @@ public class ConcreteBidCompleteList extends ExcelSupportV2 {
 					dto.put("estStartDate", "");
 					dto.put("estCloseDate", "");
 					dto.put("userName", "");
-					dto.put("custName2", "");
-					dto.put("esmtAmt", "");
-					dto.put("submitDate", "");
+					dto.put("custName2", data.get("custName2"));
+					dto.put("esmtAmt", data.get("esmtAmt"));
+					dto.put("submitDate", data.get("submitDate"));
+					
 					excelData.add(dto);
 
 					tmpBiNo = CommonUtils.getString(data.get("biNo"));
