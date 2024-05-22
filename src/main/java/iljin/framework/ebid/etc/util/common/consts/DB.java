@@ -19,7 +19,6 @@ public class DB {
 	// 품목
 	public final static String QRY_SELECT_ITEM_GRP_LIST = "item.selectItemGrpList";
 	public final static String QRY_SELECT_ITEM_LIST = "item.selectItemList";
-	public final static String QRY_SELECT_ITEM_LIST_CNT = "item.selectItemListCnt";
 	
 	// 메인
 	public final static String QRY_SELECT_BID_NOTICING_CNT = "main.selectBidNoticingCnt";

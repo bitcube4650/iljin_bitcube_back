@@ -2,6 +2,7 @@ package iljin.framework.ebid.custom.service;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -56,20 +57,28 @@ public class ItemService {
 	@Autowired
 	private GeneralDao generalDao;
 	
-	public List itemGrpList() {
-		return tCoItemGrpRepository.findAll();
+	@Transactional
+	public List itemGrpList() throws Exception {
+		
+		List grpList = generalDao.selectGernalList(DB.QRY_SELECT_ITEM_GRP_LIST, new HashMap());
+		return grpList;
 	}
 
-	public Page itemList(Map<String, Object> params) throws Exception {
-		params.put("offset", CommonUtils.getInt(params.get("size")) * CommonUtils.getInt(params.get("page")));
-		params.put("size", CommonUtils.getInt(params.get("size")));
+	@SuppressWarnings("rawtypes")
+	@Transactional
+	public Page itemList(Map<String, Object> params) throws Exception{
+		ResultBody resultBody = new ResultBody();
 		
-		List list = generalDao.selectGernalList(DB.QRY_SELECT_ITEM_LIST, params);
-		int count = CommonUtils.getInt(generalDao.selectGernalCount(DB.QRY_SELECT_ITEM_LIST_CNT, params));
+		if(params.get("size") != null && params.get("page") != null) {
+			params.put("offset", CommonUtils.getInt(params.get("size")) * CommonUtils.getInt(params.get("page")));
+			params.put("size", CommonUtils.getInt(params.get("size")));
+		}
+		
+		Page listPage = generalDao.selectGernalListPage(DB.QRY_SELECT_ITEM_LIST, params);
+		resultBody.setData(listPage);
 
-		Pageable pageable = PagaUtils.pageable(params);
+		return listPage;
 
-		return new PageImpl(list, pageable, count);
 	}
 
     public Specification<TCoItem> searchWith(Map<String, Object> params) {
@@ -108,7 +117,13 @@ public class ItemService {
 
         return predicate;
     }
-    public Optional<TCoItem> findById(String id) {
+    
+    //품목 상세 조회
+    @Transactional
+    public Optional<TCoItem> findById(String id) throws Exception {
+    	Map<String, Object> paramMap = new HashMap<String, Object>();
+    	paramMap.put("id", id);
+    	generalDao.selectGernalObject(id, paramMap);
         return tCoItemRepository.findById(id);
     }
 
