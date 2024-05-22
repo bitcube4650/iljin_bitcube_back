@@ -347,6 +347,7 @@ public class BidStatusService {
 			innerParams.put("biNo", custDto.get("biNo"));
 			innerParams.put("custCode", custDto.get("custCode"));
 			
+			generalDao.updateGernal("bidStatus.updateOpenEbidTBiInfoMatCust", innerParams);
 			
 			//협력사 입찰 temp 테이블 insert
 			this.insertBiInfoMatCustTemp(CommonUtils.getString(custDto.get("biNo")), CommonUtils.getInt(custDto.get("custCode")));

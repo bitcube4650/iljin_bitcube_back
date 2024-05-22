@@ -402,6 +402,16 @@
 		WHERE bi_no = #{biNo} 
 	</update>
 	
+	<update id="updateOpenEbidTBiInfoMatCust">
+		/* bidStatus.updateOpenEbidTBiInfoMatCust */
+		UPDATE	t_bi_info_mat_cust 
+		set	ESMT_AMT = #{esmtAmt} 
+		,		UPDATE_DATE = sysdate() 
+		,		UPDATE_USER = #{userId} 
+		WHERE bi_no = #{biNo} 
+		AND CUST_CODE = #{custCode} 
+	</update>
+	
 	<update id="updateEbidSuccessTBiInfoMat">
 		/* bidStatus.updateEbidSuccessTBiInfoMat */
 		UPDATE t_bi_info_mat 
