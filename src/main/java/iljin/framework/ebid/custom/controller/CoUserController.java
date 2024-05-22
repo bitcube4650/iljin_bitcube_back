@@ -1,9 +1,11 @@
 package iljin.framework.ebid.custom.controller;
 
 import iljin.framework.core.dto.ResultBody;
+import iljin.framework.core.security.user.CustomUserDetails;
 import iljin.framework.ebid.custom.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -117,10 +119,10 @@ public class CoUserController {
 	 * @return
 	 */
 	@PostMapping("/saveChgPwd")
-	public ResultBody saveChgPwd(@RequestBody Map<String, Object> params) {
+	public ResultBody saveChgPwd(@RequestBody Map<String, Object> params, @AuthenticationPrincipal CustomUserDetails user) {
 		ResultBody resultBody = new ResultBody();
 		try {
-			resultBody = userService.saveChgPwd(params);
+			resultBody = userService.saveChgPwd(params, user);
 		}catch(Exception e) {
 			log.error("saveChgPwd error : {}", e);
 			resultBody.setCode("fail");

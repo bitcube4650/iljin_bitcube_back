@@ -1,6 +1,7 @@
 package iljin.framework.ebid.custom.service;
 
 import iljin.framework.core.dto.ResultBody;
+import iljin.framework.core.security.user.CustomUserDetails;
 import iljin.framework.ebid.custom.entity.TCoUser;
 import iljin.framework.ebid.custom.repository.TCoUserRepository;
 import iljin.framework.ebid.etc.util.CommonUtils;
@@ -140,16 +141,15 @@ public class UserService {
     
     // 비밀번호 변경
     @Transactional
-	public ResultBody saveChgPwd(Map<String, Object> params) throws Exception {
+	public ResultBody saveChgPwd(Map<String, Object> params, CustomUserDetails user) throws Exception {
 		ResultBody resultBody = new ResultBody();
+		String userId = user.getUsername();
 
 		// 비밀번호 암호화
 		String chgPassword = CommonUtils.getString(params.get("chgPassword"), "");
 		String encodedPassword = passwordEncoder.encode(chgPassword);
 		params.put("userPwd", encodedPassword);
-
-		String createUser = ((UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUsername();
-		params.put("userPwd", encodedPassword);
+		params.put("updateUser", userId);
 
 		generalDao.updateGernal("user.updateUserChgPwd",params);
 
