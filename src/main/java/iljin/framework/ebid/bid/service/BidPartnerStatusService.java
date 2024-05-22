@@ -287,9 +287,9 @@ public class BidPartnerStatusService {
 			fileParams.put("filePath", filePath);
 			fileParams.put("useYn", "Y");
 			
-			int fileId = generalDao.insertGernal("insertTBiUploadC", fileParams);
+			generalDao.insertGernal("bidStatus.insertTBiUploadC", fileParams);
 			
-			params.put("fileId", fileId);
+			params.put("fileId", fileParams.get("fileId"));
 			
 		}
 	

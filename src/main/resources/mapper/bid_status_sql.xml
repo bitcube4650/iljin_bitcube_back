@@ -752,7 +752,7 @@
 		,	ETC_B_FILE
 		,	ETC_B_FILE_PATH
 		<choose>
-			<when test="insModeCode == '1'">
+			<when test="insModeCode == '1'.toString()">
 		,	FILE_ID
 			</when>
 			<otherwise>
@@ -774,7 +774,7 @@
 		,	#{etcFileName}
 		,	#{etcFilePath}
 		<choose>
-			<when test="insModeCode == '1'">
+			<when test="insModeCode == '1'.toString()">
 		,	#{fileId}
 			</when>
 			<otherwise>
@@ -791,7 +791,7 @@
 		,	ETC_B_FILE = #{etcFileName}
 		,	ETC_B_FILE_PATH = #{etcFilePath}
 		<choose>
-			<when test="insModeCode == '1'">
+			<when test="insModeCode == '1'.toString()">
 		,	FILE_ID = #{fileId}
 			</when>
 			<otherwise>
