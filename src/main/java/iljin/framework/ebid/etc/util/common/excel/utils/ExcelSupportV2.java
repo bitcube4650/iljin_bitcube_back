@@ -17,13 +17,19 @@ import java.util.stream.Collectors;
 public abstract class ExcelSupportV2 {
 
 	//추상메서드 선언
+	//mybatis로 모두 바꾼 후 제거 필요
 	public abstract SXSSFWorkbook getWorkBookPaging(Class<?> clazz, SXSSFWorkbook workbook, List<String> headerNames, Map<String, Object> param) throws IllegalAccessException, IOException;
+	
+	//mybatis 호환, dto 제거버전
 	public abstract SXSSFWorkbook getWorkBookPaging(String interrelatedCustCode, SXSSFWorkbook workbook, List<String> headerNames, Map<String, Object> param) throws IllegalAccessException, IOException;
 
 	public abstract void createHeaders(SXSSFWorkbook workbook, Row row, Cell cell, List<String> headerNames);
+	
+	//mybatis로 모두 바꾼 후 제거 필요
 	public abstract void createbody(Class<?> clazz, SXSSFWorkbook workbook,List<?> data, Sheet sheet,
 									Row row, Cell cell, int rowNo) throws IllegalAccessException;
 	
+	//mybatis 호환, dto 제거버전
 	public abstract void createbody(SXSSFWorkbook workbook,List<?> data, Sheet sheet,
 			Row row, Cell cell, int rowNo) throws IllegalAccessException;
 
