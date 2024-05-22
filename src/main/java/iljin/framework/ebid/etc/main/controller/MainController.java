@@ -40,17 +40,33 @@ public class MainController {
 	
 	//전자입찰 건수 조회
 	@PostMapping("/selectBidCnt")
-    public BidCntDto selectBidCnt(@RequestBody Map<String, Object> params) throws IOException {
-
-        return mainService.selectBidCnt(params);
-    }
+	public ResultBody selectBidCnt(@RequestBody Map<String, Object> params) throws IOException {
+		ResultBody resultBody = new ResultBody();
+		try { 
+			resultBody = mainService.selectBidCnt(params);
+		} catch (Exception e) {
+			resultBody.setCode("ERROR");
+			resultBody.setStatus(500);
+			resultBody.setMsg("전자입찰 건수 조회에 실패하였습니다.");
+			log.error("{} Error : {}", this.getClass(), e.getMessage());
+		}
+		return resultBody;
+	}
 	
 	//협력사 업채수 조회
 	@PostMapping("/selectPartnerCnt")
-    public PartnerCntDto selectPartnerCnt(@RequestBody Map<String, Object> params) throws IOException {
-
-        return mainService.selectPartnerCnt(params);
-    }
+	public ResultBody selectPartnerCnt(@RequestBody Map<String, Object> params) throws IOException {
+		ResultBody resultBody = new ResultBody();
+		try { 
+			resultBody = mainService.selectPartnerCnt(params);
+		} catch (Exception e) {
+			resultBody.setCode("ERROR");
+			resultBody.setStatus(500);
+			resultBody.setMsg("협력사 업채수 조회에 실패하였습니다.");
+			log.error("{} Error : {}", this.getClass(), e.getMessage());
+		}
+		return resultBody;
+	}
 	
 	//협력사 전자입찰 건수 조회
 	@PostMapping("/selectPartnerBidCnt")

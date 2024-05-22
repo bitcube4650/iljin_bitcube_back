@@ -14,6 +14,7 @@ public class DB {
 	
 	// 공통
 	public final static String QRY_SELECT_COMMON_CUST_USER_DETAIL = "common.selectCustUserDetail";
+	public final static String QRY_SELECT_COMMON_CO_USER_DETAIL = "common.selectCoUserDetail";
 	
 	// 품목
 	public final static String QRY_SELECT_ITEM_GRP_LIST = "item.selectItemGrpList";
@@ -30,6 +31,9 @@ public class DB {
 	public final static String QRY_SELECT_COMPLETE_AWARDED_CNT = "main.selectCompleteAwardedCnt";
 	public final static String QRY_SELECT_GROUP_PWD_EDIT_DATE = "main.selectGroupPwdEditDate";
 	public final static String QRY_SELECT_PWD_CHG_DATE = "main.selectPwdChgDate";
+	public final static String QRY_SELECT_INTER_CUST_CODE_LIST = "main.selectInterCustCodeList";
+	public final static String QRY_SELECT_MAIN_CO_BID_CNT = "main.selectMainCoBidCnt";
+	public final static String QRY_SELECT_PARTNER_CNT = "main.selectPartnerCnt";
 	
 	
 	// cust

@@ -72,163 +72,69 @@ public class MainService {
 
 	//전자입찰 건수 조회(계열사메인)
 	@Transactional
-	public BidCntDto selectBidCnt(Map<String, Object> params) {
-		BidCntDto bidCntDto = new BidCntDto();
+	public ResultBody selectBidCnt(Map<String, Object> params) throws Exception {
+		ResultBody resultBody = new ResultBody();
 		UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-		Optional<TCoUser> userOptional = tCoUserRepository.findById(principal.getUsername());
-		String userAuth = "";// userAuth(1 = 시스템관리자, 2 = 각사관리자, 3 = 일반사용자, 4 = 감사사용자)
-		String interrelatedCode = "";
-		String userId = principal.getUsername();
+		Map<String, Object> coUserMap = this.getCoUser();
 		
-		List<InterUserInfoDto> userInfoList = new ArrayList<>(); 
-        List<String> custCodes = new ArrayList<>();
-        
-		
-		if (userOptional.isPresent()) {
-        	
-        	userAuth = userOptional.get().getUserAuth();
-    		interrelatedCode = userOptional.get().getInterrelatedCustCode();
-  
-        	if(userAuth.equals("4")) {//감사사용자에 해당하는 계열사 조회
-        		userInfoList = (List<InterUserInfoDto>) bidProgressService.findInterCustCode(userId);
-        		//감사사용자에 해당하는 계열사리스트 담기
-                for (InterUserInfoDto userInfo : userInfoList) {
-                    custCodes.add(userInfo.getInterrelatedCustCode());
-                }
-        	}
-        	
-        	
-        }
-		
+		List<Object> userInfoList = new ArrayList<>();
+		List<String> custCodes = new ArrayList<>();
 
-		StringBuilder sbCnt = new StringBuilder(" select COUNT(CASE WHEN ing_tag = 'A0' THEN 1 END) AS planning, "
-												      + " COUNT(CASE WHEN ing_tag IN ('A1', 'A3') and est_close_date >= SYSDATE() THEN 1 END) AS noticing, "
-												      + " COUNT(CASE WHEN ing_tag IN ('A1', 'A3') AND est_close_date < SYSDATE() THEN 1 END) AS beforeOpening, "
-												      + " COUNT(CASE WHEN ing_tag = 'A2' THEN 1 END) AS opening, "
-												      + " COUNT(CASE WHEN ing_tag = 'A5' AND update_date >= CURDATE() - INTERVAL 12 MONTH THEN 1 END) AS completed, "
-												      + " COUNT(CASE WHEN ing_tag = 'A7' AND update_date >= CURDATE() - INTERVAL 12 MONTH THEN 1 END) AS unsuccessful, "
-												      + " COUNT(CASE WHEN ing_tag IN ('A1','A2', 'A3') THEN 1 END) AS ing "			// 입찰 진행 전체 건수
-											   + " from t_bi_info_mat "
-											   + " where 1=1 "											   
-												);
-		
+		String userAuth = CommonUtils.getString(coUserMap.get("userAuth")); // userAuth(1 = 시스템관리자, 2 = 각사관리자, 3 = 일반사용자, 4 = 감사사용자)
+		String interrelatedCode = CommonUtils.getString(coUserMap.get("interrelatedCustCode"));
 
-		
-		StringBuilder sbWhere = new StringBuilder();
-		
-		//계열사 조건
-		//userAuth(1 = 시스템관리자, 2 = 각사관리자, 3 = 일반사용자)
-		if (userAuth.equals("1") || userAuth.equals("2") || userAuth.equals("3")) {
-            sbWhere.append(" and interrelated_cust_code = :interrelatedCustCode ");
-        }
-		
-		//계열사 조건
-		//userAuth(4 = 감사사용자)
-		if (userAuth.equals("4")) {
+		if(userAuth.equals("4")) {
+			Map<String, Object> paramMap = new HashMap<String, Object>();
+			paramMap.put("userId", principal.getUsername());
+			userInfoList = generalDao.selectGernalList(DB.QRY_SELECT_INTER_CUST_CODE_LIST, paramMap);
 
-            sbWhere.append(" and (");
-            
-            sbWhere.append(" interrelated_cust_code = " + interrelatedCode );
-            
-            //감사사용자에 해당하는 계열사 조건 추가
-            for (int i = 0; i < custCodes.size(); i++) {
-            	sbWhere.append(" or ");
-                sbWhere.append(" interrelated_cust_code = :custCode").append(i);
-            }
-            
-            sbWhere.append(")");
-
-           
-        }
+			for(Object obj : userInfoList) {
+				Map<String, Object> userInfoMap = (Map<String, Object>) obj;
+				custCodes.add(CommonUtils.getString(userInfoMap.get("interrelatedCustCode")));
+			}
+			custCodes.add(interrelatedCode);
+		}
 		
-		//관계자 조건
-		sbWhere.append(" and ( create_user = :userid " +
-                       	  	 " or open_att1 = :userid " +
-                       	  	 " or open_att2 = :userid " +
-                       	  	 " or gongo_id = :userid " +
-                       	  	 " or est_bidder = :userid " +
-                       	  	 " or est_opener = :userid"
-                         + " ) ");
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.put("userId" , principal.getUsername());
+		paramMap.put("userAuth" , userAuth);
+		paramMap.put("interrelatedCode", interrelatedCode);
+		paramMap.put("interrelatedCodeArr", custCodes);
 		
-		sbCnt.append(sbWhere);
+		Map<String, Object> bidMap = (Map<String, Object>) generalDao.selectGernalObject(DB.QRY_SELECT_MAIN_CO_BID_CNT, paramMap);
 		
-		Query queryCnt = entityManager.createNativeQuery(sbCnt.toString());
+		Map<String, Object> resultMap = new HashMap<String, Object>();
+		resultMap.put("planning", CommonUtils.getInt(resultMap.get("planning")));
+		resultMap.put("noticing", CommonUtils.getInt(resultMap.get("noticing")));
+		resultMap.put("beforeOpening", CommonUtils.getInt(resultMap.get("beforeOpening")));
+		resultMap.put("opening", CommonUtils.getInt(resultMap.get("opening")));
+		resultMap.put("completed", CommonUtils.getInt(resultMap.get("completed")));
+		resultMap.put("unsuccessful", CommonUtils.getInt(resultMap.get("unsuccessful")));
+		resultMap.put("ing", CommonUtils.getInt(resultMap.get("planning")) + CommonUtils.getInt(resultMap.get("noticing")) + CommonUtils.getInt(resultMap.get("beforeOpening")));
 		
-		//계열사 조건 set
-		if (userAuth.equals("1") || userAuth.equals("2") || userAuth.equals("3")) {
-			queryCnt.setParameter("interrelatedCustCode", interrelatedCode);
-        }
-		
-        if (userAuth.equals("4")) {
-
-            for (int i = 0; i < custCodes.size(); i++) {
-            	queryCnt.setParameter("custCode" + i, custCodes.get(i));
-            }
-        }
-        
-        //관계자 조건 set
-        queryCnt.setParameter("userid", userId);
-		
-	    Object[] result = (Object[]) queryCnt.getSingleResult();
-
-	    bidCntDto.setPlanning((BigInteger) result[0]);
-	    bidCntDto.setNoticing((BigInteger) result[1]);
-	    bidCntDto.setBeforeOpening((BigInteger) result[2]);
-	    bidCntDto.setOpening((BigInteger) result[3]);
-	    bidCntDto.setCompleted((BigInteger) result[4]);
-	    bidCntDto.setUnsuccessful((BigInteger) result[5]);
-	    bidCntDto.setIng((BigInteger) result[6]);
-	    
-	    // 진행 중
-	    BigInteger ing = ((BigInteger) result[1]).add((BigInteger) result[2]).add((BigInteger) result[3]);
-	    bidCntDto.setIng(ing);
-
-		
-		return bidCntDto;
+		resultBody.setData(resultMap);
+		return resultBody;
 	}
 
 	//협력사 업채수 조회(계열사메인)
 	@Transactional
-	public PartnerCntDto selectPartnerCnt(Map<String, Object> params) {
-		UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-		Optional<TCoUser> userOptional = tCoUserRepository.findById(principal.getUsername());
-		String interrelatedCode = "";
-		PartnerCntDto partnerCntDto = new PartnerCntDto();
+	public ResultBody selectPartnerCnt(Map<String, Object> params) throws Exception {
+		ResultBody resultBody = new ResultBody();
+		Map<String, Object> coUserMap = this.getCoUser();
+		String interrelatedCode = CommonUtils.getString(coUserMap.get("interrelatedCustCode"));
 		
-		if (userOptional.isPresent()) {
-        
-    		interrelatedCode = userOptional.get().getInterrelatedCustCode();
-  
-        }
-
-		StringBuilder sbCnt = new StringBuilder(" select COUNT(CASE WHEN tccm.cert_yn = 'N' THEN 1 END) as 'request', "
-													 + " COUNT(CASE WHEN tccm.cert_yn = 'Y' THEN 1 END) as 'approval', "
-													 + " COUNT(CASE WHEN tccm.cert_yn = 'D' THEN 1 END) as 'deletion' "
-											  + " from t_co_cust_master tccm "
-											  + " inner join t_co_cust_ir tcci "
-											  + " on tccm.cust_code = tcci.cust_code "
-											  + " where 1=1 "
-											   );
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.put("interrelatedCode", interrelatedCode);
+		Map<String, Object> partnerMap = (Map<String, Object>) generalDao.selectGernalObject(DB.QRY_SELECT_PARTNER_CNT, paramMap);
 		
-		StringBuilder sbWhere = new StringBuilder();
-	
-		//계열사 조건
-		sbWhere.append(" and tcci.interrelated_cust_code = :interrelatedCustCode ");
+		Map<String, Object> resultMap = new HashMap<String, Object>();
+		resultMap.put("request", CommonUtils.getInt(partnerMap.get("request")));
+		resultMap.put("approval", CommonUtils.getInt(partnerMap.get("approval")));
+		resultMap.put("deletion", CommonUtils.getInt(partnerMap.get("deletion")));
 		
-		sbCnt.append(sbWhere);
+		resultBody.setData(resultMap);
+		return resultBody;
 		
-		Query queryCnt = entityManager.createNativeQuery(sbCnt.toString());
-		
-		//계열사 조건 set
-		queryCnt.setParameter("interrelatedCustCode", interrelatedCode);
-		
-	    Object[] result = (Object[]) queryCnt.getSingleResult();
-	    
-	    partnerCntDto.setRequest((BigInteger) result[0]);
-	    partnerCntDto.setApproval((BigInteger) result[1]);
-	    partnerCntDto.setDeletion((BigInteger) result[2]);
-	    
-		return partnerCntDto;
 	}
 
 	//협력사 전자입찰 건수 조회(협력사메인)
@@ -601,6 +507,14 @@ public class MainService {
 		paramMap.put("userId", principal.getUsername());
 		Map<String, Object> custMap = (Map<String, Object>) generalDao.selectGernalObject(DB.QRY_SELECT_COMMON_CUST_USER_DETAIL, paramMap);
 		return CommonUtils.getInt(custMap.get("custCode"));
+	}
+	
+	private Map<String, Object> getCoUser() throws Exception {
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		paramMap.put("userId", principal.getUsername());
+		Map<String, Object> userMap = (Map<String, Object>) generalDao.selectGernalObject(DB.QRY_SELECT_COMMON_CO_USER_DETAIL, paramMap);
+		return userMap;
 	}
 
 }
