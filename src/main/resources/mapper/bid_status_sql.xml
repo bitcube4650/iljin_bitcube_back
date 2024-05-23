@@ -540,8 +540,8 @@
 		and tccu.CUST_CODE IN ( <foreach collection="custList" item="item" separator=",">#{item}</foreach> )
 	</select>
 	
-	<insert id="insertIBiInfoMatCustTemp">
-		/* bidStatus.insertIBiInfoMatCustTemp */
+	<insert id="insertTBiInfoMatCustTemp">
+		/* bidStatus.insertTBiInfoMatCustTemp */
 		insert into t_bi_info_mat_cust_temp( 
 		BI_NO, CUST_CODE, BI_ORDER, REBID_ATT, ESMT_YN, ESMT_AMT, SUCC_YN 
 		, ENC_QUTN, ENC_ESMT_SPEC, FILE_ID, SUBMIT_DATE, CREATE_USER, CREATE_DATE 

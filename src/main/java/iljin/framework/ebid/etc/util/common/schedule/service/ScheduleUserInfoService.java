@@ -11,10 +11,12 @@ import javax.persistence.Persistence;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import iljin.framework.ebid.etc.util.GeneralDao;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -34,8 +36,12 @@ public class ScheduleUserInfoService {
 	@PersistenceContext
 	private EntityManager entityManager;
 	
+	@Autowired
+	private GeneralDao generalDao;
+	
 	/**
-	 * 미사용 사용자 업데이트
+	 * 미사용 사용자 업데이트 (EHR db에서 가져옴)
+	 * 권한이 없어 주석처리
 	 * @throws Exception
 	 */
 	@Transactional
@@ -44,41 +50,30 @@ public class ScheduleUserInfoService {
 		List<String[]> list = this.ehrDbData("Select EMP_ID from iljinehr.EBID_EMP_V where stat_yn = 'N'");
 		
 		if(list.size() != 0) {
-			StringBuilder sbQuery = new StringBuilder(
-				  "UPDATE T_CO_USER "
-				+ "SET	USE_YN = 'N' "
-				+ ",	UPDATE_USER='SYSTEM' "
-				+ ",	UPDATE_DATE = SYSDATE() "
-				+ "WHERE USER_ID IN ( :userId ) "
-				+ "AND USE_YN = 'Y' "
-			);
-			
-			Query query = entityManager.createNativeQuery(sbQuery.toString());
-			query.setParameter("userId", list);
-			query.executeUpdate();
+			generalDao.updateGernal("schedule.updateTCoUserUseYn", null);
 		}
 	}
 	
-	@SuppressWarnings({ "unchecked" })
+//	@SuppressWarnings({ "unchecked" })
 	public List<String[]> ehrDbData(String strQuery) {
-		Map<String, String> persistenceMap = new HashMap<String, String>();
-		persistenceMap.put("javax.persistence.jdbc.url", ehrUrl);
-		persistenceMap.put("javax.persistence.jdbc.user", ehrUsername);
-		persistenceMap.put("javax.persistence.jdbc.password", ehrPassword);
-		persistenceMap.put("javax.persistence.jdbc.driver", ehrDrivername);
-		EntityManagerFactory emf = Persistence.createEntityManagerFactory("oracle", persistenceMap);
-		EntityManager em = emf.createEntityManager();
+//		Map<String, String> persistenceMap = new HashMap<String, String>();
+//		persistenceMap.put("javax.persistence.jdbc.url", ehrUrl);
+//		persistenceMap.put("javax.persistence.jdbc.user", ehrUsername);
+//		persistenceMap.put("javax.persistence.jdbc.password", ehrPassword);
+//		persistenceMap.put("javax.persistence.jdbc.driver", ehrDrivername);
+//		EntityManagerFactory emf = Persistence.createEntityManagerFactory("oracle", persistenceMap);
+//		EntityManager em = emf.createEntityManager();
 		
 		List<String[]> list = null;
-		try {
-			list = em.createNativeQuery(strQuery).getResultList();
-		} catch (Exception e) {
-			list = new ArrayList<String[]>();
-			log.error("ehr db error : {}", e);
-		} finally {
-			em.close();
-			emf.close();
-		}
+//		try {
+//			list = em.createNativeQuery(strQuery).getResultList();
+//		} catch (Exception e) {
+//			list = new ArrayList<String[]>();
+//			log.error("ehr db error : {}", e);
+//		} finally {
+//			em.close();
+//			emf.close();
+//		}
 		
 		return list;
 	}

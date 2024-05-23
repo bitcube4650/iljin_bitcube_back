@@ -24,6 +24,7 @@ import iljin.framework.ebid.custom.entity.TCoCustUser;
 import iljin.framework.ebid.custom.repository.TCoCustUserRepository;
 import iljin.framework.ebid.etc.util.CommonUtils;
 import iljin.framework.ebid.etc.util.GeneralDao;
+import iljin.framework.ebid.etc.util.common.consts.DB;
 //import iljin.framework.ebid.etc.util.common.certificate.service.CertificateService;
 import iljin.framework.ebid.etc.util.common.file.FileService;
 import lombok.extern.slf4j.Slf4j;
@@ -58,7 +59,7 @@ public class BidPartnerStatusService {
 		int custCode = userOptional.get().getCustCode();
 		
 		params.put("custCode", custCode);
-		Page listPage = generalDao.selectGernalListPage("bidStatus.selectPartnerEbidStatusList", params);
+		Page listPage = generalDao.selectGernalListPage(DB.QRY_SELECT_PARTNER_EBID_STATUS_LIST, params);
 		resultBody.setData(listPage);
 		
 		return resultBody;
@@ -82,14 +83,14 @@ public class BidPartnerStatusService {
 		params.put("userId", userId);
 		params.put("custCode", custCode);
 		
-		generalDao.insertGernal("bidStatus.updateEbidTBiInfoMatCustConfirm", params);
+		generalDao.insertGernal(DB.QRY_UPDATE_EBID_T_BI_INFO_MAT_CUST_CONFIRM, params);
 		
 		//로그
 		Map<String, String> logParams = new HashMap<>();
 		logParams.put("msg", "[업체]공고확인");
 		logParams.put("biNo", CommonUtils.getString(params.get("biNo")));
 		logParams.put("userId", userId);
-		generalDao.insertGernal("bidStatus.insertTBiLog", logParams);
+		generalDao.insertGernal(DB.QRY_BID_STATUS_INSERT_T_BI_LOG, logParams);
 		
 		return resultBody;
 	}
@@ -108,7 +109,7 @@ public class BidPartnerStatusService {
 		int custCode = userOptional.get().getCustCode();
 		params.put("custCode", custCode);
 		
-		Map<String, Object> detailMap = (Map<String, Object>) generalDao.selectGernalObject("bidStatus.selectPartnerEbidStatusDetail", params);
+		Map<String, Object> detailMap = (Map<String, Object>) generalDao.selectGernalObject(DB.QRY_SELECT_PARTNER_EBID_STATUS_DETAIL, params);
 		
 		// ************ 데이터 검색 -- 세부내역 ************
 		if(CommonUtils.getString(detailMap.get("insMode")).equals("1")) {		//내역방식이 파일등록일 경우
@@ -119,12 +120,12 @@ public class BidPartnerStatusService {
 			Map<String, Object> innerParams = new HashMap<String, Object>();
 			innerParams.put("biNo", params.get("biNo"));
 			innerParams.put("fileFlag", fileFlagArr);
-			List<Object> specfile = generalDao.selectGernalList("bidStatus.selectEbidStatusDetailFile", innerParams);
+			List<Object> specfile = generalDao.selectGernalList(DB.QRY_SELECT_EBID_STATUS_DETAIL_FILE, innerParams);
 			
 			detailMap.put("spec_File", specfile);
 			
 		}else if(CommonUtils.getString(detailMap.get("insMode")).equals("2")) {		//내역방식이 직접입력일 경우
-			List<Object> specInput = generalDao.selectGernalList("bidStatus.selectEbidStatusDetailSpec", params);
+			List<Object> specInput = generalDao.selectGernalList(DB.QRY_SELECT_EBID_STATUS_DETAIL_SPEC, params);
 			
 			detailMap.put("spec_Input", specInput);
 		}
@@ -136,7 +137,7 @@ public class BidPartnerStatusService {
 		Map<String, Object> innerParams = new HashMap<String, Object>();
 		innerParams.put("biNo", params.get("biNo"));
 		innerParams.put("fileFlag", fileFlagArr);
-		List<Object> fileList = generalDao.selectGernalList("bidStatus.selectEbidStatusDetailFile", innerParams);
+		List<Object> fileList = generalDao.selectGernalList(DB.QRY_SELECT_EBID_STATUS_DETAIL_FILE, innerParams);
 		
 		detailMap.put("file_list", fileList);
 		
@@ -152,7 +153,7 @@ public class BidPartnerStatusService {
 	public ResultBody currList() throws Exception {
 		ResultBody resultBody = new ResultBody();
 		
-		List<Object> list = generalDao.selectGernalList("bidStatus.selectCodeRateList", null);
+		List<Object> list = generalDao.selectGernalList(DB.QRY_SELECT_CODE_RATE_LIST, null);
 		resultBody.setData(list);
 		
 		return resultBody;
@@ -190,7 +191,7 @@ public class BidPartnerStatusService {
 		Map<String, Object> infoParams = new HashMap<String, Object>();
 		infoParams.put("columns", "EST_START_DATE, EST_CLOSE_DATE, INTERRELATED_CUST_CODE ");
 		infoParams.put("biNo", biNo);
-		Map<String, Object> biInfo = (Map<String, Object>) generalDao.selectGernalObject("bidStatus.selectTBiInfoMatInfomation", infoParams);
+		Map<String, Object> biInfo = (Map<String, Object>) generalDao.selectGernalObject(DB.QRY_SELECT_T_BI_INFO_MAT_INFOMATION, infoParams);
 		
 		if(biInfo != null) {
 			
@@ -287,7 +288,7 @@ public class BidPartnerStatusService {
 			fileParams.put("filePath", filePath);
 			fileParams.put("useYn", "Y");
 			
-			generalDao.insertGernal("bidStatus.insertTBiUploadC", fileParams);
+			generalDao.insertGernal(DB.QRY_INSERT_T_BI_UPLOAD_C, fileParams);
 			
 			params.put("fileId", fileParams.get("fileId"));
 			
@@ -300,7 +301,7 @@ public class BidPartnerStatusService {
 
 		params.put("etcFileName", etcFileName);
 		params.put("etcFilePath", etcFilePath);
-		generalDao.insertGernal("bidStatus.mergedTBiInfoMatCust", params);
+		generalDao.insertGernal(DB.QRY_MERGED_T_BI_INFO_MAT_CUST, params);
 		
 		
 		//로그 남기기
@@ -309,7 +310,7 @@ public class BidPartnerStatusService {
 			logParams.put("msg", "[업체]견적제출");
 			logParams.put("biNo", CommonUtils.getString(params.get("biNo")));
 			logParams.put("userId", userId);
-			generalDao.insertGernal("bidStatus.insertTBiLog", logParams);
+			generalDao.insertGernal(DB.QRY_BID_STATUS_INSERT_T_BI_LOG, logParams);
 		}catch(Exception e) {
 			log.error("bidSubmitting log error : {}", e);
 		}
