@@ -162,4 +162,83 @@
 		AND		tcci.INTERRELATED_CUST_CODE = #{interrelatedCode}
 	</select>
 	
+	<select id="selectCoUserCnt" resultType="int">
+		/* main.selectCoUserCnt */
+		SELECT	COUNT(*)
+		FROM	T_CO_USER
+		WHERE	USER_ID = #{userId}
+	</select>
+	
+	<update id="updateCoUserPassword">
+		/* main.updateCoUserPassword */
+		UPDATE	T_CO_USER
+		SET		USER_PWD = #{encodedPassword}
+		,		PWD_EDIT_DATE = NOW()
+		,		PWD_EDIT_YN = 'Y'
+		WHERE	USER_ID = #{userId}
+	</update>
+	
+	<update id="updateCoCustUserPassword">
+		/* main.updateCoUserPassword */
+		UPDATE	T_CO_CUST_USER
+		SET		USER_PWD = #{encodedPassword}
+		,		PWD_CHG_DATE = NOW()
+		WHERE	USER_ID = #{userId}
+	</update>
+	
+	<select id="selectCoUserDetail" resultType="camel">
+		/* main.selectCoUserDetail */
+		SELECT	BIDAUTH
+		,		DEPT_NAME
+		,		OPENAUTH
+		,		DATE_FORMAT(PWD_EDIT_DATE, '%Y-%m-%d') AS PWD_EDIT_DATE
+		,		PWD_EDIT_YN
+		,		USER_EMAIL
+		,		USER_HP
+		,		USER_POSITION
+		,		USER_TEL
+		FROM	T_CO_USER
+		WHERE	USER_ID = #{userId}
+	</select>
+	
+	<select id="selectCoCustUserDetail" resultType="camel">
+		/* main.selectCoCustUserDetail */
+		SELECT	USER_TEL
+		,		USER_HP
+		,		USER_EMAIL
+		,		DATE_FORMAT(PWD_CHG_DATE, '%Y-%m-%d') AS PWD_CHG_DATE
+		,		USER_BUSEO
+		,		USER_POSITION
+		FROM	T_CO_CUST_USER
+		WHERE	USER_ID = #{userId}
+	</select>
+	
+	<update id="updateCoUserDetail">
+		/* main.updateCoUserDetail */
+		UPDATE	T_CO_USER
+		SET		BIDAUTH			= #{bidauth}
+		,		DEPT_NAME		= #{deptName}
+		,		OPENAUTH		= #{openauth}
+		,		USER_EMAIL		= #{userEmail}
+		,		USER_HP			= #{userHp}
+		,		USER_POSITION	= #{userPosition}
+		,		USER_TEL		= #{userTel}
+		,		UPDATE_USER		= #{userId}
+		,		UPDATE_DATE		= NOW()
+		WHERE	USER_ID			= #{userId}
+	</update>
+	
+	<update id="updateCoCustUserDetail">
+		/* main.updateCoCustUserDetail */
+		UPDATE	T_CO_CUST_USER
+		SET		USER_TEL		= #{userTel}
+		,		USER_HP			= #{userHp}
+		,		USER_EMAIL		= #{userEmail}
+		,		USER_BUSEO		= #{userBuseo}
+		,		USER_POSITION	= #{userPosition}
+		,		UPDATE_USER		= #{userId}
+		,		UPDATE_DATE		= NOW()
+		WHERE	USER_ID			= #{userId}
+	</update>
+	
 </mapper>

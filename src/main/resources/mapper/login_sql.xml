@@ -100,4 +100,37 @@
 		,		grp_nm 
 		FROM	T_CO_ITEM_GRP
 	</select>
+	
+	<select id="selectCustomUserDetails" resultType="iljin.framework.core.security.user.CustomUserDetails">
+		/* login.selectCustomUserDetails */
+		SELECT	'inter' AS custType
+		,		a.INTERRELATED_CUST_CODE AS custCode
+		,		INTERRELATED_NM AS custName
+		,		USER_NAME AS userNm
+		,		USER_ID AS userName
+		,		USER_PWD AS password
+		,		USER_AUTH AS userAuth
+		FROM	T_CO_USER a
+		,		T_CO_INTERRELATED b
+		WHERE	a.INTERRELATED_CUST_CODE = b.INTERRELATED_CUST_CODE
+		AND		USER_ID = #{userId}
+		AND		a.USE_YN  = 'Y'
+		AND		b.USE_YN  = 'Y'
+		
+		UNION ALL
+		
+		SELECT	'cust'
+		,		a.CUST_CODE
+		,		CUST_NAME
+		,		USER_NAME
+		,		USER_ID
+		,		USER_PWD
+		,		USER_TYPE
+		FROM	T_CO_CUST_USER a
+		,		T_CO_CUST_MASTER b
+		WHERE	a.CUST_CODE = b.CUST_CODE
+		AND		USER_ID = #{userId}
+		AND		a.USE_YN  = 'Y'
+		AND		b.CERT_YN = 'Y'
+	</select>
 </mapper>

@@ -206,28 +206,22 @@ public class MainService {
 		UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		String userId = principal.getUsername();
 		String password = (String) params.get("password");
-		LocalDateTime currentDate = LocalDateTime.now();
-
-
+		
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.put("userId", userId);
+		paramMap.put("encodedPassword", passwordEncoder.encode(password));
+		
 		try {
-			Optional<TCoUser> userOptional = tCoUserRepository.findById(userId);
-			String encodedPassword = passwordEncoder.encode(password);
-
-			if (userOptional.isPresent()) {//계열사인 경우
-				TCoUser tCoUser = userOptional.get();
-				tCoUser.setUserPwd(encodedPassword);
-				tCoUser.setPwdEditDate(currentDate);
-				tCoUser.setPwdEditYn("Y");
-			}else {//협력사인 경우
-				Optional<TCoCustUser> userOptional2 = tCoUserCustRepository.findById(userId);
-				TCoCustUser tCoCustUser = userOptional2.get();
-				tCoCustUser.setUserPwd(encodedPassword);
-				tCoCustUser.setPwdChgDate(currentDate);
+			int coUserCnt = CommonUtils.getInt(generalDao.selectGernalCount(DB.QRY_SELECT_CO_USER_CNT, paramMap));
+			// 계열사 user 테이블에 있는경우 계열사로 확인, 없는경우 협력사로 확인
+			if(coUserCnt > 0) { // 계열사
+				generalDao.updateGernal(DB.QRY_UPDATE_CO_USER_PASSWORD, paramMap);
+			} else { // 협력사 
+				generalDao.updateGernal(DB.QRY_UPDATE_CO_CUST_USER_PASSWORD, paramMap);
 			}
 			
 			return true;
-
-		}catch(Exception e){
+		} catch(Exception e) {
 			e.printStackTrace();
 			return false;
 		}
@@ -235,163 +229,59 @@ public class MainService {
 
 	//유저정보 조회
 	@Transactional
-	public ResultBody selectUserInfo(Map<String, Object> params) {
+	public ResultBody selectUserInfo(Map<String, Object> params) throws Exception {
 		ResultBody resultBody = new ResultBody();
+		
 		UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		String userId = principal.getUsername();
-		Map<String,Object> userInfo = new HashMap<>();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 		
-		try {
-			Optional<TCoUser> userOptional = tCoUserRepository.findById(userId);
-	
-			if (userOptional.isPresent()) {//계열사인 경우
-				String formattedDateTime = "";
-				
-				String bidauth = userOptional.get().getBidauth();
-				String deptName = userOptional.get().getDeptName();
-				String openauth = userOptional.get().getOpenauth();
-				LocalDateTime pwdEditDate = userOptional.get().getPwdEditDate();
-				String pwdEditYn = userOptional.get().getPwdEditYn();
-				String userEmail = userOptional.get().getUserEmail();
-				String userHp = userOptional.get().getUserHp();
-				String userPosition = userOptional.get().getUserPosition();
-				String userTel = userOptional.get().getUserTel();
-				
-		        if(pwdEditDate != null) {
-					formattedDateTime = pwdEditDate.format(formatter);
-				}
-				
-				userInfo.put("bidauth", bidauth);
-				userInfo.put("deptName", deptName);
-				userInfo.put("openauth", openauth);
-				userInfo.put("pwdEditDate", formattedDateTime);
-				userInfo.put("pwdEditYn", pwdEditYn);
-				userInfo.put("userEmail", userEmail);
-				userInfo.put("userHp", userHp);
-				userInfo.put("userPosition",userPosition);
-				userInfo.put("userTel", userTel);
-				
-				resultBody.setData(userInfo);
-				
-				return resultBody;
-				
-			}else {//협력사인 경우
-				
-				Optional<TCoCustUser> userOptional2 = tCoUserCustRepository.findById(userId);
-				String formattedDateTime = "";
-				
-				if(userOptional2.isPresent()) {
-				
-					String userTel = userOptional2.get().getUserTel();
-					String userHp = userOptional2.get().getUserHp();
-					String userEmail = userOptional2.get().getUserEmail();
-					LocalDateTime pwdChgDate = userOptional2.get().getPwdChgDate();
-					String userBuseo = userOptional2.get().getUserBuseo();
-					String userPosition = userOptional2.get().getUserPosition();
-					
-					if(pwdChgDate != null) {
-						formattedDateTime = pwdChgDate.format(formatter);
-					}
-					
-					userInfo.put("userTel", userTel);
-					userInfo.put("userHp", userHp);
-					userInfo.put("userEmail", userEmail);
-					userInfo.put("pwdChgDate", formattedDateTime);
-					userInfo.put("userBuseo", userBuseo);
-					userInfo.put("userPosition", userPosition);
-				}
-				
-				resultBody.setData(userInfo);
-				
-				return resultBody;
-			}
-	
-		}catch(Exception e){
-			e.printStackTrace();
-			resultBody.setCode("ERROR");
-	        resultBody.setStatus(500);
-	        resultBody.setMsg("An error occurred while selecting the user info.");
-	        resultBody.setData(e.getMessage());
-	        
-	        return resultBody;
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.put("userId", userId);
+		int coUserCnt = CommonUtils.getInt(generalDao.selectGernalCount(DB.QRY_SELECT_CO_USER_CNT, paramMap));
+		
+		Map<String,Object> userInfo = new HashMap<>();
+		if(coUserCnt > 0) {
+			userInfo = (Map<String, Object>) generalDao.selectGernalObject(DB.QRY_SELECT_CO_USER_DETAIL, paramMap);
+		} else {
+			userInfo = (Map<String, Object>) generalDao.selectGernalObject(DB.QRY_SELECT_CO_CUST_USER_DETAIL, paramMap);
 		}
+		
+		resultBody.setData(userInfo);
+		return resultBody;
 	}
 
 	//유저 정보 변경
 	@Transactional
-	public ResultBody saveUserInfo(Map<String, Object> params) {
+	public ResultBody saveUserInfo(Map<String, Object> params) throws Exception {
 		ResultBody resultBody = new ResultBody();
 		UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		String userId = principal.getUsername();
 		
-		try {
-			Optional<TCoUser> userOptional = tCoUserRepository.findById(userId);
-	
-			if (userOptional.isPresent()) {//계열사인 경우
-				
-				TCoUser tCoUser = userOptional.get();
-
-				String bidauth = "";
-				String openauth = "";
-				String deptName = (String) params.get("deptName");
-				String userEmail = (String) params.get("userEmail");
-				String userHp = (String) params.get("userHp");
-				String userPosition = (String) params.get("userPosition");
-				String userTel = (String) params.get("userTel");
-				
-				if((boolean) params.get("bidauth")) {
-					bidauth = "1";
-				}else {
-					bidauth = "";
-				}
-				
-				if((boolean) params.get("openauth")) {
-					openauth = "1";
-				}else {
-					openauth = "";
-				}
-				
-				tCoUser.setBidauth(bidauth);
-				tCoUser.setDeptName(deptName);
-				tCoUser.setOpenauth(openauth);
-				tCoUser.setUserEmail(userEmail);
-				tCoUser.setUserHp(userHp);
-				tCoUser.setUserPosition(userPosition);
-				tCoUser.setUserTel(userTel);
-				
-				return resultBody;
-				
-			}else {//협력사인 경우
-				
-				Optional<TCoCustUser> userOptional2 = tCoUserCustRepository.findById(userId);
-				
-				TCoCustUser tCoCustUser = userOptional2.get();
-				
-				String userTel = (String) params.get("userTel");
-				String userHp = (String) params.get("userHp");
-				String userEmail = (String) params.get("userEmail");
-				String userBuseo = (String) params.get("userBuseo");
-				String userPosition = (String) params.get("userPosition");
-				
-				tCoCustUser.setUserTel(userTel);
-				tCoCustUser.setUserHp(userHp);
-				tCoCustUser.setUserEmail(userEmail);
-				tCoCustUser.setUserBuseo(userBuseo);
-				tCoCustUser.setUserPosition(userPosition);
-				
-				return resultBody;
-			}
-	
-		}catch(Exception e){
-			e.printStackTrace();
-			resultBody.setCode("ERROR");
-	        resultBody.setStatus(500);
-	        resultBody.setMsg("An error occurred while updating the user info.");
-	        resultBody.setData(e.getMessage());
-	        
-	        return resultBody;
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.put("userId", userId);
+		int coUserCnt = CommonUtils.getInt(generalDao.selectGernalCount(DB.QRY_SELECT_CO_USER_CNT, paramMap));
+		
+		if(coUserCnt > 0) {
+			paramMap.put("bidauth"		, ((boolean) params.get("bidauth")) ? "1" : "");
+			paramMap.put("deptName"		, CommonUtils.getString(params.get("deptName")));
+			paramMap.put("openauth"		, ((boolean) params.get("openauth")) ? "1" : "");
+			paramMap.put("userEmail"	, CommonUtils.getString(params.get("userEmail")));
+			paramMap.put("userHp"		, CommonUtils.getString(params.get("userHp")));
+			paramMap.put("userPosition"	, CommonUtils.getString(params.get("userPosition")));
+			paramMap.put("userTel"		, CommonUtils.getString(params.get("userTel")));
+			
+			generalDao.updateGernal(DB.QRY_UPDATE_CO_USER_DETAIL, paramMap);
+		} else {
+			paramMap.put("userTel"		, CommonUtils.getString(params.get("userTel")));
+			paramMap.put("userHp"		, CommonUtils.getString(params.get("userHp")));
+			paramMap.put("userEmail"	, CommonUtils.getString(params.get("userEmail")));
+			paramMap.put("userBuseo"	, CommonUtils.getString(params.get("userBuseo")));
+			paramMap.put("userPosition"	, CommonUtils.getString(params.get("userPosition")));
+			
+			generalDao.updateGernal(DB.QRY_UPDATE_CO_CUST_USER_DETAIL, paramMap);
 		}
+		
+		return resultBody;
 	}
 
 	//계열사 정보 조회

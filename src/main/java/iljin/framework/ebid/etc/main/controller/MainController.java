@@ -117,20 +117,39 @@ public class MainController {
 	//유저 정보 조회
 	@PostMapping("/selectUserInfo")
 	public ResultBody selectUserInfo(@RequestBody Map<String, Object> params) {
-		
-		return mainService.selectUserInfo(params);
-				
+		ResultBody resultBody = new ResultBody();
+		try {
+			resultBody = mainService.selectUserInfo(params);
+		} catch (Exception e) {
+			resultBody.setCode("ERROR");
+			resultBody.setStatus(500);
+			resultBody.setMsg("An error occurred while selecting the user info.");
+			resultBody.setData(e.getMessage());
+			
+			log.error("{} Error : {}", this.getClass(), e.getMessage());
+		}
+		return resultBody;
 	}
 	
 	//유저 정보 변경
 	@PostMapping("/saveUserInfo")
 	public ResultBody saveUserInfo(@RequestBody Map<String, Object> params) {
-		
-		return mainService.saveUserInfo(params);
-				
+		ResultBody resultBody = new ResultBody();
+		try {
+			resultBody = mainService.saveUserInfo(params);
+		} catch (Exception e) {
+			resultBody.setCode("ERROR");
+			resultBody.setStatus(500);
+			resultBody.setMsg("An error occurred while updating the user info.");
+			resultBody.setData(e.getMessage());
+			
+			log.error("{} Error : {}", this.getClass(), e.getMessage());
+		}
+		return resultBody;
 	}
 	
-	//계열사 정보 조회
+	//계열사 정보 조회 (사용하지 않음)
+	@Deprecated
 	@PostMapping("/selectCompInfo")
 	public ResultBody selectCompInfo(@RequestBody Map<String, Object> params) {
 		
@@ -155,14 +174,14 @@ public class MainController {
 	}
 	
 
-	// 초기 계열사 사용자 비밀번호 변경 처리
+	// 초기 계열사 사용자 비밀번호 변경 처리 (호출 메소드를 못찾음 확인 필요)
 	@PostMapping("/chgPwdFirst")
-    public void chgPwdFirst() {
+	public void chgPwdFirst() {
 		log.info("-----------------------chgPwdFirst start----------------------");
 //		try {
 			mainService.chgPwdFirst();
 //		}catch(Exception e) {
 //		}
 		log.info("-----------------------chgPwdFirst end----------------------");
-    }
+	}
 }
