@@ -16,9 +16,13 @@ public class DB {
 	public final static String QRY_SELECT_COMMON_CUST_USER_DETAIL = "common.selectCustUserDetail";
 	public final static String QRY_SELECT_COMMON_CO_USER_DETAIL = "common.selectCoUserDetail";
 	
+	
 	// 품목
 	public final static String QRY_SELECT_ITEM_GRP_LIST = "item.selectItemGrpList";
 	public final static String QRY_SELECT_ITEM_LIST = "item.selectItemList";
+	public final static String QRY_SELECT_ITEM_CNT = "item.selectItemList_count";
+	public final static String QRY_INSERT_ITEM = "item.insertItem";
+	public final static String QRY_UPDATE_ITEM = "item.updateItem";
 	
 	// 메인
 	public final static String QRY_SELECT_BID_NOTICING_CNT = "main.selectBidNoticingCnt";

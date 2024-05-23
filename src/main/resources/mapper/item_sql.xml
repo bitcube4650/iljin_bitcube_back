@@ -28,6 +28,11 @@
 		AND		A.ITEM_NAME LIKE CONCAT('%', #{itemName}, '%')
 				</if>
 			</when>
+			<when test="dupCheck != null and dupCheck != ''">
+				<if test="itemCode != null and itemCode != ''">
+		AND		A.ITEM_CODE  = #{itemCode}
+				</if>
+			</when>
 			<otherwise>
 				<if test="itemName != null and itemName != ''">
 		AND ( A.ITEM_CODE LIKE CONCAT('%', #{itemName}, '%') OR A.ITEM_NAME LIKE CONCAT('%', #{itemName}, '%'))
@@ -69,4 +74,33 @@
 		WHERE 1=1
 		<include refid="selectItemListSql"/>
 	</select>
+	
+	<insert id="insertItem">
+		/* item.insertItem */
+		INSERT INTO T_CO_ITEM (
+					ITEM_CODE
+			,		ITEM_NAME
+			,		ITEM_GRP_CD
+			,		USE_YN
+			,		CREATE_USER
+			,		CREATE_DATE
+		) VALUES (
+					#{itemCode}
+			,		#{itemName}
+			,		#{itemGrpCd}
+			,		#{useYn}
+			,		#{createUser}
+			,		NOW()
+		)
+	
+	</insert>
+	
+	<update id="updateItem">
+		/* item.updateItem */
+		UPDATE T_CO_ITEM
+		SET	ITEM_NAME = #{itemName}
+		,	ITEM_GRP_CD = #{itemGrpCd}
+		,	USE_YN = #{useYn}
+		WHERE ITEM_CODE = #{itemCode}
+	</update>
 </mapper>
