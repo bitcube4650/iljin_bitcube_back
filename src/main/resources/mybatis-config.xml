@@ -16,5 +16,6 @@
 		<mapper resource="mapper/main_sql.xml"/>
 		<mapper resource="mapper/common_sql.xml"/>
 		<mapper resource="mapper/excel_sql.xml"/>
+		<mapper resource="mapper/schedule_sql.xml"/>
 	</mappers>
 </configuration>
