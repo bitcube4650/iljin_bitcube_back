@@ -16,35 +16,45 @@ import java.util.stream.Collectors;
 
 public abstract class ExcelSupportV2 {
 
-    //추상메서드 선언
-    public abstract SXSSFWorkbook getWorkBookPaging(Class<?> clazz, SXSSFWorkbook workbook, List<String> headerNames, Map<String, Object> param) throws IllegalAccessException, IOException;
+	//추상메서드 선언
+	//mybatis로 모두 바꾼 후 제거 필요
+	public abstract SXSSFWorkbook getWorkBookPaging(Class<?> clazz, SXSSFWorkbook workbook, List<String> headerNames, Map<String, Object> param) throws IllegalAccessException, IOException;
+	
+	//mybatis 호환, dto 제거버전
+	public abstract SXSSFWorkbook getWorkBookPaging(String interrelatedCustCode, SXSSFWorkbook workbook, List<String> headerNames, Map<String, Object> param) throws IllegalAccessException, IOException;
 
-    public abstract void createHeaders(SXSSFWorkbook workbook, Row row, Cell cell, List<String> headerNames);
-    public abstract void createbody(Class<?> clazz, SXSSFWorkbook workbook,List<?> data, Sheet sheet,
-                                    Row row, Cell cell, int rowNo) throws IllegalAccessException;
+	public abstract void createHeaders(SXSSFWorkbook workbook, Row row, Cell cell, List<String> headerNames);
+	
+	//mybatis로 모두 바꾼 후 제거 필요
+	public abstract void createbody(Class<?> clazz, SXSSFWorkbook workbook,List<?> data, Sheet sheet,
+									Row row, Cell cell, int rowNo) throws IllegalAccessException;
+	
+	//mybatis 호환, dto 제거버전
+	public abstract void createbody(SXSSFWorkbook workbook,List<?> data, Sheet sheet,
+			Row row, Cell cell, int rowNo) throws IllegalAccessException;
 
-    //일반 메서드 정의
+	//일반 메서드 정의
 
-    /**
-     * 엑셀의 헤더 명칭을 찾는 로직
-     */
-    protected List<String> findHeaderNames(Class<?> clazz) {
-        return Arrays.stream(clazz.getDeclaredFields())
-                .filter(field -> field.isAnnotationPresent(ExcelColumnName.class))
-                .map(field -> field.getAnnotation(ExcelColumnName.class).name())
-                .collect(Collectors.toList());
-    }
+	/**
+	 * 엑셀의 헤더 명칭을 찾는 로직
+	 */
+	protected List<String> findHeaderNames(Class<?> clazz) {
+		return Arrays.stream(clazz.getDeclaredFields())
+				.filter(field -> field.isAnnotationPresent(ExcelColumnName.class))
+				.map(field -> field.getAnnotation(ExcelColumnName.class).name())
+				.collect(Collectors.toList());
+	}
 
 
-    /**
-     * 엑셀의 데이터의 값을 추출하는 메서드
-     */
-    protected List<Object> findFieldValue(Class<?> clazz, Object obj) throws IllegalAccessException {
-        List<Object> result = new ArrayList<>();
-        for (Field field : clazz.getDeclaredFields()) {
-            field.setAccessible(true);
-            result.add(field.get(obj));
-        }
-        return result;
-    }
+	/**
+	 * 엑셀의 데이터의 값을 추출하는 메서드
+	 */
+	protected List<Object> findFieldValue(Class<?> clazz, Object obj) throws IllegalAccessException {
+		List<Object> result = new ArrayList<>();
+		for (Field field : clazz.getDeclaredFields()) {
+			field.setAccessible(true);
+			result.add(field.get(obj));
+		}
+		return result;
+	}
 }

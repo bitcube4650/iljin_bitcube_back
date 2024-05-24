@@ -32,6 +32,7 @@
 		,		A.PRES_NAME
 		,		(SELECT USER_NAME FROM T_CO_CUST_USER X WHERE X.CUST_CODE = A.CUST_CODE AND X.USER_TYPE = '1' LIMIT 1)	AS USER_NAME
 		,		DATE_FORMAT(A.CREATE_DATE, '%Y-%m-%d %H:%i')							AS CREATE_DATE
+		,		A.CERT_YN
 		<include refid="selectCustListSql" />
 		ORDER BY A.CREATE_DATE DESC
 		<if test="pageSize != null and pageSize != ''">
@@ -158,7 +159,7 @@
 		,		A.ADDR					AS addr
 		,		A.ADDR_DETAIL			AS addrDetail
 		,		A.REGNUM_FILE			AS regnumFile
-		,		A.REGNUM_PATH			AS regNumPath
+		,		A.REGNUM_PATH			AS regnumPath
 		,		A.B_FILE				AS bfile
 		,		A.B_FILE_PATH			AS bfilePath
 		,		A.CERT_YN				AS certYn

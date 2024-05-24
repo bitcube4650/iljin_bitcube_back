@@ -2,6 +2,7 @@ package iljin.framework.ebid.custom.service;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -26,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import iljin.framework.core.dto.ResultBody;
+import iljin.framework.core.security.user.CustomUserDetails;
 import iljin.framework.ebid.custom.dto.TCoItemDto;
 import iljin.framework.ebid.custom.entity.TCoItem;
 import iljin.framework.ebid.custom.entity.TCoItemGrp;
@@ -56,20 +58,28 @@ public class ItemService {
 	@Autowired
 	private GeneralDao generalDao;
 	
-	public List itemGrpList() {
-		return tCoItemGrpRepository.findAll();
+	@Transactional
+	public List itemGrpList() throws Exception {
+		
+		List grpList = generalDao.selectGernalList(DB.QRY_SELECT_ITEM_GRP_LIST, new HashMap());
+		return grpList;
 	}
 
-	public Page itemList(Map<String, Object> params) throws Exception {
-		params.put("offset", CommonUtils.getInt(params.get("size")) * CommonUtils.getInt(params.get("page")));
-		params.put("size", CommonUtils.getInt(params.get("size")));
+	@SuppressWarnings("rawtypes")
+	@Transactional
+	public Page itemList(Map<String, Object> params) throws Exception{
+		ResultBody resultBody = new ResultBody();
 		
-		List list = generalDao.selectGernalList(DB.QRY_SELECT_ITEM_LIST, params);
-		int count = CommonUtils.getInt(generalDao.selectGernalCount(DB.QRY_SELECT_ITEM_LIST_CNT, params));
+		if(params.get("size") != null && params.get("page") != null) {
+			params.put("offset", CommonUtils.getInt(params.get("size")) * CommonUtils.getInt(params.get("page")));
+			params.put("size", CommonUtils.getInt(params.get("size")));
+		}
+		
+		Page listPage = generalDao.selectGernalListPage(DB.QRY_SELECT_ITEM_LIST, params);
+		resultBody.setData(listPage);
 
-		Pageable pageable = PagaUtils.pageable(params);
+		return listPage;
 
-		return new PageImpl(list, pageable, count);
 	}
 
     public Specification<TCoItem> searchWith(Map<String, Object> params) {
@@ -108,45 +118,66 @@ public class ItemService {
 
         return predicate;
     }
-    public Optional<TCoItem> findById(String id) {
+    
+    //품목 상세 조회
+    @Transactional
+    public Optional<TCoItem> findById(String id) throws Exception {
+    	Map<String, Object> paramMap = new HashMap<String, Object>();
+    	paramMap.put("id", id);
+    	generalDao.selectGernalObject(id, paramMap);
         return tCoItemRepository.findById(id);
     }
 
     // 품목 등록
-    @SneakyThrows
     @Transactional
-    public ResultBody save(TCoItem tCoItem) {
+    public ResultBody save(Map<String, Object> params, CustomUserDetails user) {
         ResultBody resultBody = new ResultBody();
-        UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        TCoUser user = tCoUserRepository.findById(principal.getUsername()).get();
-        tCoItem.setCreateUser(user);
         
-        // 조회 후, 존재하는 품목코드면 return
-        StringBuilder sb = new StringBuilder(" SELECT COUNT(1) FROM t_co_item WHERE ITEM_CODE = :itemCode");
-        Query query = entityManager.createNativeQuery(sb.toString());
-        query.setParameter("itemCode", tCoItem.getItemCode());
-        BigInteger cnt = (BigInteger) query.getSingleResult();
-        if (cnt.longValue() > 0) {
-            resultBody.setCode("DUP"); // 품목코드 중복됨 -- 이미 등록된 품목코드가 존재합니다.
-        } else {
-        	// 저장
-            tCoItemRepository.save(tCoItem);
-        }
+        params.put("dupCheck", "Y");
+        params.put("itemCodeDetail", params.get("itemCode"));
+        params.put("createUser", user.getUsername());
+        
+        try {
+        	//품목코드에 해당하는 데이터가 있는지 조회
+        	int cnt = (int) generalDao.selectGernalCount(DB.QRY_SELECT_ITEM_CNT, params);
+        	if(cnt >0) {
+        		//이미 있는 품목 코드인 경우
+        		resultBody.setCode("DUP");
+        		resultBody.setStatus(500);
+    			resultBody.setMsg("An error occurred while inserting the item.");
+    			
+        	}else {
+        		//품목 테이블에 insert
+        		generalDao.insertGernal(DB.QRY_INSERT_ITEM, params);
+        	}
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			resultBody.setCode("ERROR");
+			resultBody.setStatus(500);
+			resultBody.setMsg("An error occurred while inserting the item.");
+			resultBody.setData(e.getMessage());
+		}
         
         return resultBody;
     }
 
     // 품목 수정
-    @SneakyThrows
     @Transactional
-	public ResultBody saveUpdate(TCoItem tCoItem) {
+	public ResultBody saveUpdate(Map<String, Object> params) {
 		ResultBody resultBody = new ResultBody();
-        UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        TCoUser user = tCoUserRepository.findById(principal.getUsername()).get();
-        tCoItem.setCreateUser(user);
-        
-        // 저장
-        tCoItemRepository.save(tCoItem);
+		
+		try {
+			generalDao.updateGernal(DB.QRY_UPDATE_ITEM, params);
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			resultBody.setCode("ERROR");
+			resultBody.setStatus(500);
+			resultBody.setMsg("An error occurred while updating the item.");
+			resultBody.setData(e.getMessage());
+		}
+		
         
         return resultBody;
 	}

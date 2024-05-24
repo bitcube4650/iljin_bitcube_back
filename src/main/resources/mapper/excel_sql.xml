@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="excel">
+	<select id="selectFindComplateBidListCnt" resultType="int">
+		/* excel.selectFindComplateBidListCnt */
+		select	count(1) 
+		from t_bi_info_mat tbim 
+		inner join t_bi_info_mat_cust tbimc 
+			on tbim.BI_NO = tbimc.BI_NO 
+			and tbimc.SUCC_YN = 'Y' 
+		inner join t_co_cust_master tccm 
+			on tbimc.CUST_CODE = tccm.CUST_CODE 
+		inner join ( 
+			select	tbimc.BI_NO 
+		 ,       tbimc.ESMT_AMT 
+		 ,       tccm.CUST_NAME 
+		 ,       DATE_FORMAT(tbimc.SUBMIT_DATE, '%Y-%m-%d %H:%i') AS SUBMIT_DATE 
+			,		COUNT(1) as CNT 
+			,		tbimc.SUCC_YN 
+			from t_bi_info_mat_cust tbimc 
+		 inner join t_co_cust_master tccm ON tbimc.CUST_CODE = tccm.CUST_CODE 
+			where tbimc.ESMT_YN in ( '2', '3' ) 
+			group by tbimc.BI_NO, tbimc.ESMT_AMT, SUBMIT_DATE, tccm.CUST_NAME 
+			order by tbimc.SUCC_YN 
+		) c 
+			on tbim.BI_NO = c.BI_NO 
+		left outer join t_co_user tcu 
+			on tbim.CREATE_USER = tcu.USER_ID 
+		left outer join t_co_code codeMd 
+			on tbim.MAT_DEPT = codeMd.CODE_VAL 
+			and codeMd.COL_CODE = 'MAT_DEPT' 
+		left outer join t_co_code codeMp 
+			on tbim.MAT_PROC = codeMp.CODE_VAL 
+			and codeMp.COL_CODE = 'MAT_PROC' 
+		left outer join t_co_code codeMc 
+			on tbim.MAT_CLS = codeMc.CODE_VAL 
+			and codeMc.COL_CODE = 'MAT_CLS' 
+		<if test="userAuth == '4'.toString()">
+		inner join t_co_user_interrelated tcui 
+			on tbim.INTERRELATED_CUST_CODE = tcui.INTERRELATED_CUST_CODE 
+			and tcui.USER_ID = #{userId} 
+		</if>
+		where tbim.ING_TAG = 'A5'
+		<if test="userAuth != '1'.toString() and userAuth != '4'.toString()">
+		and tbim.interrelated_cust_code = #{interrelatedCustCode}
+		</if>
+		and ( tbim.create_user = #{userId} 
+			or tbim.open_att1 = #{userId} 
+			or tbim.open_att2 = #{userId} 
+			or tbim.gongo_id = #{userId} 
+			or tbim.est_bidder = #{userId} 
+			or tbim.est_opener = #{userId} ) 
+		and tbim.UPDATE_DATE BETWEEN concat(#{startDate}, ' 00:00:00') and concat(#{endDate}, ' 23:59:59')
+		<if test="biNo != null and biNo != ''">
+		and tbim.BI_NO = #{biNo} 
+		</if>
+		<if test="biName != null and biName != ''">
+		and tbim.BI_NAME like concat('%',#{biName},'%') 
+		</if>
+		<if test="matDept != null and matDept != ''">
+		and tbim.MAT_DEPT = #{matDept} 
+		</if>
+		<if test="matProc != null and matProc != ''">
+		and tbim.MAT_PROC = #{matProc}
+		</if>
+		<if test="matCls != null and matCls != ''">
+		and tbim.MAT_CLS = #{matCls}
+		</if>
+	</select>
+	
+	<select id="selectFindComplateBidList" resultType="camel">
+		/* excel.selectFindComplateBidList */
+		select	tbim.BI_NO 
+		,		codeMd.CODE_NAME as MAT_DEPT 
+		,		codeMp.CODE_NAME as MAT_PROC 
+		,		codeMc.CODE_NAME as MAT_CLS 
+		,		tbim.MAT_FACTORY 
+		,		tbim.MAT_FACTORY_LINE 
+		,		tbim.MAT_FACTORY_CNT 
+		,		tbim.BI_NAME 
+		,		tbim.BD_AMT 
+		,		tbim.SUCC_AMT 
+		,		tccm.CUST_NAME 
+		,		c.CNT as JOIN_CUST_CNT 
+		,		DATE_FORMAT(tbim.EST_START_DATE, '%Y-%m-%d %H:%i') as EST_START_DATE 
+		,		DATE_FORMAT(tbim.EST_CLOSE_DATE, '%Y-%m-%d %H:%i') as EST_CLOSE_DATE 
+		,		tcu.USER_NAME 
+		,		c.CUST_NAME as CUST_NAME2 
+		,		c.ESMT_AMT 
+		,		c.SUBMIT_DATE 
+		from t_bi_info_mat tbim 
+		inner join t_bi_info_mat_cust tbimc 
+			on tbim.BI_NO = tbimc.BI_NO 
+			and tbimc.SUCC_YN = 'Y' 
+		inner join t_co_cust_master tccm 
+			on tbimc.CUST_CODE = tccm.CUST_CODE 
+		inner join ( 
+			select	tbimc.BI_NO 
+		 ,       tbimc.ESMT_AMT 
+		 ,       tccm.CUST_NAME 
+		 ,       DATE_FORMAT(tbimc.SUBMIT_DATE, '%Y-%m-%d %H:%i') AS SUBMIT_DATE 
+			,		COUNT(1) as CNT 
+			,		tbimc.SUCC_YN 
+			from t_bi_info_mat_cust tbimc 
+		 inner join t_co_cust_master tccm ON tbimc.CUST_CODE = tccm.CUST_CODE 
+			where tbimc.ESMT_YN in ( '2', '3' ) 
+			group by tbimc.BI_NO, tbimc.ESMT_AMT, SUBMIT_DATE, tccm.CUST_NAME 
+			order by tbimc.SUCC_YN 
+		) c 
+			on tbim.BI_NO = c.BI_NO 
+		left outer join t_co_user tcu 
+			on tbim.CREATE_USER = tcu.USER_ID 
+		left outer join t_co_code codeMd 
+			on tbim.MAT_DEPT = codeMd.CODE_VAL 
+			and codeMd.COL_CODE = 'MAT_DEPT' 
+		left outer join t_co_code codeMp 
+			on tbim.MAT_PROC = codeMp.CODE_VAL 
+			and codeMp.COL_CODE = 'MAT_PROC' 
+		left outer join t_co_code codeMc 
+			on tbim.MAT_CLS = codeMc.CODE_VAL 
+			and codeMc.COL_CODE = 'MAT_CLS' 
+		<if test="userAuth == '4'.toString()">
+		inner join t_co_user_interrelated tcui 
+			on tbim.INTERRELATED_CUST_CODE = tcui.INTERRELATED_CUST_CODE 
+			and tcui.USER_ID = #{userId} 
+		</if>
+		where tbim.ING_TAG = 'A5'
+		<if test="userAuth != '1'.toString() and userAuth != '4'.toString()">
+		and tbim.interrelated_cust_code = #{interrelatedCustCode}
+		</if>
+		and ( tbim.create_user = #{userId} 
+			or tbim.open_att1 = #{userId} 
+			or tbim.open_att2 = #{userId} 
+			or tbim.gongo_id = #{userId} 
+			or tbim.est_bidder = #{userId} 
+			or tbim.est_opener = #{userId} ) 
+		and tbim.UPDATE_DATE BETWEEN concat(#{startDate}, ' 00:00:00') and concat(#{endDate}, ' 23:59:59')
+		<if test="biNo != null and biNo != ''">
+		and tbim.BI_NO = #{biNo} 
+		</if>
+		<if test="biName != null and biName != ''">
+		and tbim.BI_NAME like concat('%',#{biName},'%') 
+		</if>
+		<if test="matDept != null and matDept != ''">
+		and tbim.MAT_DEPT = #{matDept} 
+		</if>
+		<if test="matProc != null and matProc != ''">
+		and tbim.MAT_PROC = #{matProc}
+		</if>
+		<if test="matCls != null and matCls != ''">
+		and tbim.MAT_CLS = #{matCls}
+		</if>
+		order by tbim.UPDATE_DATE desc 
+		LIMIT ${offset}, ${pageSize}
+	</select>
+</mapper>

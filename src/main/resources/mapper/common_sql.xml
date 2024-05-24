@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="common">
+	<select id="selectCustUserDetail" resultType="camel">
+		/* common.selectCustUserDetail */
+		SELECT	USER_ID
+		,		CUST_CODE
+		,		PWD_CHG_DATE
+		,		USER_BUSEO
+		,		USER_EMAIL
+		,		USER_HP
+		,		USER_NAME
+		,		USER_POSITION
+		,		USER_PWD
+		,		USER_TEL
+		FROM	T_CO_CUST_USER
+		WHERE	USER_ID = #{userId}
+	</select>
+	
+	<select id="selectCoUserDetail" resultType="camel">
+		/* common.selectCoUserDetail */
+		SELECT	USER_ID
+		,		USER_PWD
+		,		USER_NAME
+		,		USER_AUTH
+		,		USER_EMAIL
+		,		USER_HP
+		,		USER_POSITION
+		,		USER_TEL
+		,		INTERRELATED_CUST_CODE
+		FROM	T_CO_USER
+		WHERE	USER_ID = #{userId}
+	</select>
+</mapper>

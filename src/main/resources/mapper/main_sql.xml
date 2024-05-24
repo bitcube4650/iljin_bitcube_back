@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="main">
+	<select id="selectBidNoticingCnt" resultType="int">
+		/* main.selectNoticingCnt */
+		SELECT	COUNT(1)
+		FROM	T_BI_INFO_MAT tbim
+		INNER JOIN T_CO_CUST_IR tcci
+			ON	tbim.INTERRELATED_CUST_CODE = tcci.INTERRELATED_CUST_CODE
+			AND	tcci.CUST_CODE = #{custCode}
+		LEFT OUTER JOIN T_BI_INFO_MAT_CUST tbimc
+			ON	tbim.BI_NO = tbimc.BI_NO
+			AND	tbimc.CUST_CODE = #{custCode}
+		WHERE	tbim.ING_TAG IN ('A1', 'A2', 'A3')
+		AND		((tbim.BI_MODE = 'A' AND tbimc.CUST_CODE = #{custCode}) OR tbim.BI_MODE = 'B')
+		AND		(tbimc.ESMT_YN IS NULL or tbimc.ESMT_YN IN ('0', '1'))
+	</select>
+	
+	<select id="selectBidSubmittedCnt" resultType="int">
+		/* main.selectSubmittedCnt */
+		SELECT	COUNT(1)
+		FROM T_BI_INFO_MAT tbim
+		INNER JOIN T_CO_CUST_IR tcci
+			ON	tbim.INTERRELATED_CUST_CODE = tcci.INTERRELATED_CUST_CODE
+			AND	tcci.CUST_CODE = #{custCode}
+		LEFT OUTER JOIN T_BI_INFO_MAT_CUST tbimc
+			ON	tbim.BI_NO = tbimc.BI_NO
+			AND	tbimc.CUST_CODE = #{custCode}
+		LEFT OUTER JOIN T_CO_USER tcu
+			ON	tbim.CREATE_USER = tcu.USER_ID
+		WHERE	tbim.BI_MODE IN ('A', 'B')
+		AND		tbim.ING_TAG IN ('A1', 'A2', 'A3')
+		AND		tbimc.ESMT_YN IN ('2')
+		
+	</select>
+	
+	<select id="selectBidAwardedCnt" resultType="int">
+		/* main.selectAwardedCnt */
+		SELECT	COUNT(1)
+		FROM	T_BI_INFO_MAT tbim
+		INNER JOIN T_BI_INFO_MAT_CUST tbimc
+			ON	tbim.BI_NO = tbimc.BI_NO
+		WHERE	tbim.ING_TAG = 'A5'
+		AND		tbimc.SUCC_YN = 'Y'
+		AND		tbimc.CUST_CODE = #{custCode}
+		AND		tbim.UPDATE_DATE >= CURDATE() - INTERVAL 12 MONTH
+	</select>
+	
+	<select id="selectBidUnsuccessfulCnt" resultType="int">
+		/* main.selectUnsuccessfulCnt */
+		SELECT	COUNT(1) 
+		FROM	T_BI_INFO_MAT tbim
+		INNER JOIN T_BI_INFO_MAT_CUST tbimc
+			ON	tbim.BI_NO = tbimc.BI_NO
+		WHERE	tbim.ING_TAG IN ('A5', 'A7')
+		AND		tbimc.CUST_CODE = #{custCode}
+		AND		tbimc.SUCC_YN = 'N' 
+		AND		tbim.UPDATE_DATE >= CURDATE() - INTERVAL 12 MONTH
+	</select>
+	
+	<select id="selectCompletePostedCnt" resultType="int">
+		/* main.selectCompletePostedCnt */
+		SELECT	COUNT(1)
+		FROM	T_BI_INFO_MAT tbim
+		LEFT OUTER JOIN T_BI_INFO_MAT_CUST tbimc
+			ON	tbim.BI_NO = tbimc.BI_NO
+			AND	tbimc.CUST_CODE = #{custCode}
+		WHERE	tbim.ING_TAG IN ('A5', 'A7')
+		AND		(tbim.UPDATE_DATE >= CURDATE() - INTERVAL 12 MONTH)
+		AND		(tbim.BI_MODE = 'B' OR (tbim.BI_MODE = 'A' AND tbimc.CUST_CODE = #{custCode}))
+	</select>
+	
+	<select id="selectCompleteSubmittedCnt" resultType="int">
+		/* main.selectCompleteSubmittedCnt */
+		SELECT	COUNT(1)
+		FROM	T_BI_INFO_MAT tbim
+		INNER JOIN T_BI_INFO_MAT_CUST tbimc
+			ON	tbim.BI_NO = tbimc.BI_NO
+		WHERE	tbim.ING_TAG IN ('A5', 'A7')
+		AND		tbimc.ESMT_YN IN('2' , '3') 
+		AND		(tbim.UPDATE_DATE >= CURDATE() - INTERVAL 12 MONTH)
+		AND		tbimc.CUST_CODE = #{custCode}
+	</select>
+	
+	<select id="selectCompleteAwardedCnt" resultType="int">
+		/* main.selectCompleteAwardedCnt */
+		SELECT	COUNT(1)
+		FROM	T_BI_INFO_MAT tbim
+		INNER JOIN T_BI_INFO_MAT_CUST tbimc
+			ON	tbim.BI_NO = tbimc.BI_NO
+		WHERE	tbim.ING_TAG IN ('A5') 
+		AND		(tbim.UPDATE_DATE >= CURDATE() - INTERVAL 12 MONTH) 
+		AND		tbimc.SUCC_YN = 'Y' 
+		AND		tbimc.CUST_CODE = #{custCode}
+	</select>
+	
+	<select id="selectGroupPwdEditDate" resultType="String">
+		/* main.selectGroupPwdEditDate */
+		SELECT	DATE_FORMAT(PWD_EDIT_DATE, '%Y-%m-%d %H:%i:%s') AS PWD_EDIT_DATE
+		FROM	T_CO_USER
+		WHERE	USER_ID = #{userId}
+	</select>
+	
+	<select id="selectPwdChgDate" resultType="String">
+		/* main.selectPwdChgDate */
+		SELECT	DATE_FORMAT(PWD_CHG_DATE, '%Y-%m-%d %H:%i:%s') AS PWD_CHG_DATE
+		FROM	T_CO_CUST_USER
+		WHERE	USER_ID = #{userId}
+	</select>
+	
+	<select id="selectInterCustCodeList" resultType="camel">
+		/* main.selectInterCustCodeList */
+		SELECT	USER_ID
+		,		INTERRELATED_CUST_CODE
+		FROM	T_CO_USER_INTERRELATED
+		WHERE	USER_ID = #{userId}
+	</select>
+	
+	<select id="selectMainCoBidCnt" resultType="camel">
+		/* main.selectMainCoBidCnt */
+		SELECT	COUNT(CASE WHEN ING_TAG = 'A0' THEN 1 END) AS PLANNING
+		,		COUNT(CASE WHEN ING_TAG IN ('A1', 'A3') and EST_CLOSE_DATE >= SYSDATE() THEN 1 END) AS NOTICING
+		,		COUNT(CASE WHEN ING_TAG IN ('A1', 'A3') AND EST_CLOSE_DATE <![CDATA[<]]> SYSDATE() THEN 1 END) AS BEFORE_OPENING
+		,		COUNT(CASE WHEN ING_TAG = 'A2' THEN 1 END) AS OPENING
+		,		COUNT(CASE WHEN ING_TAG = 'A5' AND UPDATE_DATE >= CURDATE() - INTERVAL 12 MONTH THEN 1 END) AS COMPLETED
+		,		COUNT(CASE WHEN ING_TAG = 'A7' AND UPDATE_DATE >= CURDATE() - INTERVAL 12 MONTH THEN 1 END) AS UNSUCCESSFUL
+		,		COUNT(CASE WHEN ING_TAG IN ('A1','A2', 'A3') THEN 1 END) AS ING
+		FROM	T_BI_INFO_MAT
+		WHERE	1=1
+		<if test='userAuth != null'>
+			<if test ='userAuth.equals("1") or userAuth.equals("2") or userAuth.equals("3")'>
+		AND		INTERRELATED_CUST_CODE = #{interrelatedCode}
+			</if>
+		</if>
+		<if test='userAuth != null'>
+			<if test='userAuth.equals("4")'>
+		AND		INTERRELATED_CUST_CODE IN 
+				(<foreach collection="interrelatedCodeArr" item="item" separator=",">
+					#{item}
+				</foreach>)
+			</if>
+		</if>
+		AND		(CREATE_USER	= #{userId}
+			OR	OPEN_ATT1		= #{userId}
+			OR	OPEN_ATT2		= #{userId}
+			OR	GONGO_ID		= #{userId}
+			OR	EST_BIDDER		= #{userId}
+			OR	EST_OPENER		= #{userId}
+		)
+	</select>
+	
+	<select id="selectPartnerCnt" resultType="camel">
+		/* main.selectPartnerCnt */
+		SELECT	COUNT(CASE WHEN tccm.CERT_YN = 'N' THEN 1 END) as REQUEST
+		,		COUNT(CASE WHEN tccm.CERT_YN = 'Y' THEN 1 END) as APPROVAL
+		,		COUNT(CASE WHEN tccm.CERT_YN = 'D' THEN 1 END) as DELETION
+		FROM	T_CO_CUST_MASTER tccm
+		INNER JOIN T_CO_CUST_IR tcci
+			ON tccm.CUST_CODE = tcci.CUST_CODE
+		WHERE	1=1
+		AND		tcci.INTERRELATED_CUST_CODE = #{interrelatedCode}
+	</select>
+	
+	<select id="selectCoUserCnt" resultType="int">
+		/* main.selectCoUserCnt */
+		SELECT	COUNT(*)
+		FROM	T_CO_USER
+		WHERE	USER_ID = #{userId}
+	</select>
+	
+	<update id="updateCoUserPassword">
+		/* main.updateCoUserPassword */
+		UPDATE	T_CO_USER
+		SET		USER_PWD = #{encodedPassword}
+		,		PWD_EDIT_DATE = NOW()
+		,		PWD_EDIT_YN = 'Y'
+		WHERE	USER_ID = #{userId}
+	</update>
+	
+	<update id="updateCoCustUserPassword">
+		/* main.updateCoUserPassword */
+		UPDATE	T_CO_CUST_USER
+		SET		USER_PWD = #{encodedPassword}
+		,		PWD_CHG_DATE = NOW()
+		WHERE	USER_ID = #{userId}
+	</update>
+	
+	<select id="selectCoUserDetail" resultType="camel">
+		/* main.selectCoUserDetail */
+		SELECT	BIDAUTH
+		,		DEPT_NAME
+		,		OPENAUTH
+		,		DATE_FORMAT(PWD_EDIT_DATE, '%Y-%m-%d') AS PWD_EDIT_DATE
+		,		PWD_EDIT_YN
+		,		USER_EMAIL
+		,		USER_HP
+		,		USER_POSITION
+		,		USER_TEL
+		FROM	T_CO_USER
+		WHERE	USER_ID = #{userId}
+	</select>
+	
+	<select id="selectCoCustUserDetail" resultType="camel">
+		/* main.selectCoCustUserDetail */
+		SELECT	USER_TEL
+		,		USER_HP
+		,		USER_EMAIL
+		,		DATE_FORMAT(PWD_CHG_DATE, '%Y-%m-%d') AS PWD_CHG_DATE
+		,		USER_BUSEO
+		,		USER_POSITION
+		FROM	T_CO_CUST_USER
+		WHERE	USER_ID = #{userId}
+	</select>
+	
+	<update id="updateCoUserDetail">
+		/* main.updateCoUserDetail */
+		UPDATE	T_CO_USER
+		SET		BIDAUTH			= #{bidauth}
+		,		DEPT_NAME		= #{deptName}
+		,		OPENAUTH		= #{openauth}
+		,		USER_EMAIL		= #{userEmail}
+		,		USER_HP			= #{userHp}
+		,		USER_POSITION	= #{userPosition}
+		,		USER_TEL		= #{userTel}
+		,		UPDATE_USER		= #{userId}
+		,		UPDATE_DATE		= NOW()
+		WHERE	USER_ID			= #{userId}
+	</update>
+	
+	<update id="updateCoCustUserDetail">
+		/* main.updateCoCustUserDetail */
+		UPDATE	T_CO_CUST_USER
+		SET		USER_TEL		= #{userTel}
+		,		USER_HP			= #{userHp}
+		,		USER_EMAIL		= #{userEmail}
+		,		USER_BUSEO		= #{userBuseo}
+		,		USER_POSITION	= #{userPosition}
+		,		UPDATE_USER		= #{userId}
+		,		UPDATE_DATE		= NOW()
+		WHERE	USER_ID			= #{userId}
+	</update>
+	
+</mapper>

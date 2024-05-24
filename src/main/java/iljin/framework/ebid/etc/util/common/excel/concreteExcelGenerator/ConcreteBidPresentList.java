@@ -310,4 +310,15 @@ public class ConcreteBidPresentList extends ExcelSupportV2 {
     protected List<Object> findFieldValue(Class<?> clazz, Object obj) throws IllegalAccessException {
         return super.findFieldValue(clazz, obj);
     }
+    
+
+    @Override
+	public SXSSFWorkbook getWorkBookPaging(String interrelatedCustCode, SXSSFWorkbook workbook, List<String> headerNames, Map<String, Object> param) throws IllegalAccessException, IOException {
+    	return null;
+    }
+    
+    @Override
+	public void createbody(SXSSFWorkbook workbook, List<?> data, Sheet sheet, Row row, Cell cell, int rowNo) throws IllegalAccessException {
+    	
+    }
 }

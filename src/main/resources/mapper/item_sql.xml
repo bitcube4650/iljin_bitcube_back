@@ -21,8 +21,16 @@
 				<if test="itemCode != null and itemCode != ''">
 		AND		A.ITEM_CODE LIKE CONCAT('%', #{itemCode}, '%')
 				</if>
+				<if test="itemCodeDetail != null and itemCodeDetail != ''">
+		AND		A.ITEM_CODE  = #{itemCodeDetail}
+				</if>
 				<if test="itemName != null and itemName != ''">
 		AND		A.ITEM_NAME LIKE CONCAT('%', #{itemName}, '%')
+				</if>
+			</when>
+			<when test="dupCheck != null and dupCheck != ''">
+				<if test="itemCode != null and itemCode != ''">
+		AND		A.ITEM_CODE  = #{itemCode}
 				</if>
 			</when>
 			<otherwise>
@@ -37,6 +45,7 @@
 		/* item.selectItemList */
 		SELECT	A.ITEM_CODE
 		,		A.ITEM_NAME
+		,	    C.ITEM_GRP_CD
 		,		C.GRP_NM
 		,		A.USE_YN
 		,		B.USER_NAME AS CREATE_USER
@@ -49,11 +58,13 @@
 		WHERE 1=1
 		<include refid="selectItemListSql"/>
 		ORDER BY A.ITEM_CODE
-		LIMIT #{offset}, #{size}
+		<if test="size != null and size != ''">
+		LIMIT ${offset}, ${size}
+		</if>
 	</select>
 	
-	<select id="selectItemListCnt" resultType="int">
-		/* item.selectItemListCnt */
+	<select id="selectItemList_count" resultType="int">
+		/* item.selectItemList_count */
 		SELECT	COUNT(*)
 		FROM	T_CO_ITEM A
 		LEFT OUTER JOIN T_CO_USER B
@@ -63,4 +74,33 @@
 		WHERE 1=1
 		<include refid="selectItemListSql"/>
 	</select>
+	
+	<insert id="insertItem">
+		/* item.insertItem */
+		INSERT INTO T_CO_ITEM (
+					ITEM_CODE
+			,		ITEM_NAME
+			,		ITEM_GRP_CD
+			,		USE_YN
+			,		CREATE_USER
+			,		CREATE_DATE
+		) VALUES (
+					#{itemCode}
+			,		#{itemName}
+			,		#{itemGrpCd}
+			,		#{useYn}
+			,		#{createUser}
+			,		NOW()
+		)
+	
+	</insert>
+	
+	<update id="updateItem">
+		/* item.updateItem */
+		UPDATE T_CO_ITEM
+		SET	ITEM_NAME = #{itemName}
+		,	ITEM_GRP_CD = #{itemGrpCd}
+		,	USE_YN = #{useYn}
+		WHERE ITEM_CODE = #{itemCode}
+	</update>
 </mapper>

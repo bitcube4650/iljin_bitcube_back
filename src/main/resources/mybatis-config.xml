@@ -13,6 +13,10 @@
 		<mapper resource="mapper/item_sql.xml"/>
 		<mapper resource="mapper/cust_sql.xml"/>
 		<mapper resource="mapper/user_sql.xml"/>
+		<mapper resource="mapper/main_sql.xml"/>
+		<mapper resource="mapper/common_sql.xml"/>
+		<mapper resource="mapper/excel_sql.xml"/>
+		<mapper resource="mapper/schedule_sql.xml"/>
 		<mapper resource="mapper/statistics_sql.xml"/>
 	</mappers>
 </configuration>

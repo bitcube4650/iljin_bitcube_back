@@ -40,31 +40,63 @@ public class MainController {
 	
 	//전자입찰 건수 조회
 	@PostMapping("/selectBidCnt")
-    public BidCntDto selectBidCnt(@RequestBody Map<String, Object> params) throws IOException {
-
-        return mainService.selectBidCnt(params);
-    }
+	public ResultBody selectBidCnt(@RequestBody Map<String, Object> params) throws IOException {
+		ResultBody resultBody = new ResultBody();
+		try { 
+			resultBody = mainService.selectBidCnt(params);
+		} catch (Exception e) {
+			resultBody.setCode("ERROR");
+			resultBody.setStatus(500);
+			resultBody.setMsg("전자입찰 건수 조회에 실패하였습니다.");
+			log.error("{} Error : {}", this.getClass(), e.getMessage());
+		}
+		return resultBody;
+	}
 	
 	//협력사 업채수 조회
 	@PostMapping("/selectPartnerCnt")
-    public PartnerCntDto selectPartnerCnt(@RequestBody Map<String, Object> params) throws IOException {
-
-        return mainService.selectPartnerCnt(params);
-    }
+	public ResultBody selectPartnerCnt(@RequestBody Map<String, Object> params) throws IOException {
+		ResultBody resultBody = new ResultBody();
+		try { 
+			resultBody = mainService.selectPartnerCnt(params);
+		} catch (Exception e) {
+			resultBody.setCode("ERROR");
+			resultBody.setStatus(500);
+			resultBody.setMsg("협력사 업채수 조회에 실패하였습니다.");
+			log.error("{} Error : {}", this.getClass(), e.getMessage());
+		}
+		return resultBody;
+	}
 	
 	//협력사 전자입찰 건수 조회
 	@PostMapping("/selectPartnerBidCnt")
-    public PartnerBidCntDto selectPartnerBidCnt(@RequestBody Map<String, Object> params) throws IOException {
-
-        return mainService.selectPartnerBidCnt(params);
-    }
+	public ResultBody selectPartnerBidCnt(@RequestBody Map<String, Object> params) throws IOException {
+		ResultBody resultBody = new ResultBody();
+		try {
+			resultBody = mainService.selectPartnerBidCnt(params);
+		} catch (Exception e) {
+			resultBody.setCode("ERROR");
+			resultBody.setStatus(500);
+			resultBody.setMsg("전자입찰 건수 조회에 실패하였습니다.");
+			log.error("{} Error : {}", this.getClass(), e.getMessage());
+		}
+		return resultBody;
+	}
 	
 	//입찰완료 조회
 	@PostMapping("/selectCompletedBidCnt")
-    public PartnerCompletedBidCntDto selectCompletedBidCnt(@RequestBody Map<String, Object> params) throws IOException {
-
-        return mainService.selectCompletedBidCnt(params);
-    }
+	public ResultBody selectCompletedBidCnt(@RequestBody Map<String, Object> params) throws IOException {
+		ResultBody resultBody = new ResultBody();
+		try {
+			resultBody = mainService.selectCompletedBidCnt(params);
+		} catch (Exception e) {
+			resultBody.setCode("ERROR");
+			resultBody.setStatus(500);
+			resultBody.setMsg("입찰완료 조회에 실패하였습니다.");
+			log.error("{} Error : {}", this.getClass(), e.getMessage());
+		}
+		return resultBody;
+	}
 	
 	//비밀번호 확인
 	@PostMapping("/checkPwd")
@@ -85,20 +117,39 @@ public class MainController {
 	//유저 정보 조회
 	@PostMapping("/selectUserInfo")
 	public ResultBody selectUserInfo(@RequestBody Map<String, Object> params) {
-		
-		return mainService.selectUserInfo(params);
-				
+		ResultBody resultBody = new ResultBody();
+		try {
+			resultBody = mainService.selectUserInfo(params);
+		} catch (Exception e) {
+			resultBody.setCode("ERROR");
+			resultBody.setStatus(500);
+			resultBody.setMsg("An error occurred while selecting the user info.");
+			resultBody.setData(e.getMessage());
+			
+			log.error("{} Error : {}", this.getClass(), e.getMessage());
+		}
+		return resultBody;
 	}
 	
 	//유저 정보 변경
 	@PostMapping("/saveUserInfo")
 	public ResultBody saveUserInfo(@RequestBody Map<String, Object> params) {
-		
-		return mainService.saveUserInfo(params);
-				
+		ResultBody resultBody = new ResultBody();
+		try {
+			resultBody = mainService.saveUserInfo(params);
+		} catch (Exception e) {
+			resultBody.setCode("ERROR");
+			resultBody.setStatus(500);
+			resultBody.setMsg("An error occurred while updating the user info.");
+			resultBody.setData(e.getMessage());
+			
+			log.error("{} Error : {}", this.getClass(), e.getMessage());
+		}
+		return resultBody;
 	}
 	
-	//계열사 정보 조회
+	//계열사 정보 조회 (사용하지 않음)
+	@Deprecated
 	@PostMapping("/selectCompInfo")
 	public ResultBody selectCompInfo(@RequestBody Map<String, Object> params) {
 		
@@ -123,14 +174,14 @@ public class MainController {
 	}
 	
 
-	// 초기 계열사 사용자 비밀번호 변경 처리
+	// 초기 계열사 사용자 비밀번호 변경 처리 (호출 메소드를 못찾음 확인 필요)
 	@PostMapping("/chgPwdFirst")
-    public void chgPwdFirst() {
+	public void chgPwdFirst() {
 		log.info("-----------------------chgPwdFirst start----------------------");
 //		try {
 			mainService.chgPwdFirst();
 //		}catch(Exception e) {
 //		}
 		log.info("-----------------------chgPwdFirst end----------------------");
-    }
+	}
 }

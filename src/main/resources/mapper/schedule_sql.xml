@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="schedule">
+	<update id="updateEbidStatusDel">
+		/* schedule.updateEbidStatusDel */
+		UPDATE T_BI_INFO_MAT
+		SET ING_TAG = 'D' 
+		,	UPDATE_DATE = NOW() 
+		,	UPDATE_USER = 'system' 
+		WHERE EST_CLOSE_DATE <![CDATA[ < ]]> NOW() 
+		AND ING_TAG = 'A0'
+		<selectKey keyColumn="G_BI_NO" keyProperty="gBiNo" resultType="String" order="BEFORE">
+			SELECT GROUP_CONCAT(BI_NO) as G_BI_NO
+			FROM T_BI_INFO_MAT
+			WHERE EST_CLOSE_DATE <![CDATA[ < ]]> NOW() 
+			AND ING_TAG = 'A0'
+		</selectKey>
+	</update>
+	
+	<insert id="insertTBiLog">
+		/* schedule.insertTBiLog */
+		INSERT INTO t_bi_log (
+			bi_no,
+			user_id, 
+			log_text, 
+			create_date
+		) SELECT
+			a.biNo, 
+			'System', 
+			#{msg}, 
+			sysdate()
+		from (
+			select jt.datas as biNo
+			from t_bi_info_mat tbim
+			inner join json_table(
+				    replace(json_array(#{gBiNo}), ',', '","'),
+				    '$[*]' columns (datas varchar(50) path '$')
+			) jt
+				on tbim.BI_NO = jt.datas
+		) a
+	</insert>
+	
+	<update id="updateIngTagForLast30Days">
+		/* schedule.updateIngTagForLast30Days */
+		UPDATE T_BI_INFO_MAT
+		SET ING_TAG = 'A7'
+		,	UPDATE_DATE = NOW() 
+		,	UPDATE_USER = 'System'
+		WHERE BID_OPEN_DATE <![CDATA[ < ]]> DATE_SUB(NOW(), INTERVAL 30 DAY) 
+		AND ING_TAG IN ('A1', 'A2', 'A3')
+		<selectKey keyColumn="G_BI_NO" keyProperty="gBiNo" resultType="String" order="BEFORE">
+			SELECT GROUP_CONCAT(BI_NO) as G_BI_NO
+			FROM T_BI_INFO_MAT
+			WHERE BID_OPEN_DATE <![CDATA[ < ]]> DATE_SUB(NOW(), INTERVAL 30 DAY) 
+			AND ING_TAG IN ('A1', 'A2', 'A3')
+		</selectKey>
+	</update>
+	
+	<insert id="insertTBiInfoMatHist">
+		/* schedule.insertTBiInfoMatHist */
+		INSERT into t_bi_info_mat_hist (
+		BI_NO, BI_NAME, BI_MODE, INS_MODE, BID_JOIN_SPEC, SPECIAL_COND, SUPPLY_COND, SPOT_DATE, SPOT_AREA, SUCC_DECI_METH, BID_OPEN_DATE, AMT_BASIS, 
+		BD_AMT, SUCC_AMT, EST_START_DATE, EST_CLOSE_DATE, EST_OPENER, EST_BIDDER, EST_OPEN_DATE, OPEN_ATT1, OPEN_ATT1_SIGN, OPEN_ATT2, OPEN_ATT2_SIGN, 
+		ING_TAG, CREATE_USER, CREATE_DATE, UPDATE_USER, UPDATE_DATE, ITEM_CODE, GONGO_ID, PAY_COND, WHY_A3, WHY_A7, BI_OPEN, INTERRELATED_CUST_CODE, 
+		REAL_AMT, ADD_ACCEPT, MAT_DEPT, MAT_PROC, MAT_CLS, MAT_FACTORY, MAT_FACTORY_LINE, MAT_FACTORY_CNT 
+		) select 
+		BI_NO, BI_NAME, BI_MODE, INS_MODE, BID_JOIN_SPEC, SPECIAL_COND, SUPPLY_COND, SPOT_DATE, SPOT_AREA, SUCC_DECI_METH, BID_OPEN_DATE, AMT_BASIS, 
+		BD_AMT, SUCC_AMT, EST_START_DATE, EST_CLOSE_DATE, EST_OPENER, EST_BIDDER, EST_OPEN_DATE, OPEN_ATT1, OPEN_ATT1_SIGN, OPEN_ATT2, OPEN_ATT2_SIGN, 
+		ING_TAG, CREATE_USER, CREATE_DATE, UPDATE_USER, UPDATE_DATE, ITEM_CODE, GONGO_ID, PAY_COND, WHY_A3, WHY_A7, BI_OPEN, INTERRELATED_CUST_CODE, 
+		REAL_AMT, ADD_ACCEPT, MAT_DEPT, MAT_PROC, MAT_CLS, MAT_FACTORY, MAT_FACTORY_LINE, MAT_FACTORY_CNT 
+		from t_bi_info_mat tbim
+		inner join json_table(
+			    replace(json_array(#{gBiNo}), ',', '","'),
+			    '$[*]' columns (datas varchar(50) path '$')
+		) jt
+			on tbim.BI_NO = jt.datas
+	</insert>
+	
+	<select id="selectSendMailList" resultType="camel">
+		/* schedule.selectSendMailList */
+		select	te.MAIL_ID 
+		,		te.TITLE 
+		,		te.CONTS 
+		,		te.RECEIVES 
+		,		te.SEND_FLAG 
+		,		te.ERROR_MSG 
+		,		te.SEND_DATE 
+		,		te.CREATE_DATE 
+		,		te.FROM_MAIL 
+		from t_email te  
+		where te.SEND_FLAG = '0' 
+		and te.CREATE_DATE >= date_sub(now(), interval 10 minute) 
+	</select>
+	
+	<update id="updateEmailSendResponse">
+		/* schedule.updateEmailSendResponse */
+		UPDATE T_EMAIL
+		SET SEND_FLAG = #{sendFlag}
+		,	ERROR_MSG = #{errMsg} 
+		WHERE MAIL_ID = #{mailId}
+	</update>
+	
+	<select id="ebidCloseSendCustAlarm" resultType="camel">
+		/* schedule.ebidCloseSendCustAlarm */
+		select	tbim.BI_NO 
+		,		tbim.BI_NAME 
+		,		DATE_FORMAT(tbim.est_start_date, '%Y-%m-%d %H:%i') AS est_start_date 
+		,		DATE_FORMAT(tbim.est_close_date, '%Y-%m-%d %H:%i') AS est_close_date 
+		,		tci.INTERRELATED_NM 
+		FROM t_bi_info_mat tbim 
+		INNER JOIN t_co_interrelated tci 
+			on tbim.INTERRELATED_CUST_CODE = tci.INTERRELATED_CUST_CODE 
+		where (now() <![CDATA[ > ]]> date_sub(tbim.est_close_date, interval 2 day) 
+		and now() <![CDATA[ < ]]> date_sub(tbim.est_close_date, interval 1 day)) 
+		and tbim.ing_tag in ('A1', 'A3') 
+	</select>
+	
+	<select id="ebidCloseSendCustReceiverList" resultType="camel">
+		/* schedule.ebidCloseSendCustReceiverList */
+		select	tccu.USER_EMAIL  
+		,		a.from_email 
+		,		REGEXP_REPLACE(tccu.USER_HP , '[^0-9]+', '') as USER_HP 
+		,		tccu.USER_NAME 
+		from 
+		( 
+			select	jb.datas as user_id 
+			,		tcu.user_email as from_email 
+			from t_bi_info_mat_cust tbimc 
+			inner join json_table( 
+				replace(json_array(tbimc.USEMAIL_ID), ',', '","'), 
+				'$[*]' columns (datas varchar(50) path '$') 
+			) jb 
+			inner join t_bi_info_mat tbim 
+				on tbimc.bi_no = tbim.bi_no 
+			left outer join t_co_user tcu 
+				on tbim.create_user = tcu.user_id 
+			where tbimc.bi_no = #{biNo} 
+			and tbimc.esmt_yn NOT IN ( '2', '3' ) 
+		) a 
+		inner join t_co_cust_user tccu 
+			on a.user_id = tccu.user_id 
+			and tccu.USE_YN = 'Y' 
+		group by tccu.USER_EMAIL 
+	</select>
+	
+	<update id="updateTCoUserUseYn">
+		/*  schedule.updateTCoUserUseYn */
+		UPDATE T_CO_USER 
+		SET	USE_YN = 'N' 
+		,	UPDATE_USER='SYSTEM' 
+		,	UPDATE_DATE = SYSDATE() 
+		WHERE USER_ID IN ( :userId ) 
+		AND USE_YN = 'Y' 
+	</update>
+	
+</mapper>
