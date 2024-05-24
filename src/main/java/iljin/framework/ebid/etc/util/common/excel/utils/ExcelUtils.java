@@ -1,24 +1,5 @@
 package iljin.framework.ebid.etc.util.common.excel.utils;
 
-import com.opencsv.CSVWriter;
-import iljin.framework.ebid.etc.util.CommonUtils;
-import iljin.framework.ebid.etc.util.common.excel.concreteExcelGenerator.*;
-import iljin.framework.ebid.etc.util.common.excel.dto.BidProgressResponseDto;
-import iljin.framework.ebid.etc.util.common.excel.repository.ExcelRepository;
-import lombok.extern.slf4j.Slf4j;
-
-import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.ss.util.CellRangeAddress;
-import org.apache.poi.xssf.streaming.SXSSFSheet;
-import org.apache.poi.xssf.streaming.SXSSFWorkbook;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.jetbrains.annotations.NotNull;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
@@ -31,8 +12,47 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.usermodel.BorderStyle;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.RichTextString;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.VerticalAlignment;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.streaming.SXSSFSheet;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import com.opencsv.CSVWriter;
+
+import iljin.framework.ebid.etc.util.CommonUtils;
+import iljin.framework.ebid.etc.util.common.excel.concreteExcelGenerator.ConcreteBiInfoDetailList;
+import iljin.framework.ebid.etc.util.common.excel.concreteExcelGenerator.ConcreteBidCompleteList;
+import iljin.framework.ebid.etc.util.common.excel.concreteExcelGenerator.ConcreteBidPresentList;
+import iljin.framework.ebid.etc.util.common.excel.concreteExcelGenerator.ConcreteBiddingDetail;
+import iljin.framework.ebid.etc.util.common.excel.concreteExcelGenerator.ConcreteCompanyBidPerformance;
+import iljin.framework.ebid.etc.util.common.excel.dto.BidProgressResponseDto;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
@@ -40,8 +60,6 @@ public final class ExcelUtils implements ExcelSupport {
 
     private static final int MAX_ROW = 1000;
 
-    @Autowired
-    private ExcelRepository excelRepository;
     @Autowired
     private ConcreteCompanyBidPerformance concreteCompanyBidPerformance;
     @Autowired
@@ -208,8 +226,6 @@ public final class ExcelUtils implements ExcelSupport {
 
         } catch (IOException e) {
             log.error("Excel Download Error Message = {}", e.getMessage());
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         }
     }
@@ -549,15 +565,9 @@ public final class ExcelUtils implements ExcelSupport {
         StringBuilder insModeContentBuilder = new StringBuilder();
 
         if(!"직접입력".equals(insModeFlag)) {//파일입력인 경우
-        	//파일등록시 내역사항에 들어가는 파일리스트
-            index = 0;
-            for(Map<String, Object> map : fileContent) {
-                insModeContentBuilder.append(map.get("fileNm"));
-                // 다음 요소가 있으면 공백 추가
-                if (++index < fileContent.size()) {
-                    insModeContentBuilder.append("\n");
-                }
-            }
+            insModeContentBuilder.append(fileContent.stream()
+                    .filter(map -> "K".equals(map.get("fileFlag")))
+                    .collect(Collectors.toList()).get(0).get("fileNm"));
         }
         
         /*
@@ -597,7 +607,7 @@ public final class ExcelUtils implements ExcelSupport {
         String openAtt2        = CommonUtils.getString(result.get("openAtt2"), "");      //입회자2
         String supplyCond      = CommonUtils.getString(result.get("supplyCond"), "");    //납품 조건
         String insMode         = CommonUtils.getString(result.get("insMode"), "");       //내역 방식
-        String insModeContent  = CommonUtils.getString(insModeContentBuilder, "");       //내역사항
+        String insModeContent  = CommonUtils.getString(insModeContentBuilder, "");       //세부내역
 
         /*
         ** 입찰 기본정보
@@ -693,15 +703,153 @@ public final class ExcelUtils implements ExcelSupport {
             	startIdx++;
             }
             
-            
             //내역사항 셀 세로 합치기
             CellRangeAddress mergedRegion = new CellRangeAddress(28, 28+tableContent.size(), 0, 0); 
             xssfSheet.addMergedRegion(mergedRegion); 
 
-            
+           	List<Map<String,Object>> innerFileList = fileContent.stream()
+                    .filter(map -> "0".equals(map.get("fileFlag")))
+                    .collect(Collectors.toList());
+        	
+        	List<Map<String,Object>> outerFileList = fileContent.stream()
+                    .filter(map -> "1".equals(map.get("fileFlag")))
+                    .collect(Collectors.toList());
+        	
+        	if(innerFileList.size() > 0 || outerFileList.size() > 0) {
+    	        StringBuilder fileNmBuilder = new StringBuilder();
+    	        
+    	        int lastRowNum = xssfSheet.getLastRowNum() + 1; 
+    	        Row newRow = xssfSheet.createRow(lastRowNum); 
+
+    	        Cell cell0 = newRow.createCell(0);
+    	        Cell cell1 = newRow.createCell(1);
+       	        Cell cell2 = newRow.createCell(2);
+       	        Cell cell3 = newRow.createCell(3);
+       	        Cell cell4 = newRow.createCell(4);
+       	        Cell cell5 = newRow.createCell(5);
+       	        Cell cell6 = newRow.createCell(6);
+    	        
+    	        cell0.setCellValue("첨부파일");
+
+        		if(innerFileList.size() > 0) {
+        			fileNmBuilder.append("대내용\n");
+        	        for(Map<String, Object> map : innerFileList) {
+        	        	fileNmBuilder.append(map.get("fileNm"));
+        	        	fileNmBuilder.append("\n");
+        	        }
+
+        		}
+        		
+        		if(outerFileList.size() > 0) {
+        			fileNmBuilder.append( innerFileList.size() > 0 ? "\n대외용\n" : "대외용\n");
+        	        for(Map<String, Object> map : outerFileList) {
+        	        	fileNmBuilder.append(map.get("fileNm"));
+        	        	fileNmBuilder.append("\n");
+        	        }
+        		}
+        		
+        		RichTextString richText = xssfWorkBook.getCreationHelper().createRichTextString(fileNmBuilder.toString());
+
+        		cell1.setCellValue(CommonUtils.getString(richText, ""));
+        		xssfSheet.addMergedRegion(new CellRangeAddress(lastRowNum, lastRowNum, 1, 6));
+        		CellStyle style = xssfWorkBook.createCellStyle();
+        		style.setWrapText(true);
+        		style.setBorderLeft(BorderStyle.THIN);
+        		style.setBorderRight(BorderStyle.THIN);
+        		style.setBorderTop(BorderStyle.THIN);
+        		style.setBorderBottom(BorderStyle.THIN);
+        		style.setVerticalAlignment(VerticalAlignment.TOP);
+        		cell0.setCellStyle(style);
+        		cell1.setCellStyle(style);
+        		cell2.setCellStyle(style);
+        		cell3.setCellStyle(style);
+        		cell4.setCellStyle(style);
+        		cell5.setCellStyle(style);
+        		cell6.setCellStyle(style);
+        		newRow.setHeightInPoints(409.60f);
+        	}
+        		
             
         }else {
-        	xssfSheet.getRow(28).getCell(1).setCellValue(insModeContent);//내역사항
+        	xssfSheet.getRow(28).getCell(1).setCellValue(insModeContent);//세부내역
+        	List<Map<String,Object>> innerFileList = fileContent.stream()
+                    .filter(map -> "0".equals(map.get("fileFlag")))
+                    .collect(Collectors.toList());
+        	
+        	List<Map<String,Object>> outerFileList = fileContent.stream()
+                    .filter(map -> "1".equals(map.get("fileFlag")))
+                    .collect(Collectors.toList());
+        	
+        	if(innerFileList.size() > 0 || outerFileList.size() > 0) {
+    	        StringBuilder fileNmBuilder = new StringBuilder();
+    	       // xssfSheet.getRow(29).createCell(0).setCellValue("첨부파일");
+    			
+    	        
+    	        Row row29 = xssfSheet.getRow(29);
+    	        if (row29 == null) {
+    	            row29 = xssfSheet.createRow(29);
+    	        }
+    	        Cell cell0 = row29.getCell(0);
+    	        if (cell0 == null) {
+    	            cell0 = row29.createCell(0);
+    	        }
+    	        cell0.setCellValue("첨부파일");
+    	        
+    	        
+        		if(innerFileList.size() > 0) {
+        			fileNmBuilder.append("대내용\n");
+        	        for(Map<String, Object> map : innerFileList) {
+        	        	fileNmBuilder.append(map.get("fileNm"));
+        	        	fileNmBuilder.append("\n");
+        	        }
+
+        		}
+        		
+        		if(outerFileList.size() > 0) {
+        			fileNmBuilder.append( innerFileList.size() > 0 ? "\n대외용\n" : "대외용\n");
+        	        for(Map<String, Object> map : outerFileList) {
+        	        	fileNmBuilder.append(map.get("fileNm"));
+        	        	fileNmBuilder.append("\n");
+        	        }
+        		}
+        		Cell cell = row29.createCell(1);
+        		Cell cell2 = row29.createCell(2);
+				Cell cell3 = row29.createCell(3);
+				Cell cell4 = row29.createCell(4);
+				Cell cell5 = row29.createCell(5);
+				Cell cell6 = row29.createCell(6);
+				Cell cell7 = row29.createCell(7);
+				Cell cell8 = row29.createCell(8);
+				Cell cell9 = row29.createCell(9);
+				Cell cell10 = row29.createCell(10);				
+        		
+        		RichTextString richText = xssfWorkBook.getCreationHelper().createRichTextString(fileNmBuilder.toString());
+        		
+
+        		row29.getCell(1).setCellValue(CommonUtils.getString(richText, ""));
+        		xssfSheet.addMergedRegion(new CellRangeAddress(29, 29, 1, 10));
+        		CellStyle style = xssfWorkBook.createCellStyle();
+        		style.setWrapText(true);
+        		style.setBorderLeft(BorderStyle.THIN);
+        		style.setBorderRight(BorderStyle.THIN);
+        		style.setBorderTop(BorderStyle.THIN);
+        		style.setBorderBottom(BorderStyle.THIN);
+        		style.setVerticalAlignment(VerticalAlignment.TOP);
+        		cell0.setCellStyle(style);
+        		cell.setCellStyle(style);
+        		cell2.setCellStyle(style);
+        		cell3.setCellStyle(style);
+        		cell4.setCellStyle(style);
+        		cell5.setCellStyle(style);
+        		cell6.setCellStyle(style);
+        		cell7.setCellStyle(style);
+        		cell8.setCellStyle(style);
+        		cell9.setCellStyle(style);
+        		cell10.setCellStyle(style);
+        		row29.setHeightInPoints(409.60f);
+
+        	}
+        	
         }
 
         response.setCharacterEncoding("UTF-8");
@@ -715,7 +863,6 @@ public final class ExcelUtils implements ExcelSupport {
         outputStream.close();
     }
 }
-
 
 
 

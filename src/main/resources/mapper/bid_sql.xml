@@ -16,25 +16,25 @@
 		</if>
 		<if test="userAuth == '1' or userAuth == '2' or userAuth == '3'">
 		AND		A.INTERRELATED_CUST_CODE = #{interrelatedCustCode}
-		AND		(	A.CREATE_USER = #{userid}
-				OR	A.OPEN_ATT1 = #{userid}
-				OR	A.OPEN_ATT2 = #{userid}
-				OR	A.GONGO_ID = #{userid}
-				OR	A.EST_BIDDER = #{userid}
-				OR	A.EST_OPENER = #{userid})
+		AND		(	A.CREATE_USER = #{userId}
+				OR	A.OPEN_ATT1 = #{userId}
+				OR	A.OPEN_ATT2 = #{userId}
+				OR	A.GONGO_ID = #{userId}
+				OR	A.EST_BIDDER = #{userId}
+				OR	A.EST_OPENER = #{userId})
 		</if>
 		<if test="userAuth == '4'">
-		AND		(	A.CREATE_USER = #{userid}
-				OR	A.OPEN_ATT1 = #{userid}
-				OR	A.OPEN_ATT2 = #{userid}
-				OR	A.GONGO_ID = #{userid}
-				OR	A.EST_BIDDER = #{userid}
-				OR	A.EST_OPENER = #{userid})
-		AND		(
-				<foreach item="item" collection="custCodes" open=" OR A.INTERRELATED_CUST_CODE IN (" separator="," close=")">
+		AND		(	A.CREATE_USER = #{userId}
+				OR	A.OPEN_ATT1 = #{userId}
+				OR	A.OPEN_ATT2 = #{userId}
+				OR	A.GONGO_ID = #{userId}
+				OR	A.EST_BIDDER = #{userId}
+				OR	A.EST_OPENER = #{userId})
+				OR	A.INTERRELATED_CUST_CODE IN (
+				<foreach item="item" collection="custCodes" separator=",">
 					#{item}
 				</foreach>
-				OR	A.INTERRELATED_CUST_CODE = #{interrelatedCustCode})
+				)
 		</if>
 	</select>
 	
@@ -42,8 +42,8 @@
 		/* bid.selectProgresslist */
 		SELECT	A.BI_NO			AS BI_NO
 		,		A.BI_NAME		AS BI_NAME
-		,		DATE_FORMAT(A.EST_START_DATE, '%Y-%M-%D %H:%I')			AS EST_START_DATE
-		,		DATE_FORMAT(A.EST_CLOSE_DATE, '%Y-%M-%D %H:%I')			AS EST_CLOSE_DATE
+		,		DATE_FORMAT(A.EST_START_DATE, '%Y-%m-%d %H:%i')			AS EST_START_DATE
+		,		DATE_FORMAT(A.EST_CLOSE_DATE, '%Y-%m-%d %H:%i')			AS EST_CLOSE_DATE
 		,		CASE WHEN A.BI_MODE = 'A' THEN '지명' ELSE '일반' END		AS BI_MODE
 		,		CASE WHEN A.INS_MODE = '1' THEN '파일' ELSE '직접입력' END	AS INS_MODE
 		,		A.ING_TAG		AS ING_TAG
@@ -66,30 +66,37 @@
 		</if>
 		<if test='userAuth == "1" or userAuth == "2" or userAuth == "3"'>
 		AND		A.INTERRELATED_CUST_CODE = #{interrelatedCustCode}
-		AND		(	A.CREATE_USER = #{userid}
-				OR	A.OPEN_ATT1 = #{userid}
-				OR	A.OPEN_ATT2 = #{userid}
-				OR	A.GONGO_ID = #{userid}
-				OR	A.EST_BIDDER = #{userid}
-				OR	A.EST_OPENER = #{userid})
+		AND		(	A.CREATE_USER = #{userId}
+				OR	A.OPEN_ATT1 = #{userId}
+				OR	A.OPEN_ATT2 = #{userId}
+				OR	A.GONGO_ID = #{userId}
+				OR	A.EST_BIDDER = #{userId}
+				OR	A.EST_OPENER = #{userId})
 		</if>
 		<if test='userAuth == "4"'>
-		AND		(	A.CREATE_USER = #{userid}
-				OR	A.OPEN_ATT1 = #{userid}
-				OR	A.OPEN_ATT2 = #{userid}
-				OR	A.GONGO_ID = #{userid}
-				OR	A.EST_BIDDER = #{userid}
-				OR	A.EST_OPENER = #{userid})
-		AND		(
-				<foreach item="item" collection="custCodes" open=" OR A.INTERRELATED_CUST_CODE IN (" separator="," close=")">
-					#{item}w
-				</foreach>
-				OR	A.INTERRELATED_CUST_CODE = #{interrelatedCustCode})
+		AND		(	A.CREATE_USER = #{userId}
+				OR	A.OPEN_ATT1 = #{userId}
+				OR	A.OPEN_ATT2 = #{userId}
+				OR	A.GONGO_ID = #{userId}
+				OR	A.EST_BIDDER = #{userId}
+				OR	A.EST_OPENER = #{userId})
+				OR	A.INTERRELATED_CUST_CODE IN (
+					<foreach item="item" collection="custCodes" separator=",">
+						#{item}
+					</foreach>
+					)
 		</if>
 		ORDER BY A.BI_NO DESC
 		LIMIT ${offset}, ${pageSize}
 	</select>
 	
+	<select id="selectInterCustCode" resultType="camel">
+		/*bid.selectInterCustCode*/
+		SELECT 	a.user_id AS user_id
+		, 		a.interrelated_cust_code AS interrelated_cust_code  
+	    FROM t_co_user_interrelated a  
+	    WHERE a.user_id = #{userId}
+	</select>
 	<select id="selectProgressDetailList" resultType="camel">
 	/* bid.selectProgressDetailList*/
 		SELECT 	a.bi_no AS bi_no
@@ -197,6 +204,7 @@
         END AS file_flag_ko
         ,		a.file_nm AS file_NM
         ,       a.file_path AS file_path 
+        ,		a.FILE_ID
 	    from t_bi_upload a 
 	    WHERE a.use_yn = 'Y'  
 	    and a.bi_no = #{biNo}
@@ -247,63 +255,617 @@
 	
 	<select id="selectPastBidList_count" resultType="int">
 	
-	/* bid.selectPastBidList_count*/
-	SELECT count(1) FROM t_bi_info_mat a 
-	WHERE a.interrelated_cust_code = #{interrelatedCode}
-	and (
-		a.create_user = #{userId}
-		or a.open_att1 = #{userId}
-		or a.open_att2 = #{userId}
-		or a.gongo_id = #{userId}
-		or a.est_bidder = #{userId}
-		or a.est_opener = #{userId}
-	)
-	<if test="biNo != null and biNo != ''">
-	 and a.bi_no like concat('%',#{biNo},'%')
-	 </if>
-	 <if test="biName != null and biName != ''">
-	  and a.bi_name like concat('%',#{biName},'%')  
-	 </if>
+		/* bid.selectPastBidList_count*/
+		SELECT count(1) FROM t_bi_info_mat a 
+		WHERE a.interrelated_cust_code = #{interrelatedCode}
+		and (
+			a.create_user = #{userId}
+			or a.open_att1 = #{userId}
+			or a.open_att2 = #{userId}
+			or a.gongo_id = #{userId}
+			or a.est_bidder = #{userId}
+			or a.est_opener = #{userId}
+		)
+		<if test="biNo != null and biNo != ''">
+		 and a.bi_no like concat('%',#{biNo},'%')
+		 </if>
+		 <if test="biName != null and biName != ''">
+		  and a.bi_name like concat('%',#{biName},'%')  
+		 </if>
 	
 	</select>
 	
 	
 	<select id="selectPastBidList" resultType="camel">
-	/* bid.selectPastBidList*/
-	SELECT 	a.bi_no AS bi_no, a.bi_name AS bi_name
-	, 		CASE 
-				WHEN a.bi_mode = 'A' THEN '지명경쟁입찰' 
-				ELSE '일반경쟁입찰' 
-			END AS bi_mode
-	, 		CASE 
-				WHEN a.ins_mode = '1' 
-				THEN '파일등록' ELSE '직접입력' 
-			END AS ins_mode
-	, 		DATE_FORMAT(a.est_close_date, '%Y-%m-%d %H:%i') AS est_close_date
-	, 		CASE 
-				WHEN a.ing_tag = 'A0' THEN '입찰계획' 
-				WHEN a.ing_tag = 'A1' THEN '입찰진행'
-				WHEN a.ing_tag = 'A2' THEN '개찰'
-				WHEN ing_tag = 'A3' THEN '재입찰' WHEN a.ing_tag = 'A5' THEN '입찰완료' 
-			ELSE '유찰' END AS ing_tag 
-	FROM t_bi_info_mat a 
-	WHERE a.interrelated_cust_code = #{interrelatedCode}
-	and (		
-		a.create_user = #{userId}
-		or a.open_att1 = #{userId}
-		or a.open_att2 = #{userId}
-		or a.gongo_id = #{userId}
-		or a.est_bidder = #{userId}
-		or a.est_opener = #{userId}
-	)
-	<if test="biNo != null and biNo != ''">
-	 	and a.bi_no like concat('%',#{biNo},'%')
-	 </if>
-	 <if test="biName != null and biName != ''">
-	  	and a.bi_name like concat('%',#{biName},'%')  
-	 </if>
-	order by a.bi_no desc 
-	LIMIT ${offset}, ${pageSize}
+		/* bid.selectPastBidList*/
+		SELECT 	a.bi_no AS bi_no, a.bi_name AS bi_name
+		, 		CASE 
+					WHEN a.bi_mode = 'A' THEN '지명경쟁입찰' 
+					ELSE '일반경쟁입찰' 
+				END AS bi_mode
+		, 		CASE 
+					WHEN a.ins_mode = '1' 
+					THEN '파일등록' ELSE '직접입력' 
+				END AS ins_mode
+		, 		DATE_FORMAT(a.est_close_date, '%Y-%m-%d %H:%i') AS est_close_date
+		, 		CASE 
+					WHEN a.ing_tag = 'A0' THEN '입찰계획' 
+					WHEN a.ing_tag = 'A1' THEN '입찰진행'
+					WHEN a.ing_tag = 'A2' THEN '개찰'
+					WHEN ing_tag = 'A3' THEN '재입찰' WHEN a.ing_tag = 'A5' THEN '입찰완료' 
+				ELSE '유찰' END AS ing_tag 
+		FROM t_bi_info_mat a 
+		WHERE a.interrelated_cust_code = #{interrelatedCode}
+		and (		
+			a.create_user = #{userId}
+			or a.open_att1 = #{userId}
+			or a.open_att2 = #{userId}
+			or a.gongo_id = #{userId}
+			or a.est_bidder = #{userId}
+			or a.est_opener = #{userId}
+		)
+		<if test="biNo != null and biNo != ''">
+		 	and a.bi_no like concat('%',#{biNo},'%')
+		 </if>
+		 <if test="biName != null and biName != ''">
+		  	and a.bi_name like concat('%',#{biName},'%')  
+		 </if>
+		order by a.bi_no desc 
+		LIMIT ${offset}, ${pageSize}
 	</select>
+	
+	<select id="selectCustList_count" resultType="int">
+		/* bid.selectCustList_count*/
+		SELECT 	COUNT(*)
+		FROM t_co_cust_ir a, t_co_cust_master b 
+		WHERE a.interrelated_cust_code = #{interrelatedCode}
+		and a.cust_code = b.cust_code 
+		and b.cert_yn='Y' 
+		<if test="custName != null and custName != ''">
+		and b.cust_name like concat('%',#{custName},'%') 
+		</if>
+		<if test="chairman != null and chairman != ''">
+		and b.pres_name like concat('%',#{chairman},'%')
+		</if>  
+	</select>
+	
+	
+	<select id="selectCustList" resultType="camel">
+		/* bid.selectCustList*/
+		SELECT 	CAST(b.cust_code AS CHAR) AS cust_code
+		, 		b.cust_name AS cust_name
+		, 		b.pres_name AS pres_name,CONCAT('(', b.zipcode, ')'
+		, 		b.addr, ' ', b.addr_detail) AS combined_addr
+		, 		a.interrelated_cust_code AS interrelated_cust_code 
+		FROM t_co_cust_ir a, t_co_cust_master b 
+		WHERE a.interrelated_cust_code = #{interrelatedCode}
+		and a.cust_code = b.cust_code 
+		and b.cert_yn='Y' 
+		<if test="custName != null and custName != ''">
+		and b.cust_name like concat('%',#{custName},'%') 
+		</if>
+		<if test="chairman != null and chairman != ''">
+		and b.pres_name like concat('%',#{chairman},'%')
+		</if>  
+		LIMIT ${offset}, ${pageSize}
+	</select>
+
+	<select id="selectUserList_count" resultType="int">
+		/*bid.selectUserlist*/
+		SELECT 	COUNT(*)
+		FROM t_co_user a 
+		WHERE use_yn = 'Y' 
+		<if test='type =="openBidUser"'>
+			AND a.openauth = '1' 
+			AND a.interrelated_cust_code = #{interrelatedCD}
+			<if test="userName != null and userName != ''">
+			AND a.user_name like concat('%',#{userName},'%')
+			</if>
+			<if test="deptName != null and deptName != ''">
+			AND a.dept_name like concat('%',#{deptName},'%')
+			</if>
+		</if>
+		<if test='type =="biddingUser"'>
+			AND a.bidauth = '1'
+			AND a.interrelated_cust_code = #{interrelatedCD}
+			<if test="userName != null and userName != ''">
+			AND a.user_name like concat('%',#{userName},'%')
+			</if>
+			<if test="deptName != null and deptName != ''">
+			AND a.dept_name like concat('%',#{deptName},'%')
+			</if>
+		</if>
+		<if test='type =="normalUser"'>
+			AND a.interrelated_cust_code = #{interrelatedCD}
+			<if test="userName != null and userName != ''">
+			AND a.user_name like concat('%',#{userName},'%')
+			</if>
+			<if test="deptName != null and deptName != ''">
+			AND a.dept_name like concat('%',#{deptName},'%')
+			</if>
+		</if>
+
+	</select>
+	
+	<select id="selectUserList" resultType="camel">
+		/*bid.selectUserList*/
+		SELECT 	a.user_id AS user_id
+		, 		a.user_name AS user_name
+		, 		a.dept_name AS dept_name
+		, 		a.user_auth AS user_auth
+		,		a.interrelated_cust_code AS interrelated_cust_code
+		, 		a.openauth AS open_auth 
+		FROM t_co_user a 
+		WHERE use_yn = 'Y' 
+		<if test='type =="openBidUser"'>
+			AND a.openauth = '1' 
+			AND a.interrelated_cust_code = #{interrelatedCD}
+			<if test="userName != null and userName != ''">
+			AND a.user_name like concat('%',#{userName},'%')
+			</if>
+			<if test="deptName != null and deptName != ''">
+			AND a.dept_name like concat('%',#{deptName},'%')
+			</if>
+		</if>
+		<if test='type =="biddingUser"'>
+			AND a.bidauth = '1'
+			AND a.interrelated_cust_code = #{interrelatedCD}
+			<if test="userName != null and userName != ''">
+			AND a.user_name like concat('%',#{userName},'%')
+			</if>
+			<if test="deptName != null and deptName != ''">
+			AND a.dept_name like concat('%',#{deptName},'%')
+			</if>
+		</if>
+		<if test='type =="normalUser"'>
+			AND a.interrelated_cust_code = #{interrelatedCD}
+			<if test="userName != null and userName != ''">
+			AND a.user_name like concat('%',#{userName},'%')
+			</if>
+			<if test="deptName != null and deptName != ''">
+			AND a.dept_name like concat('%',#{deptName},'%')
+			</if>
+		</if>
+		LIMIT ${offset}, ${pageSize}
+	</select>
+	
+	<insert id="insertTBiInfoMat">
+		/*bid.insertTBiInfoMat*/
+		INSERT into t_bi_info_mat 
+		  (		bi_no
+		  ,		bi_name
+		  , 	bi_mode
+		  , 	ins_mode
+		  , 	bid_join_spec
+		  ,	 	special_cond
+		  , 	supply_cond
+		  , 	spot_date
+		  , 	spot_area
+		  , 	succ_deci_meth
+		  ,		bid_open_date
+		  , 	amt_basis
+		  ,		bd_amt
+		  , 	est_start_date
+		  ,		est_close_date
+		  ,		est_opener
+		  , 	est_bidder
+		  , 	open_att1
+		  , 	open_att2
+		  , 	ing_tag
+		  ,		create_user
+		  , 	create_date
+		  , 	update_user
+		  , 	update_date
+		  , 	item_code
+		  ,		gongo_id
+		  ,		pay_cond
+		  , 	bi_open
+		  , 	interrelated_cust_code
+		  , 	mat_dept
+		  ,  	mat_proc
+		  , 	mat_cls
+		  , 	mat_factory
+		  , 	mat_factory_line
+		  ,		mat_factory_cnt
+		  ,		open_att1_sign, open_att2_sign) 
+	      values(
+	       		#{biNo}
+	       , 	#{biName}
+	       , 	#{biModeCode}
+	       , 	#{insModeCode}
+	       , 	#{bidJoinSpec}
+	       ,    #{specialCond}
+	       , 	#{supplyCond}
+	       , 	STR_TO_DATE(#{spotDate}, '%Y-%m-%d %H:%i')
+	       , 	#{spotArea}
+	       , 	#{succDeciMethCode}
+	       ,	sysdate()
+	       , 	#{amtBasis}
+	       , 	#{bdAmt}
+	       , 	STR_TO_DATE(#{estStartDate}, '%Y-%m-%d %H:%i')
+	       , 	STR_TO_DATE(#{estCloseDate}, '%Y-%m-%d %H:%i')
+	       ,    #{estOpenerCode}
+	       , 	#{estBidderCode}
+	       , 	#{openAtt1Code}
+	       , 	#{openAtt2Code}
+	       , 	'A0'
+	       ,    #{userId}
+	       ,    sysdate()
+	       , 	#{userId}
+	       , 	sysdate()
+	       , 	#{itemCode}
+	       ,    #{gongoIdCode}
+	       , 	#{payCond}
+	       , 	'N'
+	       , 	#{interrelatedCustCode}
+	       , 	#{matDept}
+	       ,	#{matProc}
+	       , 	#{matCls}
+	       , 	#{matFactory}
+	       ,	#{matFactoryLine}
+	       , 	#{matFactoryCnt}
+	       ,   'N'
+	       ,   'N'
+	       )
+	</insert>
+	
+	<insert id="insertTBiInfoMatHist">
+		/*bid.insertTBiInfoMatHist*/
+		INSERT into t_bi_info_mat_hist 
+		(		bi_no
+		, 		bi_name
+		, 		bi_mode
+		, 		ins_mode
+		,		bid_join_spec
+		, 		special_cond
+		, 		supply_cond
+		, 		spot_date
+		,       spot_area
+		, 		succ_deci_meth
+		,		amt_basis
+		, 		bd_amt
+		, 		est_start_date
+		, 		est_close_date
+		, 		est_opener
+		, 		est_bidder
+		, 		open_att1
+		,       open_att2
+		, 		ing_tag
+		, 		item_code
+		, 		gongo_id
+		, 		pay_cond
+		, 		bi_open	
+		, 		mat_dept
+		,       mat_proc
+		, 		mat_cls
+		, 		mat_factory
+		, 		mat_factory_line
+		, 		mat_factory_cnt
+		<if test='type =="insert"'>
+		, 		bid_open_date
+		, 		create_user
+		, 		create_date	
+		, 		interrelated_cust_code
+		</if>
+		<if test='type =="update"'>
+		, 		update_user
+		, 		update_date
+		</if>
+		) 
+		values
+		(		#{biNo}
+		, 		#{biName}
+		, 		#{biModeCode}
+		, 		#{insModeCode}
+		, 		#{bidJoinSpec}
+		,       #{specialCond}
+		, 		#{supplyCond}
+		, 		STR_TO_DATE(#{spotDate}, '%Y-%m-%d %H:%i')
+		, 		#{spotArea}
+		, 		#{succDeciMethCode}
+		, 	    #{amtBasis}
+		, 		#{bdAmt}
+		, 		STR_TO_DATE(#{estStartDate}, '%Y-%m-%d %H:%i')
+		, 		STR_TO_DATE(#{estCloseDate}, '%Y-%m-%d %H:%i')
+		,       #{estOpenerCode}
+		, 		#{estBidderCode}
+		, 		#{openAtt1Code}
+		, 		#{openAtt2Code}
+		, 		'A0'
+		, 		#{itemCode}
+		, 		#{gongoIdCode}
+		, 		#{payCond}
+		, 		'N'
+		, 		#{matDept}
+		, 		#{matProc}
+		, 		#{matCls}
+		, 		#{matFactory}
+		, 		#{matFactoryLine}
+		, 		#{matFactoryCnt}
+		<if test='type =="insert"'>
+		, 		SYSDATE()
+		, 		#{userId}
+		, 		SYSDATE()
+		, 		#{interrelatedCustCode}
+		</if>
+		<if test='type =="update"'>
+		,		#{userId}
+		,		sysdate()
+		</if>
+		)
+	</insert>
+	<insert id="insertTBiInfoMatCust">
+		/*bid.insertTBiInfoMatCust*/
+		INSERT into t_bi_info_mat_cust 
+		(		bi_no
+		, 		cust_code
+		, 		rebid_att
+		, 		esmt_yn
+		, 		esmt_amt
+		, 		succ_yn
+		, 		create_user
+		, 		create_date
+		,		usemail_id
+		,		bi_order
+		)       values
+		(
+				#{biNo}
+		, 		#{custCode}
+		, 		'N'
+		, 		'0'
+		,		 0
+		, 		'N'
+		, 		#{userId}
+		, 		sysdate()
+		,		#{usemailId}
+		,		1
+		)
+	</insert>
+	
+	<select id="selectGongoEmailList" resultType="camel">
+		/*bid.selectGongoEmailList*/
+		select 	tcu.USER_EMAIL
+	 	,		tcu2.USER_EMAIL as from_email
+	 	from t_co_user tcu 
+	 	left outer join t_co_user tcu2 
+	 	on tcu2.USER_ID  = #{userId}
+	 	where tcu.USER_ID = #{gongoIdCode}
+	</select>
+	
+	<select id="selectInterrelatedNm" resultType="String">
+		/*bid.selectInterrelatedNm*/
+		select tci.INTERRELATED_NM 
+	 	from t_co_interrelated tci 
+	   	inner join t_co_user tcu 
+	   	on tci.INTERRELATED_CUST_CODE = tcu.INTERRELATED_CUST_CODE 
+	    where tcu.USER_ID = #{userId}
+	</select>
+	
+	<insert id="insertTEmail">
+		/*bid.insertTEmail*/
+		INSERT INTO t_email 
+		(		
+				title
+		, 		conts
+		, 		send_flag
+		, 		create_date
+		, 		receives
+		, 		from_mail
+		, 		bi_no
+		) 
+		VALUES
+		(		#{title}
+		, 		#{content}
+		, 		'0'
+		, 		CURRENT_TIMESTAMP
+		, 		#{userEmail}
+		, 		#{fromMail}
+		, 		#{biNo}
+		)
+	</insert>
+	
+	<insert id="insertTBiUpload">
+		INSERT into t_bi_upload 
+		(		bi_no
+		, 		file_flag
+		, 		f_cust_code
+		, 		file_nm
+		, 		file_path
+		, 		create_date
+		, 		use_yn
+		) 
+	    values 
+	    (
+	    		#{biNo}
+	    , 		#{fileFlag}
+	    , 		#{fCustCode}
+	    , 		#{fileNm}
+	    , 		#{filePath}
+	    , 		sysdate()
+	    , 		'Y'
+	    ) 
+		
+	</insert>
+	
+	<delete id="deleteTBiSpecMat">
+		/*bid.deleteTBiSpecMat*/
+		DELETE from t_bi_spec_mat 
+		where bi_no = #{biNo}
+	</delete>
+	
+	<insert id="insertTBiSpectMat">
+		/*bid.insertTBiSpectMat*/
+		INSERT into t_bi_spec_mat 
+		(
+				bi_no
+		, 		seq
+		, 		name
+		, 		ssize
+		, 		unitcode
+		, 		order_uc
+		, 		create_user
+		, 		create_date
+		, 		order_qty
+		)
+		values (
+				#{biNo}
+		, 		#{seq}
+		, 		#{name}
+		, 		#{ssize}
+		, 		#{unitcode}
+		, 		#{orderUc}
+		, 		#{userId}
+		, 		sysdate()
+		, 		#{orderQty}
+		)
+	</insert>
+	
+	<select id="selectProgressCodeList" resultType="camel">
+		/*bid.selectProgressCodeList*/
+		SELECT COL_CODE ,CODE_VAL,CODE_NAME  
+   		FROM t_co_code tcc  
+   		WHERE COL_CODE IN ('MAT_DEPT','MAT_PROC','MAT_CLS') 
+   		ORDER BY 
+  			CASE 
+	  		     WHEN COL_CODE = 'MAT_DEPT' THEN 1 
+	  		     WHEN COL_CODE = 'MAT_PROC' THEN 2 
+	  		     WHEN COL_CODE = 'MAT_CLS' THEN 3 
+  		   	END,
+  			CAST(SUBSTRING(CODE_VAL, 2) AS UNSIGNED) 
+	</select>
+	
+	<update id="deleteTBiInfoMat">
+		/*deleteTBiInfoMat*/
+		UPDATE t_bi_info_mat 
+	    SET	ING_TAG = 'D' 
+	    ,	UPDATE_USER = #{userId}
+	    ,	UPDATE_DATE = SYSDATE() 
+	    WHERE bi_no = #{biNo}
+	</update>
+	
+	<update id="updateTBiInfoMatA1">
+		/*bid.updateTBiInfoMat*/
+		UPDATE t_bi_info_mat 
+		set 	bid_open_date = sysdate()
+		,		ing_tag = 'A1'  
+	    WHERE bi_no = #{biNo}
+	</update>
+	
+	<select id="selectBidNoticeEmailList" resultType="camel">
+		/*bid.selectBidNoticeEmailList*/
+		
+	<if test='biModeCode == "A"'>
+		select 	tccu.USER_EMAIL 
+		 ,		tcu.user_email as from_email
+		 , 		REGEXP_REPLACE(tccu.USER_HP , '[^0-9]', '') as USER_HP
+		 ,		tccu.USER_NAME  from t_co_cust_user tccu 
+	 	left outer join t_co_user tcu
+	 	on tcu.USER_ID = #{userId}
+	 	where tccu.user_id in(
+           <foreach item="custUserId" collection="custUserIds" separator=",">
+				#{custUserId}
+			</foreach>
+		 	)
+		 	and tccu.use_yn = 'Y' 
+		 union all
+		 select tcu.USER_EMAIL, 
+		 tcu2.user_email as from_email, 
+		 REGEXP_REPLACE(tcu.USER_HP , '[^0-9]', '') as USER_HP ,
+		 tcu.USER_NAME from t_co_user tcu 
+		 left outer join t_co_user tcu2 
+		 on tcu2.user_id = #{userId}
+		 where tcu.USER_ID = #{cuserCode}
+	</if>
+	
+	<if test='biModeCode == "B"'>
+		select 	tccu.USER_EMAIL
+   		 ,		tcu.user_email as from_email 
+   		 from t_co_user tcu 
+   		 inner join t_co_interrelated tci
+   		 on tcu.INTERRELATED_CUST_CODE = tci.INTERRELATED_CUST_CODE
+   		 inner join t_co_cust_ir tcci 
+   		 on tci.INTERRELATED_CUST_CODE = tcci.INTERRELATED_CUST_CODE 
+   		 inner join t_co_cust_master tccm 
+   		 on tcci.CUST_CODE = tccm.CUST_CODE 		
+   		 left outer join t_co_cust_user tccu 
+   		 on tccm.CUST_CODE = tccu.CUST_CODE 
+   		 where tcu.USER_ID = #{userId}
+   		 and tccu.use_yn = 'Y'
+   		 and tccu.USER_EMAIL is not null
+   		 group by tccu.USER_EMAIL 
+		union all
+		 select tcu.USER_EMAIL, tcu2.user_email as from_email from t_co_user tcu 
+		 left outer join t_co_user tcu2 
+		 on tcu2.user_id = #{userId}
+		 where tcu.USER_ID = #{cuserCode}
+	</if>
+            			 
+	</select>
+	
+	<update id="updateTBiInfoMat">
+	
+		/*bid.updateTBiInfoMat*/
+		UPDATE t_bi_info_mat 
+		SET 	bi_name = #{biName}
+		, 		bi_mode = #{biModeCode}
+		, 		ins_mode = #{insModeCode}
+		,		bid_join_spec = #{bidJoinSpec}
+		, 		special_cond = #{specialCond}
+		, 		supply_cond = #{supplyCond}
+		,		spot_date = STR_TO_DATE(#{spotDate}, '%Y-%m-%d %H:%i')
+		, 		spot_area = #{spotArea}
+		,		succ_deci_meth = #{succDeciMethCode}
+		, 		amt_basis = #{amtBasis}
+		,		bd_amt = #{bdAmt}
+		,		est_start_date = STR_TO_DATE(#{estStartDate}, '%Y-%m-%d %H:%i')
+		,  		est_close_date = STR_TO_DATE(#{estCloseDate}, '%Y-%m-%d %H:%i')
+		, 		est_opener = #{estOpenerCode}
+		, 		est_bidder = #{estBidderCode}
+		,		open_att1 = #{openAtt1Code}
+		, 		open_att2 = #{openAtt2Code}
+		, 		update_user = #{userId}
+		,		update_date = sysdate()
+		, 		item_code = #{itemCode}
+		, 		gongo_id = #{gongoIdCode}
+		, 		pay_cond = #{payCond}
+		, 		mat_dept = #{matDept}
+		, 		mat_proc = #{matProc}
+		,		mat_cls = #{matCls}
+		, 		mat_factory = #{matFactory}
+		, 		mat_factory_line = #{matFactoryLine}
+		, 		mat_factory_cnt = #{matFactoryCnt} 
+		WHERE bi_no = #{biNo}
+		
+	</update>
+	
+	<delete id="deleteTBiInfoMatCust">
+		/*bid.deleteTBiInfoMatCust*/
+		DELETE from t_bi_info_mat_cust 
+		where bi_no = #{biNo}
+	</delete>
+	
+	<delete id="deleteTBiUpload">
+		/*bid.deleteTBiUpload*/
+		DELETE from t_bi_upload 
+		where bi_no = #{biNo}
+		and file_flag = #{fileFlag}
+		
+		<if test="delInnerFiles != null and delInnerFiles != ''">
+		and file_id in(
+		<foreach item="delInnerFile" collection="delInnerFiles" separator=",">
+			#{delInnerFile}
+		</foreach>
+		)
+		</if>
+		
+		<if test="delOuterFiles != null and delOuterFiles != ''">
+		and file_id in(
+		<foreach item="delOuterFile" collection="delOuterFiles" separator=",">
+			#{delOuterFile}
+		</foreach>
+		)
+		</if>
+		
+	</delete>
 	
 </mapper>

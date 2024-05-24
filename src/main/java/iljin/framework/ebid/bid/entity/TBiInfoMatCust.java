@@ -9,7 +9,6 @@ import javax.persistence.Id;
 import javax.persistence.IdClass;
 import javax.persistence.Table;
 
-import iljin.framework.ebid.etc.notice.entity.TCoBoardCustID;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

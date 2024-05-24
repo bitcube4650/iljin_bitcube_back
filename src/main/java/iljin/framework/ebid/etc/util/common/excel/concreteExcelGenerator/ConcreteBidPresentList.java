@@ -1,34 +1,44 @@
 package iljin.framework.ebid.etc.util.common.excel.concreteExcelGenerator;
 
-import iljin.framework.ebid.etc.statistics.dto.BiInfoDetailDto;
-import iljin.framework.ebid.etc.statistics.dto.BiInfoDto;
-import iljin.framework.ebid.etc.util.CommonUtils;
-import iljin.framework.ebid.etc.util.common.excel.dto.BiInfoDetailExcelDto;
-import iljin.framework.ebid.etc.util.common.excel.dto.BiddingStatusDto;
-import iljin.framework.ebid.etc.util.common.excel.repository.ExcelRepository;
-import iljin.framework.ebid.etc.util.common.excel.utils.ExcelSupportV2;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.poi.ss.usermodel.*;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.poi.ss.usermodel.BorderStyle;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import iljin.framework.ebid.etc.statistics.dto.BiInfoDto;
+import iljin.framework.ebid.etc.util.CommonUtils;
+import iljin.framework.ebid.etc.util.GeneralDao;
+import iljin.framework.ebid.etc.util.common.excel.repository.ExcelRepository;
+import iljin.framework.ebid.etc.util.common.excel.utils.ExcelSupportV2;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
 @Slf4j
 public class ConcreteBidPresentList extends ExcelSupportV2 {
     @Autowired
     ExcelRepository excelRepository;
+    
+    @Autowired
+    GeneralDao generalDao;
     @Override
-    public SXSSFWorkbook getWorkBookPaging(Class<?> clazz, SXSSFWorkbook workbook, List<String> headerNames, Map<String, Object> param) throws IllegalAccessException, IOException {
+    public SXSSFWorkbook getWorkBookPaging(Class<?> clazz, SXSSFWorkbook workbook, List<String> headerNames, Map<String, Object> param) {
         Sheet sheet = workbook.createSheet("Sheet1"); // 엑셀 sheet 이름
         sheet.setDefaultColumnWidth(12); // 디폴트 너비 설정
 
@@ -46,13 +56,16 @@ public class ConcreteBidPresentList extends ExcelSupportV2 {
         int offset = 0;
         int limit = 1000;
         int cnt = 0;
-        int bidPresentListCnt = excelRepository.findBidPresentListCnt(param);
+        
+		try {
+			List<Object> bidPresentList = generalDao.selectGernalList("statistics.bidPresentList", param);
+		
+        List<Map<String,Object>> excelData = new ArrayList<>();
+	        for(Object bidPresendListObject : bidPresentList) {
+	        	Map<String,Object> bidPresendListMap = (Map<String, Object>) bidPresendListObject;
+	        	
 
-        while(offset < bidPresentListCnt) {
-            data = excelRepository.findBidPresentList(param, offset, limit);
-            List<BiddingStatusDto> excelData = new ArrayList<>();
-
-            for(int i = 0; i < data.size(); i++) {
+	        	/*
                 BiddingStatusDto biddingStatusDto = new BiddingStatusDto();
 
                 String interrelatedNm = CommonUtils.getString(data.get(i).getInterrelatedNm(), " ");
@@ -76,12 +89,15 @@ public class ConcreteBidPresentList extends ExcelSupportV2 {
                 biddingStatusDto.setCustCnt(custCnt);
                 biddingStatusDto.setRegCustCnt(CommonUtils.getFormatNumber(regCustCnt));
                 biddingStatusDto.setTestNull("");
+                */
 
-                excelData.add(biddingStatusDto);
-            }
-
+                excelData.add(bidPresendListMap);
+	            
+	
+	        }
+	        
             int start = offset;
-
+        	
             createbody(clazz, workbook, excelData, sheet, row, cell, start);
 
             offset += limit;
@@ -89,7 +105,10 @@ public class ConcreteBidPresentList extends ExcelSupportV2 {
 
             excelData.clear();
             ((SXSSFSheet) sheet).flushRows(limit);
-        }
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
         return workbook;
     }
 
@@ -241,45 +260,45 @@ public class ConcreteBidPresentList extends ExcelSupportV2 {
         // 통화 서식 생성
         short currencyFormat = workbook.createDataFormat().getFormat("#,##0.00");
 
-        for (Object o : data) {
-            List<Object> fields = findFieldValue(clazz, o);
-            row = sheet.createRow(++startRow);
-            for (int i = 0, fieldSize = fields.size(); i < fieldSize; i++) {
-                cell = row.createCell(i);
 
-                bodyCellStyle.setBorderBottom(BorderStyle.THIN);
-                bodyCellStyle.setBottomBorderColor(IndexedColors.BLACK.getIndex());
-                bodyCellStyle.setBorderLeft(BorderStyle.THIN);
-                bodyCellStyle.setLeftBorderColor(IndexedColors.BLACK.getIndex());
-                bodyCellStyle.setBorderRight(BorderStyle.THIN);
-                bodyCellStyle.setRightBorderColor(IndexedColors.BLACK.getIndex());
-                bodyCellStyle.setBorderTop(BorderStyle.THIN);
-                bodyCellStyle.setTopBorderColor(IndexedColors.BLACK.getIndex());
+        List<Object> fields = (List<Object>) data;
+        row = sheet.createRow(++startRow);
+        for (int i = 0, fieldSize = fields.size(); i < fieldSize; i++) {
+            cell = row.createCell(i);
+
+            bodyCellStyle.setBorderBottom(BorderStyle.THIN);
+            bodyCellStyle.setBottomBorderColor(IndexedColors.BLACK.getIndex());
+            bodyCellStyle.setBorderLeft(BorderStyle.THIN);
+            bodyCellStyle.setLeftBorderColor(IndexedColors.BLACK.getIndex());
+            bodyCellStyle.setBorderRight(BorderStyle.THIN);
+            bodyCellStyle.setRightBorderColor(IndexedColors.BLACK.getIndex());
+            bodyCellStyle.setBorderTop(BorderStyle.THIN);
+            bodyCellStyle.setTopBorderColor(IndexedColors.BLACK.getIndex());
 
 
 
+            cell.setCellStyle(bodyCellStyle);
+
+            Object fieldValue = fields.get(i);
+            if (fieldValue instanceof BigDecimal) {
+                BigDecimal decimalValue = (BigDecimal) fieldValue;
+                bodyCellStyle.setDataFormat(cell.getSheet().getWorkbook().createDataFormat().getFormat("#,##0")); // 숫자 서식을 설정합니다.
+
+                // 셀에 값을 설정할 때 숫자 형식으로 설정합니다.
+                cell.setCellType(CellType.NUMERIC);
+
+                // 셀에 값을 설정합니다.
+                cell.setCellValue(decimalValue.doubleValue());
+
+                // 셀에 숫자 서식을 적용합니다.
                 cell.setCellStyle(bodyCellStyle);
-
-                Object fieldValue = fields.get(i);
-                if (fieldValue instanceof BigDecimal) {
-                    BigDecimal decimalValue = (BigDecimal) fieldValue;
-                    bodyCellStyle.setDataFormat(cell.getSheet().getWorkbook().createDataFormat().getFormat("#,##0")); // 숫자 서식을 설정합니다.
-
-                    // 셀에 값을 설정할 때 숫자 형식으로 설정합니다.
-                    cell.setCellType(CellType.NUMERIC);
-
-                    // 셀에 값을 설정합니다.
-                    cell.setCellValue(decimalValue.doubleValue());
-
-                    // 셀에 숫자 서식을 적용합니다.
-                    cell.setCellStyle(bodyCellStyle);
-                } else {
-                    // 다른 형식의 데이터는 그대로 셀에 설정
-                    cell.setCellType(CellType.STRING);
-                    cell.setCellValue(CommonUtils.getString(fieldValue, " "));
-                }
+            } else {
+                // 다른 형식의 데이터는 그대로 셀에 설정
+                cell.setCellType(CellType.STRING);
+                cell.setCellValue(CommonUtils.getString(fieldValue, " "));
             }
         }
+        
     }
 
     @Override

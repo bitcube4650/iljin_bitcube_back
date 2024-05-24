@@ -35,7 +35,8 @@
         BD_AMT,
         SUCC_AMT,
         M_AMT,
-        INTERRELATED_CUST_CODE   
+        INTERRELATED_CUST_CODE,
+        '' as temp
     	FROM
         (	SELECT
             IFNULL(A.INTERRELATED_NM,
@@ -171,8 +172,10 @@
         <if test="itemCode != null and itemCode != ''">
          AND tbim.ITEM_CODE = #{itemCode}
          </if>
-		GROUP BY tbim.BI_NO   
+		GROUP BY tbim.BI_NO
+		<if test="excel == null">
 		LIMIT ${offset}, ${pageSize}
+		</if>
 	</select>
 	
 	<select id="bidPresentList" resultType="camel">
@@ -186,6 +189,7 @@
 		,		sum(BID_LIST.SUCC_AMT) as SUCC_AMT
 		,		ifnull(round(sum(BID_LIST.cust_cnt)/sum(BID_LIST.SUCC_CNT), 1), 0) as cust_cnt
 		,		sum(BID_LIST.REG_CUST_CNT) as REG_CUST_CNT
+		,		'' AS TEMP
 		from (	
 				select	max(A.INTERRELATED_NM ) as INTERRELATED_NM 
 				,		A.INTERRELATED_CUST_CODE
@@ -329,7 +333,9 @@
 	         )  
      	</if>
 	   order by tbim.UPDATE_DATE desc 
+	   <if test="excel == null">
 	   LIMIT ${offset}, ${pageSize}
+	   </if>
 	</select>
 	
 </mapper>
