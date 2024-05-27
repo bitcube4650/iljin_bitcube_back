@@ -54,11 +54,6 @@ public class NoticeService {
 		params.put("userId", user.getUsername()); // 계열사사용자 권한
 		
 		try {
-			// 공지상세 조회시 조회수 +1
-			String bno = CommonUtils.getString(params.get("bno"));
-			if(!"".equals(bno)) {
-				this.updateClickNum(params);
-			}
 			Page listPage = generalDao.selectGernalListPage(DB.QRY_SELECT_NOTICE_LIST, params);
 			resultBody.setData(listPage);
 			
