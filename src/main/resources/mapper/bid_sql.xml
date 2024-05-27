@@ -9,10 +9,10 @@
 		WHERE	1=1
 		AND		A.ING_TAG = 'A0'
 		<if test="bidNo != null and bidNo != ''">
-		AND		A.BI_NO LIKE CONCAT('%'+ #{bidNo} +'%')
+		AND		A.BI_NO LIKE CONCAT('%', #{bidNo},'%')
 		</if>
 		<if test="bidName != null and bidName != ''">
-		AND		A.BI_NAME LIKE CONCAT('%'+ #{bidName} +'%')
+		AND		A.BI_NAME LIKE CONCAT('%', #{bidName} ,'%')
 		</if>
 		<if test="userAuth == '1' or userAuth == '2' or userAuth == '3'">
 		AND		A.INTERRELATED_CUST_CODE = #{interrelatedCustCode}
