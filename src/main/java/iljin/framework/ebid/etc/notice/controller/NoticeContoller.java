@@ -40,7 +40,7 @@ public class NoticeContoller {
 	 */
 	@SuppressWarnings("rawtypes")
 	@PostMapping("/noticeList")
-	public Page noticeList(@RequestBody Map<String, Object> params, @AuthenticationPrincipal CustomUserDetails user) {
+	public ResultBody noticeList(@RequestBody Map<String, Object> params, @AuthenticationPrincipal CustomUserDetails user) {
 
 		return noticeService.noticeList(params, user);
 	}
