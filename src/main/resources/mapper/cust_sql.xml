@@ -159,9 +159,9 @@
 		,		A.ADDR					AS addr
 		,		A.ADDR_DETAIL			AS addrDetail
 		,		A.REGNUM_FILE			AS regnumFile
-		,		A.REGNUM_PATH			AS regnumPath
+		,		IFNULL(A.REGNUM_PATH, '')	AS regnumPath
 		,		A.B_FILE				AS bfile
-		,		A.B_FILE_PATH			AS bfilePath
+		,		IFNULL(A.B_FILE_PATH, '')	AS bfilePath
 		,		A.CERT_YN				AS certYn
 		,		A.ETC					AS etc
 		,		D.CUST_LEVEL			AS custLevel

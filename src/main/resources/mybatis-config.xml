@@ -4,6 +4,11 @@
 	<typeAliases>
 		<typeAlias alias="camel" type="iljin.framework.ebid.etc.util.CamelMap" />
 	</typeAliases>
+	
+	<plugins>
+		<plugin interceptor="iljin.framework.mybatis.CommonParameterInterceptor" />
+	</plugins>
+	
 	<mappers>
 		<mapper resource="mapper/login_sql.xml"/>
 		<mapper resource="mapper/bid_sql.xml"/>

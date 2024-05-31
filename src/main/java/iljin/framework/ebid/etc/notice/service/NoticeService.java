@@ -45,7 +45,7 @@ public class NoticeService {
 	// 공지사항 목록 조회 및 상세 조회
 	@SuppressWarnings("rawtypes")
 	@Transactional
-	public Page noticeList(Map<String, Object> params, CustomUserDetails user){
+	public ResultBody noticeList(Map<String, Object> params, CustomUserDetails user){
 		ResultBody resultBody = new ResultBody();
 		
 		params.put("custCode", user.getCustCode());	// 계열사 사용자 - 소속 계열사/ 협력사 사용자 - 본인 협력사
@@ -54,26 +54,17 @@ public class NoticeService {
 		params.put("userId", user.getUsername()); // 계열사사용자 권한
 		
 		try {
-			// 공지상세 조회시 조회수 +1
-			String bno = CommonUtils.getString(params.get("bno"));
-			if(!"".equals(bno)) {
-				this.updateClickNum(params);
-			}
 			Page listPage = generalDao.selectGernalListPage(DB.QRY_SELECT_NOTICE_LIST, params);
 			resultBody.setData(listPage);
-			
-			return listPage;
 		} catch (Exception e) {
 			e.printStackTrace();
 			resultBody.setCode("ERROR");
 			resultBody.setStatus(500);
 			resultBody.setMsg("An error occurred while updating the click count.");
 			resultBody.setData(e.getMessage());
-			
-			return null;
 		}
 
-//		return resultBody;
+		return resultBody;
 	}
 
 	// 조회수 +1
@@ -101,11 +92,12 @@ public class NoticeService {
 		String fileName = null;
 		String preUploadedPath = CommonUtils.getString(params.get("bfilePath"));		// 기등록 첨부파일 경로
 		String preFileName = CommonUtils.getString(params.get("bfile"));				// 기등록 첨부파일
+		String bco = CommonUtils.getString(params.get("bco"));
 		
 		if (file != null) {// 새로 첨부된 파일이 있는 경우
 			uploadedPath = fileService.uploadFile(file);
 			fileName = file.getOriginalFilename();
-
+			
 		} else if (!"".equals(preUploadedPath) && !"".equals(preFileName)) {// 기존에 첨부했던 파일이 그대로 있는 경우
 			uploadedPath = preUploadedPath;
 			fileName = preFileName;
@@ -119,16 +111,18 @@ public class NoticeService {
 		
 		// 공지 대상 계열사 정보 delete
 		generalDao.deleteGernal(DB.QRY_DELETE_NOTICE_CUST, params);
-
-		ArrayList<String> custCodeList = (ArrayList<String>) params.get("interrelatedCustCodeArr");// 등록할 공지 계열사
-
-		// 공지 대상 계열사 정보 INSERT
-		for (int i = 0; i < custCodeList.size(); i++) {
-			Map<String, Object> custParams = new HashMap<>();
-			custParams.put("bno", bno);
-			custParams.put("custCode", custCodeList.get(i));
+		
+		if (bco.equals("CUST")) {
+			ArrayList<String> custCodeList = (ArrayList<String>) params.get("interrelatedCustCodeArr");// 등록할 공지 계열사
 			
-			generalDao.insertGernal(DB.QRY_INSERT_NOTICE_CUST, custParams);
+			// 공지 대상 계열사 정보 INSERT
+			for (int i = 0; i < custCodeList.size(); i++) {
+				Map<String, Object> custParams = new HashMap<>();
+				custParams.put("bno", bno);
+				custParams.put("custCode", custCodeList.get(i));
+				
+				generalDao.insertGernal(DB.QRY_INSERT_NOTICE_CUST, custParams);
+			}
 		}
 	}
 
@@ -136,7 +130,6 @@ public class NoticeService {
 	@SuppressWarnings("unchecked")
 	@Transactional
 	public void insertNotice(MultipartFile file, Map<String, Object> params) throws Exception {
-
 		String bco = CommonUtils.getString(params.get("bco"));
 		String uploadedPath = null;
 		String fileName = null;

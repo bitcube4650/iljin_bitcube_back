@@ -217,11 +217,12 @@ public class UserService {
 	@NotNull
 	private AuthToken getAuthToken(final HttpSession session, final String loginId, final UserDto obj, final UsernamePasswordAuthenticationToken token, final Authentication authentication, boolean sso) throws Exception {
 		// 4. Authentication 인스턴스를 SecurityContextHolder의 SecurityContext에 설정
-		SecurityContextHolder.getContext().setAuthentication(token);
 		session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, SecurityContextHolder.getContext());
 		Map<String, Object> paramMap = new HashMap<String, Object>();
 		paramMap.put("loginId", loginId);
 		UserDto data = (UserDto) generalDao.selectGernalObject(DB.QRY_SELECT_LOGIN_USER_TOKEN_INFO, paramMap);
+		token.setDetails(data);
+		SecurityContextHolder.getContext().setAuthentication(token);
 		
 		return new AuthToken(data.getCustType(),
 				data.getCustCode(),
