@@ -30,9 +30,9 @@ public class BidProgressController {
     @Autowired
     private BidProgressService bidProgressService;
 
-    @PostMapping("/progresslist")
+    @PostMapping("/progressList")
     public ResultBody progresslist(@RequestBody Map<String, Object> params) {
-        return bidProgressService.progresslist(params);
+        return bidProgressService.progressList(params);
     }
 
     @PostMapping("/progresslistDetail")
