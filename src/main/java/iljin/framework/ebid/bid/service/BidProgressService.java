@@ -91,7 +91,7 @@ public class BidProgressService {
         return resultBody;
     }
 
-	public ResultBody progresslist(@RequestBody Map<String, Object> params) {
+	public ResultBody progressList(@RequestBody Map<String, Object> params) {
 		ResultBody resultBody = new ResultBody();
 		
 		try {
@@ -102,8 +102,10 @@ public class BidProgressService {
 			String interrelatedCode	= userOptional.get().getInterrelatedCustCode();
 			String userId			= principal.getUsername();
 			
-			params.put("bidNo"					, params.get("bidNo"));
-			params.put("bidName"				, params.get("bidName"));
+			/*
+			params.put("biNo"					, params.get("biNo"));
+			params.put("biName"				, params.get("biName"));
+			*/
 			params.put("interrelatedCustCode"	, interrelatedCode);
 			params.put("userId"					, userId);
 			params.put("userAuth"				, userAuth);
@@ -120,19 +122,17 @@ public class BidProgressService {
 				params.put("custCodes", custCodes);
 			}
 			
-			Page listPage = generalDao.selectGernalListPage("bid.selectProgresslist", params);
+			Page listPage = generalDao.selectGernalListPage("bid.selectProgressList", params);
 			resultBody.setData(listPage);
 			
-			return resultBody;
 		} catch (Exception e) {
-			log.error("BidProgressService progresslist error : ", e);
+			log.error("BidProgressService selectProgressList error : ", e);
 			resultBody.setCode("fail");
 			resultBody.setMsg("입찰 계획 리스트를 가져오는것을 실패하였습니다.");
 			
-			return null;
 		}
 		
-		//return resultBody;	//TODO : 추후 return type을 ResultBody로 바꾸며 수정작업 예정
+		return resultBody;
 	}
 
     public ResultBody progresslistDetail(String param, CustomUserDetails user) throws Exception {

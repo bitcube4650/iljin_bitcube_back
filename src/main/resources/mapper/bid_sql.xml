@@ -2,17 +2,17 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="bid">
-	<select id="selectProgresslist_count" resultType="int">
+	<select id="selectProgressList_count" resultType="int">
 		/* bid.selectProgresslist_count */
 		SELECT	COUNT(1)
 		FROM	T_BI_INFO_MAT A
 		WHERE	1=1
 		AND		A.ING_TAG = 'A0'
-		<if test="bidNo != null and bidNo != ''">
-		AND		A.BI_NO LIKE CONCAT('%', #{bidNo},'%')
+		<if test="biNo != null and biNo != ''">
+		AND		A.BI_NO = #{biNo}
 		</if>
-		<if test="bidName != null and bidName != ''">
-		AND		A.BI_NAME LIKE CONCAT('%', #{bidName} ,'%')
+		<if test="biName != null and biName != ''">
+		AND		A.BI_NAME LIKE CONCAT('%', #{biName} ,'%')
 		</if>
 		<if test="userAuth == '1' or userAuth == '2' or userAuth == '3'">
 		AND		A.INTERRELATED_CUST_CODE = #{interrelatedCustCode}
@@ -38,7 +38,7 @@
 		</if>
 	</select>
 	
-	<select id="selectProgresslist" resultType="camel">
+	<select id="selectProgressList" resultType="camel">
 		/* bid.selectProgresslist */
 		SELECT	A.BI_NO			AS BI_NO
 		,		A.BI_NAME		AS BI_NAME
@@ -58,11 +58,11 @@
 		LEFT JOIN	T_CO_USER C
 			ON A.GONGO_ID = C.USER_ID
 		WHERE	A.ING_TAG = 'A0'
-		<if test="bidNo != null and bidNo != ''">
-		AND		A.BI_NO LIKE CONCAT('%', #{bidNo},'%')
+		<if test="biNo != null and biNo != ''">
+		AND		A.BI_NO = #{biNo}
 		</if>
-		<if test="bidName != null and bidName != ''">
-		AND		A.BI_NAME LIKE CONCAT('%', #{bidName} ,'%')
+		<if test="biName != null and biName != ''">
+		AND		A.BI_NAME LIKE CONCAT('%', #{biName} ,'%')
 		</if>
 		<if test='userAuth == "1" or userAuth == "2" or userAuth == "3"'>
 		AND		A.INTERRELATED_CUST_CODE = #{interrelatedCustCode}
