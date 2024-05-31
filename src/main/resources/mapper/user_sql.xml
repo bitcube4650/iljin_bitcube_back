@@ -44,8 +44,16 @@
 		,		A.DEPT_NAME
 		,		A.USER_TEL
 		,		A.USER_HP
-		,		A.USER_AUTH
-		,		A.USE_YN
+		,		CASE
+					WHEN A.USER_AUTH = '1' THEN '시스템관리자'
+					WHEN A.USER_AUTH = '2' THEN '각사관리자'
+					WHEN A.USER_AUTH = '3' THEN '일반사용자'
+					WHEN A.USER_AUTH = '4' THEN '감사사용자'
+				END AS USER_AUTH
+		,		CASE
+					WHEN A.USE_YN = 'Y' THEN '사용'
+					WHEN A.USE_YN = 'N' THEN '미사용'
+				END AS USE_YN
 		,		B.INTERRELATED_NM
 		FROM	T_CO_USER A
 		INNER JOIN T_CO_INTERRELATED B

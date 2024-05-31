@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -40,8 +41,8 @@ public class UserService {
 
 	public ResultBody interrelatedList() throws Exception {
 		ResultBody resultBody = new ResultBody();
-
-		List<Object> list = generalDao.selectGernalList("user.selectInterrelatedList", null);
+		Map<String, Object> params = new HashMap<String, Object>();
+		List<Object> list = generalDao.selectGernalList("user.selectInterrelatedList", params);
 		resultBody.setData(list);
 
 		return resultBody;
