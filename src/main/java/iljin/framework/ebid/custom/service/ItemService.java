@@ -58,7 +58,6 @@ public class ItemService {
 	@Autowired
 	private GeneralDao generalDao;
 	
-	@Transactional
 	public ResultBody itemGrpList() throws Exception {
 		ResultBody resultBody = new ResultBody();
 			
@@ -76,7 +75,6 @@ public class ItemService {
 	}
 
 	@SuppressWarnings("rawtypes")
-	@Transactional
 	public ResultBody itemList(Map<String, Object> params) throws Exception{
 		ResultBody resultBody = new ResultBody();
 		
@@ -140,7 +138,6 @@ public class ItemService {
     }
     
     //품목 상세 조회
-    @Transactional
     public ResultBody findById(String id) throws Exception {
     	ResultBody resultBody = new ResultBody();
     	
