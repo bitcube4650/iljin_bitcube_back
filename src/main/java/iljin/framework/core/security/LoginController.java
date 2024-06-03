@@ -163,7 +163,7 @@ public class LoginController {
 		Pageable pageable = PagaUtils.pageable(params);
 		Page page = new PageImpl<>(new ArrayList<Object>(), pageable, 0);
 		try {
-			page = itemService.itemList(params);
+//			page = itemService.itemList(params);
 		} catch (Exception e) {
 			log.error("login itemList error : {}", e);
 		}
