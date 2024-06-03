@@ -115,7 +115,7 @@ public class BidStatusService {
 				innerParams.put("custCode", custObjMap.get("custCode"));
 				List<Object> specObj = generalDao.selectGernalList(DB.QRY_SELECT_EBID_STATUS_JOIN_CUST_SPEC, innerParams);
 				
-				custObjMap.put("bidSpec", specObj);
+				custObjMap.put("bid_Spec", specObj);
 			}
 		}
 		
