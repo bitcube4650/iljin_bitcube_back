@@ -7,7 +7,6 @@ import javax.servlet.http.HttpSession;
 
 import org.apache.commons.collections.map.HashedMap;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -41,9 +40,18 @@ public class CustController {
 	 */
 	@SuppressWarnings("rawtypes")
 	@PostMapping("/approvalList")
-	public Page approvalList(@RequestBody Map<String, Object> params, @AuthenticationPrincipal CustomUserDetails user) throws Exception {
+	public ResultBody approvalList(@RequestBody Map<String, Object> params, @AuthenticationPrincipal CustomUserDetails user) {
+		ResultBody resultBody = new ResultBody();
 		params.put("interrelatedCustCode", user.getCustCode());
-		return custService.custList(params);
+		try {
+			resultBody= custService.custList(params);
+		} catch (Exception e) {
+			resultBody.setCode("ERROR");
+			resultBody.setStatus(500);
+			resultBody.setMsg("업체 승인 리스트 조회 중 오류가 발생하였습니다.");
+			log.error("{} Error : {}", this.getClass(), e.getMessage());
+		}
+		return resultBody;
 	}
 
 	/**
@@ -55,9 +63,18 @@ public class CustController {
 	 */
 	@SuppressWarnings("rawtypes")
 	@PostMapping("/custList")
-	public Page custList(@RequestBody Map<String, Object> params, @AuthenticationPrincipal CustomUserDetails user) throws Exception {
+	public ResultBody custList(@RequestBody Map<String, Object> params, @AuthenticationPrincipal CustomUserDetails user){
+		ResultBody resultBody = new ResultBody();
 		params.put("interrelatedCustCode", user.getCustCode());
-		return custService.custList(params);
+		try {
+			resultBody= custService.custList(params);
+		} catch (Exception e) {
+			resultBody.setCode("ERROR");
+			resultBody.setStatus(500);
+			resultBody.setMsg("업체 리스트 조회 중 오류가 발생하였습니다.");
+			log.error("{} Error : {}", this.getClass(), e.getMessage());
+		}
+		return resultBody;
 	}
 
 	/**
@@ -68,8 +85,17 @@ public class CustController {
 	 */
 	@SuppressWarnings("rawtypes")
 	@PostMapping("/otherCustList")
-	public Page otherCustList(@RequestBody Map<String, Object> params) throws Exception {
-		return custService.otherCustList(params);
+	public ResultBody otherCustList(@RequestBody Map<String, Object> params) {
+		ResultBody resultBody = new ResultBody();
+		try {
+			resultBody= custService.otherCustList(params);
+		} catch (Exception e) {
+			resultBody.setCode("ERROR");
+			resultBody.setStatus(500);
+			resultBody.setMsg("타 계열사 업체 리스트 조회 중 오류가 발생하였습니다.");
+			log.error("{} Error : {}", this.getClass(), e.getMessage());
+		}
+		return resultBody;
 	}
 	
 	/**
@@ -227,7 +253,7 @@ public class CustController {
 		} catch (Exception e) {
 			resultBody.setCode("ERROR");
 			resultBody.setStatus(500);
-			resultBody.setMsg("탈퇴 중 오류가 발생하였습니다.");
+			resultBody.setMsg("업체 탈퇴 중 오류가 발생하였습니다.");
 			log.error("{} Error : {}", this.getClass(), e.getMessage());
 		}
 		
@@ -266,7 +292,7 @@ public class CustController {
 		ResultBody resultBody = new ResultBody();
 
 		try {
-				custService.save(params, regnumFile, bFile, user);
+			custService.save(params, regnumFile, bFile, user);
 		} catch (IOException e) {
 			resultBody.setCode("UPLOAD");
 			resultBody.setStatus(500);

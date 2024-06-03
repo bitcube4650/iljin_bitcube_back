@@ -158,9 +158,9 @@
 		,		A.ZIPCODE				AS zipcode
 		,		A.ADDR					AS addr
 		,		A.ADDR_DETAIL			AS addrDetail
-		,		A.REGNUM_FILE			AS regnumFile
+		,		A.REGNUM_FILE			AS regnumFileName
 		,		IFNULL(A.REGNUM_PATH, '')	AS regnumPath
-		,		A.B_FILE				AS bfile
+		,		A.B_FILE				AS bfileName
 		,		IFNULL(A.B_FILE_PATH, '')	AS bfilePath
 		,		A.CERT_YN				AS certYn
 		,		A.ETC					AS etc
@@ -284,9 +284,9 @@
 		,		ADDR_DETAIL		= #{addrDetail}
 		,		CAPITAL			= #{capital}
 		,		FOUND_YEAR		= #{foundYear}
-		,		B_FILE			= #{bFile}
-		,		B_FILE_PATH		= #{bFilePath}
-		,		REGNUM_FILE		= #{regnumFile}
+		,		B_FILE			= #{bfileName}
+		,		B_FILE_PATH		= #{bfilePath}
+		,		REGNUM_FILE		= #{regnumFileName}
 		,		REGNUM_PATH		= #{regnumPath}
 		,		UPDATE_USER		= #{userId}
 		,		UPDATE_DATE		= NOW()

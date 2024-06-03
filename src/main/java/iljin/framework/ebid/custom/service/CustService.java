@@ -39,21 +39,23 @@ public class CustService {
 	private GeneralDao generalDao;
 	
 	@SuppressWarnings({ "rawtypes", "unused" })
-	public Page custList(Map<String, Object> params) throws Exception {
+	public ResultBody custList(Map<String, Object> params) throws Exception {
 		ResultBody resultBody = new ResultBody();
 
-		Page listPage = generalDao.selectGernalListPage(DB.QRY_SELECT_CUST_LIST, params);
+		Page list = generalDao.selectGernalListPage(DB.QRY_SELECT_CUST_LIST, params);
+		resultBody.setData(list);
 		
-		return listPage;
+		return resultBody;
 	}
 
 	@SuppressWarnings({ "unused", "rawtypes" })
-	public Page otherCustList(Map<String, Object> params) throws Exception {
+	public ResultBody otherCustList(Map<String, Object> params) throws Exception {
 		ResultBody resultBody = new ResultBody();
 
-		Page listPage = generalDao.selectGernalListPage(DB.QRY_SELECT_OTHER_CUST_LIST, params);
-
-		return listPage;
+		Page list = generalDao.selectGernalListPage(DB.QRY_SELECT_OTHER_CUST_LIST, params);
+		resultBody.setData(list);
+		
+		return resultBody;
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -138,11 +140,11 @@ public class CustService {
 		// 첨부파일 업로드
 		if (regnumFile != null) {
 			params.put("regnumPath",	fileService.uploadFile(regnumFile));
-			params.put("regnumFile",	regnumFile.getOriginalFilename());
+			params.put("regnumFileName",regnumFile.getOriginalFilename());
 		}
 		if (bFile != null) {
-			params.put("bFilePath",		fileService.uploadFile(bFile, "N"));
-			params.put("bFile",			bFile.getOriginalFilename());
+			params.put("bfilePath",		fileService.uploadFile(bFile, "N"));
+			params.put("bfileName",		bFile.getOriginalFilename());
 		}
 		
 		params.put("regnum",			CommonUtils.getString(params.get("regnum1")) + CommonUtils.getString(params.get("regnum2")) + CommonUtils.getString(params.get("regnum3")));		// 사업자등록번호
