@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import iljin.framework.core.security.user.UserDto;
 
 import java.sql.PreparedStatement;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
@@ -20,7 +21,10 @@ public class CommonParameterInterceptor implements Interceptor {
 		ParameterHandler parameterHandler = (ParameterHandler) invocation.getTarget();
 		Object parameterObject = parameterHandler.getParameterObject();
 		
-		Map<String, Object> paramMap = (Map<String, Object>) parameterObject;
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		if(parameterObject != null) {
+			paramMap = (Map<String, Object>) parameterObject;
+		}
 		
 		// token의 userDto 세팅 부분 공통 파라미터로 세팅
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
