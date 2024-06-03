@@ -23,19 +23,19 @@ public class ItemController {
 
     //품목 그룹 조회
     @PostMapping("/itemGrpList")
-    public List itemGrpList() throws Exception {
+    public ResultBody itemGrpList() throws Exception {
         return itemService.itemGrpList();
     }
 
     //품목 목록 조회
     @PostMapping("/itemList")
-    public Page itemList(@RequestBody Map<String, Object> params) throws Exception {
+    public ResultBody itemList(@RequestBody Map<String, Object> params) throws Exception {
         return itemService.itemList(params);
     }
 
     //품목 상세 조회
     @PostMapping("/{id}")
-    public Optional<TCoItem> findById(@PathVariable String id) throws Exception {
+    public ResultBody findById(@PathVariable String id) throws Exception {
         return itemService.findById(id);
     }
     // 품목 수정

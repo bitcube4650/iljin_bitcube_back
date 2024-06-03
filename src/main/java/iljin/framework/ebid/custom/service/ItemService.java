@@ -59,15 +59,25 @@ public class ItemService {
 	private GeneralDao generalDao;
 	
 	@Transactional
-	public List itemGrpList() throws Exception {
-		
-		List grpList = generalDao.selectGernalList(DB.QRY_SELECT_ITEM_GRP_LIST, new HashMap());
-		return grpList;
+	public ResultBody itemGrpList() throws Exception {
+		ResultBody resultBody = new ResultBody();
+			
+		try {
+			List grpList = generalDao.selectGernalList(DB.QRY_SELECT_ITEM_GRP_LIST, new HashMap());
+			resultBody.setData(grpList);
+		}catch(Exception e) {
+			e.printStackTrace();
+			resultBody.setCode("ERROR");
+			resultBody.setStatus(500);
+			resultBody.setMsg("An error occurred while selecting the itemGrpList.");
+			resultBody.setData(e.getMessage());
+		}
+		return resultBody;
 	}
 
 	@SuppressWarnings("rawtypes")
 	@Transactional
-	public Page itemList(Map<String, Object> params) throws Exception{
+	public ResultBody itemList(Map<String, Object> params) throws Exception{
 		ResultBody resultBody = new ResultBody();
 		
 		if(params.get("size") != null && params.get("page") != null) {
@@ -75,10 +85,20 @@ public class ItemService {
 			params.put("size", CommonUtils.getInt(params.get("size")));
 		}
 		
-		Page listPage = generalDao.selectGernalListPage(DB.QRY_SELECT_ITEM_LIST, params);
-		resultBody.setData(listPage);
+		try {
+			Page listPage = generalDao.selectGernalListPage(DB.QRY_SELECT_ITEM_LIST, params);
+			resultBody.setData(listPage);
+			
+		}catch(Exception e) {
+			e.printStackTrace();
+			resultBody.setCode("ERROR");
+			resultBody.setStatus(500);
+			resultBody.setMsg("An error occurred while selecting the itemList.");
+			resultBody.setData(e.getMessage());
+		}
+		
 
-		return listPage;
+		return resultBody;
 
 	}
 
@@ -121,11 +141,21 @@ public class ItemService {
     
     //품목 상세 조회
     @Transactional
-    public Optional<TCoItem> findById(String id) throws Exception {
-    	Map<String, Object> paramMap = new HashMap<String, Object>();
-    	paramMap.put("id", id);
-    	generalDao.selectGernalObject(id, paramMap);
-        return tCoItemRepository.findById(id);
+    public ResultBody findById(String id) throws Exception {
+    	ResultBody resultBody = new ResultBody();
+    	
+    	try {
+    		Optional<TCoItem> result = tCoItemRepository.findById(id);
+			resultBody.setData(result);
+		}catch(Exception e) {
+			e.printStackTrace();
+			resultBody.setCode("ERROR");
+			resultBody.setStatus(500);
+			resultBody.setMsg("An error occurred while selecting the item detail.");
+			resultBody.setData(e.getMessage());
+		}
+  
+        return resultBody;
     }
 
     // 품목 등록
