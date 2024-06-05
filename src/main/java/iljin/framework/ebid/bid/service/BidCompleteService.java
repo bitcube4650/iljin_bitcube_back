@@ -105,7 +105,7 @@ public class BidCompleteService {
 				innerParams.put("custCode", custDto.get("custCode"));
 				
 				List<Object> specDto = generalDao.selectGernalList(DB.QRY_SELECT_COMPLETE_EBID_JOIN_CUST_SPEC, innerParams);
-				custDto.put("bidSpec", specDto);
+				custDto.put("bid_Spec", specDto);
 			}
 		}
 		
@@ -295,7 +295,7 @@ public class BidCompleteService {
 				innerParams.put("custCode", custDto.get("custCode"));
 				
 				List<Object> specDto = generalDao.selectGernalList(DB.QRY_SELECT_COMPLETE_EBID_JOIN_CUST_SPEC, innerParams);
-				custDto.put("bidSpec",specDto);
+				custDto.put("bid_Spec",specDto);
 			}
 		}
 		
