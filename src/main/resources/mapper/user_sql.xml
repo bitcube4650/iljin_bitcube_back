@@ -293,4 +293,17 @@
 		DELETE FROM T_CO_CUST_USER
 		WHERE CUST_CODE = #{custCode}
 	</delete>
+	
+	<select id="selectCustAdminUserList" resultType="camel">
+		/* user.selectCustAdminUser */
+		SELECT	CUST_NAME
+		,		USER_NAME
+		,		USER_EMAIL
+		FROM	T_CO_CUST_MASTER A
+		INNER JOIN T_CO_CUST_USER B
+		ON		A.CUST_CODE = B.CUST_CODE
+		WHERE	A.CUST_CODE = #{custCode}
+		AND		B.USER_TYPE = '1'
+		ORDER BY B.CREATE_DATE
+	</select>
 </mapper>

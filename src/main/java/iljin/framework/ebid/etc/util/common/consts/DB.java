@@ -67,6 +67,7 @@ public class DB {
 	public final static String QRY_UPDATE_CUST_USER_USEYN = "user.updateTCoCustUserUseYn";
 	public final static String QRY_DELETE_CUST_USER = "user.deleteTCoCustUser";
 	public final static String QRY_SELECT_ADMIN_USER_LIST = "user.selectAdminUserList";
+	public final static String QRY_SELECT_CUST_ADMIN_USER_LIST = "user.selectCustAdminUserList";
 	
 	// notice
 	public final static String QRY_SELECT_NOTICE_LIST = "etc.selectNoticeList";
