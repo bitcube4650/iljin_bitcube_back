@@ -285,7 +285,7 @@
 		,		CAPITAL			= #{capital}
 		,		FOUND_YEAR		= #{foundYear}
 		,		B_FILE			= #{bFile}
-		,		B_FILE_PATH		= #{bfilePath}
+		,		B_FILE_PATH		= #{bFilePath}
 		,		REGNUM_FILE		= #{regnumFile}
 		,		REGNUM_PATH		= #{regnumPath}
 		,		UPDATE_USER		= #{userId}
