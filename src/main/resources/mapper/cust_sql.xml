@@ -160,8 +160,8 @@
 		,		A.ADDR_DETAIL			AS addrDetail
 		,		A.REGNUM_FILE			AS regnumFileName
 		,		IFNULL(A.REGNUM_PATH, '')	AS regnumPath
-		,		A.B_FILE				AS bfileName
-		,		IFNULL(A.B_FILE_PATH, '')	AS bfilePath
+		,		A.B_FILE				AS bFileName
+		,		IFNULL(A.B_FILE_PATH, '')	AS bFilePath
 		,		A.CERT_YN				AS certYn
 		,		A.ETC					AS etc
 		,		D.CUST_LEVEL			AS custLevel
