@@ -60,7 +60,14 @@ public class CoUserController {
 	 */
 	@PostMapping("/pwdCheck")
 	public ResultBody pwdCheck(@RequestBody Map<String, Object> params) {
-		return userService.pwdCheck(params);
+		ResultBody resultBody = new ResultBody();
+		try {
+			resultBody = userService.pwdCheck(params);
+		}catch(Exception e) {
+			log.error("userList error : {}", e);
+			resultBody.setCode("fail");
+		}
+		return resultBody;
 	}
 
 	/**
