@@ -27,12 +27,13 @@ public class CustUserService {
 	private GeneralDao generalDao;
 
 	@SuppressWarnings({ "unused", "rawtypes" })
-	public Page userList(Map<String, Object> params) throws Exception {
+	public ResultBody userList(Map<String, Object> params) throws Exception {
 		ResultBody resultBody = new ResultBody();
 
 		Page listPage = generalDao.selectGernalListPage(DB.QRY_SELECT_CUST_USER_LIST, params);
+		resultBody.setData(listPage);
 
-		return listPage;
+		return resultBody;
 	}
 
 	@SuppressWarnings({ "unused", "rawtypes", "unchecked" })
