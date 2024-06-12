@@ -151,6 +151,12 @@
 		LEFT OUTER JOIN T_CO_USER B
 			ON A.CREATE_USER = B.USER_ID
 		WHERE 1=1 
+		<if test="title != '' and title != null">
+			AND A.TITLE LIKE CONCAT('%', #{title}, '%')
+		</if>
+		<if test="faqType != '' and faqType != null">
+			AND A.FAQ_TYPE = #{faqType}
+		</if>
 	</select>
 	
 	<select id="selectFaqList" resultType="camel">
@@ -172,6 +178,9 @@
 		LEFT OUTER JOIN T_CO_USER B
 			ON A.CREATE_USER = B.USER_ID
 		WHERE 1=1 
+		<if test="id != '' and id != null">
+			AND A.FAQ_ID = #{id}
+		</if>
 		<if test="title != '' and title != null">
 			AND A.TITLE LIKE CONCAT('%', #{title}, '%')
 		</if>
@@ -180,7 +189,7 @@
 		</if>
 		ORDER BY A.CREATE_DATE DESC
 		<if test="admin eq 'Y'.toString()">
-		LIMIT ${offset}, ${pageSize}
+			LIMIT ${offset}, ${pageSize}
 		</if>
 	</select>
 	

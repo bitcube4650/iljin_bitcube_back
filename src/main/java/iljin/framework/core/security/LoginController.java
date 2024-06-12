@@ -159,15 +159,14 @@ public class LoginController {
 	}
 
 	@PostMapping("/login/itemList")
-	public Page itemList(@RequestBody Map<String, Object> params) {
-		Pageable pageable = PagaUtils.pageable(params);
-		Page page = new PageImpl<>(new ArrayList<Object>(), pageable, 0);
+	public ResultBody itemList(@RequestBody Map<String, Object> params) {
+		ResultBody result = new ResultBody();
 		try {
-//			page = itemService.itemList(params);
+			result = itemService.itemList(params);
 		} catch (Exception e) {
 			log.error("login itemList error : {}", e);
 		}
-		return page;
+		return result;
 	}
 	
 	@PostMapping("/login/idcheck")

@@ -30,7 +30,7 @@ public class FaqService {
 	// faq 목록 조회
 	@SuppressWarnings("rawtypes")
 	@Transactional
-	public Page faqList(Map<String, Object> params) {
+	public ResultBody faqList(Map<String, Object> params) {
 
 		ResultBody resultBody = new ResultBody();
 
@@ -38,18 +38,16 @@ public class FaqService {
 			Page listPage = generalDao.selectGernalListPage(DB.QRY_SELECT_FAQ_LIST, params);
 			resultBody.setData(listPage);
 
-			return listPage;
 		} catch (Exception e) {
 			e.printStackTrace();
 			resultBody.setCode("ERROR");
 			resultBody.setStatus(500);
-			resultBody.setMsg("An error occurred while updating the click count.");
+			resultBody.setMsg("An error occurred while selecting faqList.");
 			resultBody.setData(e.getMessage());
 
-			return null;
 		}
 
-//		return resultBody;
+		return resultBody;
 	}
 	
 

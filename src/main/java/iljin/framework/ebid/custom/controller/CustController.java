@@ -221,7 +221,7 @@ public class CustController {
 	@PostMapping("/del")
 	public ResultBody del(@RequestBody Map<String, Object> params, @AuthenticationPrincipal CustomUserDetails user) {
 		ResultBody resultBody = new ResultBody();
-		params.put("updUserId", user.getUsername());
+		params.put("userId", user.getUsername());
 		
 		try {
 			custService.del(params);

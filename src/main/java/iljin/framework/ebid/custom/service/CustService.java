@@ -98,6 +98,10 @@ public class CustService {
 	public void back(Map<String, Object> params, CustomUserDetails user) throws Exception {
 		params.put("userId", user.getUsername());
 		params.put("certYn", "D");
+		
+		// 반려 처리 메일 수신할 관리자 정보
+		Map<String, Object> admInfo = (Map<String, Object>) generalDao.selectGernalList(DB.QRY_SELECT_CUST_ADMIN_USER_LIST, params).get(0);
+		
 		// 업체 반려 처리
 		generalDao.updateGernal(DB.QRY_UPDATE_CUST_CERT, params);
 
@@ -113,9 +117,9 @@ public class CustService {
 		
 		// 반려 메일 저장 처리
 		mailService.saveMailInfo("[일진그룹 e-bidding] 회원가입 반려",
-				"[" + user.getCustName() + "] 계열사에서 [" + params.get("custName") + "] 업체 반려처리 되었습니다.\n"
+				"[" + user.getCustName() + "] 계열사에서 [" + admInfo.get("custName") + "] 업체 반려처리 되었습니다.\n"
 				+ "아래 반려 사유를 확인해 주십시오\n" + "\n" + "감사합니다.\n" + "\n" + "- 반려사유\n" + params.get("etc"),
-				(String) params.get("userEmail"));
+				CommonUtils.getString(admInfo.get("userEmail")));
 	}
 	
 	@Transactional
@@ -140,11 +144,11 @@ public class CustService {
 		// 첨부파일 업로드
 		if (regnumFile != null) {
 			params.put("regnumPath",	fileService.uploadFile(regnumFile));
-			params.put("regnumFileName",regnumFile.getOriginalFilename());
+			params.put("regnumFile",	regnumFile.getOriginalFilename());
 		}
 		if (bFile != null) {
-			params.put("bfilePath",		fileService.uploadFile(bFile, "N"));
-			params.put("bfileName",		bFile.getOriginalFilename());
+			params.put("bFilePath",		fileService.uploadFile(bFile, "N"));
+			params.put("bFile",			bFile.getOriginalFilename());
 		}
 		
 		params.put("regnum",			CommonUtils.getString(params.get("regnum1")) + CommonUtils.getString(params.get("regnum2")) + CommonUtils.getString(params.get("regnum3")));		// 사업자등록번호

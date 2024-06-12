@@ -32,7 +32,7 @@ public class FaqController {
 	 */
 	@SuppressWarnings("rawtypes")
 	@PostMapping("/faqList")
-	public Page faqList(@RequestBody Map<String, Object> params) {
+	public ResultBody faqList(@RequestBody Map<String, Object> params) {
 
 		return faqService.faqList(params);
 	}

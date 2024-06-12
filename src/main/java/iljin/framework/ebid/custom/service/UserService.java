@@ -103,40 +103,48 @@ public class UserService {
 		generalDao.deleteGernal("deleteUserInterrelated", params);
 		// 감사사용자의 경우 감사계열사 정보를 저장 처리
 		if ("4".equals(params.get("userAuth"))) {
-			List<Map> list = (List) params.get("userInterrelatedList");
-			for (Map<String, Object> dataMap : list) {
-				//선택한 계열사만 인서트
-				if (dataMap.get("check") != null && (boolean)dataMap.get("check") == true) {
-					dataMap.put("interrelatedCustCode", dataMap.get("interrelatedCustCode"));
+			boolean reactYn = (boolean) params.get("reactYn");
+			if( reactYn ){
+				List<String> list = (List) params.get("userInterrelatedList");
+				for (String interrelatedCustCode : list) {
+					Map<String, Object> dataMap = new HashMap<>();
+					// 리액트에서는 선택한 계열사코드만 파라미터로 넘어옴
+					dataMap.put("interrelatedCustCode", interrelatedCustCode);
 					dataMap.put("userId", params.get("userId"));
 					generalDao.insertGernal("insertUserInterrelated", dataMap);
+				}
+			} else {
+				List<Map> list = (List) params.get("userInterrelatedList");
+				for (Map<String, Object> dataMap : list) {
+					//선택한 계열사만 인서트
+					if (dataMap.get("check") != null && (boolean)dataMap.get("check") == true) {
+						dataMap.put("interrelatedCustCode", dataMap.get("interrelatedCustCode"));
+						dataMap.put("userId", params.get("userId"));
+						generalDao.insertGernal("insertUserInterrelated", dataMap);
+					}
 				}
 			}
 		}
 		return resultBody;
 	}
     // 비밀번호 체크
-	public ResultBody pwdCheck(Map<String, Object> params) {
-        ResultBody resultBody = new ResultBody();
+	public ResultBody pwdCheck(Map<String, Object> params) throws Exception {
+		ResultBody resultBody = new ResultBody();
 		// 파라미터 정리
 		String userId = ((UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUsername();
 		String pwd = CommonUtils.getString(params.get("pwd"), "");
-		
+
 		// db 비밀번호
-		String dbPassword = "";
-		Optional<TCoUser> userOptional = tCoUserRepository.findById(userId);
-		if (userOptional.isPresent()) {
-			dbPassword = userOptional.get().getUserPwd();
-		}
-		
+		params.put("userId", userId);
+		Map<String, Object> userInfo  = (Map<String, Object>)generalDao.selectGernalObject("user.selectUserPassword", params);
+		String dbPassword = (String) userInfo.get("userPwd");
 		// 비밀번호 체크
-		//boolean pwdCheck = userServiceImpl.checkPassword(userId, pwd);
 		boolean pwdCheck = ((BCryptPasswordEncoder) passwordEncoder).matches(pwd, dbPassword);
 		//
 		if(!pwdCheck ) {
-            resultBody.setCode("NO"); // 비밀번호 실패
+			resultBody.setCode("NO"); // 비밀번호 실패
 		}
-		
+
 		return resultBody;
 	}
     
