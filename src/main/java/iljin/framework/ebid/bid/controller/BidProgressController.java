@@ -20,11 +20,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import iljin.framework.core.dto.ResultBody;
 import iljin.framework.core.security.user.CustomUserDetails;
 import iljin.framework.ebid.bid.service.BidProgressService;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/api/v1/bid")
 @CrossOrigin
-
+@Slf4j
 public class BidProgressController {
 
     @Autowired
@@ -36,8 +37,16 @@ public class BidProgressController {
     }
 
     @PostMapping("/progresslistDetail")
-    public ResultBody progresslistDetail(@RequestBody String param, @AuthenticationPrincipal CustomUserDetails user) throws Exception {
-        return bidProgressService.progresslistDetail(param, user);
+    public ResultBody progresslistDetail(@RequestBody Map<String,Object> params){
+		ResultBody resultBody = new ResultBody();
+        try {
+        	resultBody =  bidProgressService.progresslistDetail(params);
+		} catch (Exception e) {
+			log.error("progresslistDetail error : {}", e);
+			resultBody.setCode("fail");
+			resultBody.setMsg("입찰 상세 조회를 실패하였습니다.");
+		}
+        return resultBody;
     }
 
     @PostMapping("/bidNotice")
@@ -46,8 +55,9 @@ public class BidProgressController {
     	try {
     		bidProgressService.bidNotice(params);
         } catch (Exception e) {
-            e.printStackTrace();
-            resultBody.setCode("error");
+			log.error("bidNotice error : {}", e);
+			resultBody.setCode("fail");
+			resultBody.setMsg("입찰 공고를 실패하였습니다.");
             }
         return resultBody;
     }
@@ -82,8 +92,9 @@ public class BidProgressController {
     		Map<String, Object> params = mapper.readValue(bidContent, Map.class);
     		resultBody = bidProgressService.updateBid(params, insFile, innerFiles, outerFiles);
         } catch (Exception e) {
-            e.printStackTrace();
-            resultBody.setCode("error");
+			log.error("updateBid  error : {}", e);
+			resultBody.setCode("fail");
+			resultBody.setMsg("입찰 공고 수정을 실패하였습니다.");
             }
         return resultBody;
     }
@@ -117,19 +128,36 @@ public class BidProgressController {
 			params = mapper.readValue(bidContent, Map.class);
     		resultBody = bidProgressService.insertBid(params, insFile, innerFiles, outerFiles);
         } catch (Exception e) {
-            e.printStackTrace();
-            resultBody.setCode("error");
+			log.error("insertBid  error : {}", e);
+			resultBody.setCode("fail");
+			resultBody.setMsg("입찰 공고 등록을 실패하였습니다.");
             }
         return resultBody;
     }
 
     @PostMapping("/pastBidList")
-    public ResultBody pastBidList(@RequestBody Map<String, Object> params) throws Exception {
-        return bidProgressService.pastBidList(params);
+    public ResultBody pastBidList(@RequestBody Map<String, Object> params){
+		ResultBody resultBody = new ResultBody();
+        try {
+        	resultBody = bidProgressService.pastBidList(params);
+		} catch (Exception e) {
+			log.error("progressCodeList error : {}", e);
+			resultBody.setCode("fail");
+			resultBody.setMsg("과거입찰 조회를 실패하였습니다.");
+		}
+		return resultBody;
     }
     @PostMapping("/progressCodeList")
-    public ResultBody progressCodeList() throws Exception {
-        return bidProgressService.progressCodeList();
+    public ResultBody progressCodeList(){
+		ResultBody resultBody = new ResultBody();
+        try {
+        	resultBody = bidProgressService.progressCodeList();
+		} catch (Exception e) {
+			log.error("progressCodeList error : {}", e);
+			resultBody.setCode("fail");
+			resultBody.setMsg("입찰분류 코드 조회를 실패하였습니다.");
+		}
+		return resultBody;
     }
 
 }

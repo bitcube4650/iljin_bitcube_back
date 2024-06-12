@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.Page;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -135,10 +136,10 @@ public class BidProgressService {
 		return resultBody;
 	}
 
-    public ResultBody progresslistDetail(String param, CustomUserDetails user) throws Exception {
+    public ResultBody progresslistDetail(@RequestBody Map<String,Object> params) throws Exception {
 
     	Map<String,Object> paramMap = new HashMap<>();
-    	paramMap.put("biNo", param);
+    	paramMap.put("biNo", params.get("biNo"));
 		List<Object> selectProgressDetailList = generalDao.selectGernalList("bid.selectProgressDetailList", paramMap);
 		List<Object> selectProgressDetailTableList = generalDao.selectGernalList("bid.selectProgressDetailTableList", paramMap);
 		List<Object> selectProgressDetaiFileList = generalDao.selectGernalList("bid.selectProgressDetaiFileList", paramMap);
@@ -665,8 +666,6 @@ public class BidProgressService {
 	        // 내역방식 - 파일등록
 	        if( "1".equals(CommonUtils.getString(bidContent.get("insModeCode")))){
 
-	        	// MultipartFile file, String biNo, String fCustCode, String fileFlag
-	        	
 	            // 파일직접입력 
 	            this.saveFileBid(insFile, biNo, "0", "K");
 	        } 
@@ -686,24 +685,7 @@ public class BidProgressService {
 	                orderUc = !StringUtils.isEmpty(data.get("orderUc")) ? Integer.parseInt(data.get("orderUc").toString()) : 0;
 	                // orderQty 값이 null이거나 비어 있는 경우 0으로 초기화
 	                orderQty = !StringUtils.isEmpty(data.get("orderQty")) ? Integer.parseInt(data.get("orderQty").toString()) : 0;
-	                
-	                /*
-	                StringBuilder sbList4 = new StringBuilder(
-	                        "INSERT into t_bi_spec_mat (bi_no, seq, name, ssize, unitcode, order_uc, create_user, create_date, order_qty) "
-	                                +
-	                                "values (:biNo, :seq, :name, :ssize, :unitcode, :orderUc, :userId, sysdate(), :orderQty)");
-	                Query queryList4 = entityManager.createNativeQuery(sbList4.toString());
-	               // queryList4.setParameter("biNo", biNo);
-	                queryList4.setParameter("seq", data.get("seq"));
-	                queryList4.setParameter("name", (String) data.get("name"));
-	                queryList4.setParameter("ssize", (String) data.get("ssize"));
-	                queryList4.setParameter("unitcode", (String) data.get("unitcode"));
-	                queryList4.setParameter("orderUc", orderUc);
-	                //queryList4.setParameter("userId", userId);
-	                queryList4.setParameter("orderQty", orderQty);
-	                queryList4.executeUpdate();
-	                */
-	                
+	                	                
 		            tableContentMap.put("seq", data.get("seq"));
 		            tableContentMap.put("name", (String) data.get("name"));
 		            tableContentMap.put("ssize", (String) data.get("ssize"));

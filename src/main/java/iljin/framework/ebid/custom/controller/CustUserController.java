@@ -32,8 +32,16 @@ public class CustUserController {
 	 */
 	@SuppressWarnings("rawtypes")
 	@PostMapping("/userList")
-	public Page userList(@RequestBody Map<String, Object> params) throws Exception {
-		return custUserService.userList(params);
+	public ResultBody userList(@RequestBody Map<String, Object> params) throws Exception {
+		ResultBody resultBody = new ResultBody();
+		try {
+			resultBody = custUserService.userList(params);
+		}catch(Exception e) {
+			log.error("userList error : {}", e);
+			resultBody.setCode("fail");
+			resultBody.setMsg("사용자관리 리스트를 가져오는것을 실패하였습니다.");
+		}
+		return resultBody;
 	}
 
 	/**
@@ -46,11 +54,20 @@ public class CustUserController {
 	 */
 	@SuppressWarnings("rawtypes")
 	@PostMapping("/userListForCust")
-	public Page userListForCust(@RequestBody Map<String, Object> params, @AuthenticationPrincipal CustomUserDetails user) throws Exception {
+	public ResultBody userListForCust(@RequestBody Map<String, Object> params, @AuthenticationPrincipal CustomUserDetails user){
+		ResultBody resultBody = new ResultBody();
 		if (params.get("custCode") == null) {
 			params.put("custCode", Integer.parseInt(user.getCustCode()));
 		}
-		return custUserService.userList(params);
+		try {
+			return custUserService.userList(params);
+		} catch (Exception e) {
+			log.error("userListForCust error : {}", e);
+			resultBody.setCode("fail");
+			resultBody.setMsg("입찰 상세 조회를 실패하였습니다.");
+		}
+		return null;
+
 	}
 	
 	/**
