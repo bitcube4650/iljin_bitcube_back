@@ -58,8 +58,8 @@
 		<if test="custName != null and custName != ''">
 		AND		A.CUST_NAME LIKE CONCAT('%', #{custName}, '%')
 		</if>
-		<if test="custTypeCode1 != null and custTypeCode1 != ''">
-		AND		A.CUST_TYPE1 = #{custTypeCode1}
+		<if test="custType != null and custType != ''">
+		AND		A.CUST_TYPE1 = #{custType}
 		</if>
 	</sql>
 	
