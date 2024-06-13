@@ -146,6 +146,7 @@
 		,		CASE WHEN tbim.OPEN_ATT2 IS NOT NULL AND tbim.OPEN_ATT2 != '' THEN tbim.OPEN_ATT2_SIGN ELSE 'Y' END AS OPEN_ATT2_SIGN 
 		,		tbim.EST_OPENER as EST_OPENER_ID 
 		,		tbim.EST_BIDDER as EST_BIDDER_ID 
+		,		tbim.GONGO_ID
 		from t_bi_info_mat tbim 
 		left outer join t_co_user tcu 
 			on tbim.GONGO_ID = tcu.USER_ID 
@@ -191,6 +192,7 @@
 		,		tbu.FILE_PATH 
 		,		tbimc.ETC_B_FILE as ETC_FILE 
 		,		tbimc.ETC_B_FILE_PATH as ETC_PATH 
+		, 		IFNULL(tbimc.usemail_id,'') AS usemail_id 
 		from t_bi_info_mat_cust tbimc 
 		inner join t_co_cust_master tccm 
 			on tbimc.CUST_CODE = tccm.CUST_CODE 

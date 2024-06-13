@@ -121,6 +121,27 @@ public class BidStatusService {
 		
 		detailObj.put("cust_List", custData);
 		
+		int custDataSize = custData.size();
+		
+        if(custDataSize >0) {
+        	Map<String,Object> paramMap = new HashMap<>();
+	        String usemailIdFilter = "";
+	        for (int i = 0; i < custDataSize; i++) {
+	           Map<String,Object> selectProgressDetaiCustListMap = (Map<String, Object>) custData.get(i);
+	
+	            if (i < custDataSize - 1) {
+	            	usemailIdFilter +=(selectProgressDetaiCustListMap.get("usemailId").toString()+ ",");
+	            }else {
+	            	usemailIdFilter += (selectProgressDetaiCustListMap.get("usemailId").toString());
+	            }
+	        }
+            
+	    	paramMap.put("usemailIds", usemailIdFilter.split(","));
+	    	List<Object> selectProgressDetaiCustUserList = generalDao.selectGernalList("bid.selectProgressDetaiCustUserList", paramMap);
+	    	detailObj.put("cust_user_info", selectProgressDetaiCustUserList);
+        }
+        
+		
 		// ************ 데이터 검색 -- 세부내역 ************
 		if(CommonUtils.getString(detailObj.get("insMode")).equals("1")) {		//내역방식이 파일등록일 경우
 			ArrayList<String> fileFlagArr = new ArrayList<String>();
