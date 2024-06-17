@@ -216,9 +216,7 @@
 	<update id="updateCoUserDetail">
 		/* main.updateCoUserDetail */
 		UPDATE	T_CO_USER
-		SET		BIDAUTH			= #{bidauth}
-		,		DEPT_NAME		= #{deptName}
-		,		OPENAUTH		= #{openauth}
+		SET		DEPT_NAME		= #{deptName}
 		,		USER_EMAIL		= #{userEmail}
 		,		USER_HP			= #{userHp}
 		,		USER_POSITION	= #{userPosition}

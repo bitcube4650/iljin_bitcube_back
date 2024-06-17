@@ -261,22 +261,21 @@ public class MainService {
 		paramMap.put("userId", userId);
 		int coUserCnt = CommonUtils.getInt(generalDao.selectGernalCount(DB.QRY_SELECT_CO_USER_CNT, paramMap));
 		
+		Map<String, Object> userInfoMap = (Map<String, Object>) params.get("userInfo");
 		if(coUserCnt > 0) {
-			paramMap.put("bidauth"		, ((boolean) params.get("bidauth")) ? "1" : "");
-			paramMap.put("deptName"		, CommonUtils.getString(params.get("deptName")));
-			paramMap.put("openauth"		, ((boolean) params.get("openauth")) ? "1" : "");
-			paramMap.put("userEmail"	, CommonUtils.getString(params.get("userEmail")));
-			paramMap.put("userHp"		, CommonUtils.getString(params.get("userHp")));
-			paramMap.put("userPosition"	, CommonUtils.getString(params.get("userPosition")));
-			paramMap.put("userTel"		, CommonUtils.getString(params.get("userTel")));
+			paramMap.put("deptName"		, CommonUtils.getString(userInfoMap.get("deptName")));
+			paramMap.put("userEmail"	, CommonUtils.getString(userInfoMap.get("userEmail")));
+			paramMap.put("userHp"		, CommonUtils.getString(userInfoMap.get("userHp")));
+			paramMap.put("userPosition"	, CommonUtils.getString(userInfoMap.get("userPosition")));
+			paramMap.put("userTel"		, CommonUtils.getString(userInfoMap.get("userTel")));
 			
 			generalDao.updateGernal(DB.QRY_UPDATE_CO_USER_DETAIL, paramMap);
 		} else {
-			paramMap.put("userTel"		, CommonUtils.getString(params.get("userTel")));
-			paramMap.put("userHp"		, CommonUtils.getString(params.get("userHp")));
-			paramMap.put("userEmail"	, CommonUtils.getString(params.get("userEmail")));
-			paramMap.put("userBuseo"	, CommonUtils.getString(params.get("userBuseo")));
-			paramMap.put("userPosition"	, CommonUtils.getString(params.get("userPosition")));
+			paramMap.put("userTel"		, CommonUtils.getString(userInfoMap.get("userTel")));
+			paramMap.put("userHp"		, CommonUtils.getString(userInfoMap.get("userHp")));
+			paramMap.put("userEmail"	, CommonUtils.getString(userInfoMap.get("userEmail")));
+			paramMap.put("userBuseo"	, CommonUtils.getString(userInfoMap.get("userBuseo")));
+			paramMap.put("userPosition"	, CommonUtils.getString(userInfoMap.get("userPosition")));
 			
 			generalDao.updateGernal(DB.QRY_UPDATE_CO_CUST_USER_DETAIL, paramMap);
 		}
