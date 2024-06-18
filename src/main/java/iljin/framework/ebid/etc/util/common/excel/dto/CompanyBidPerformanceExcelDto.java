@@ -1,11 +1,10 @@
 package iljin.framework.ebid.etc.util.common.excel.dto;
 
+import java.math.BigDecimal;
+
 import iljin.framework.ebid.etc.util.common.excel.utils.ExcelColumnName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-
-import java.math.BigDecimal;
-import java.math.BigInteger;
 
 @AllArgsConstructor
 @Data
@@ -16,13 +15,13 @@ public class CompanyBidPerformanceExcelDto {
     @ExcelColumnName(name = "입찰건수")
     String cnt;
     @ExcelColumnName(name = "예산금액(1)")
-    BigDecimal bdAnt;
+    BigDecimal bdAmt;
     @ExcelColumnName(name = "낙찰금액(2)")
     BigDecimal succAmt;
     @ExcelColumnName(name = "차이(1)-(2)")
-    BigDecimal mamt;
+    BigDecimal mAmt;
     @ExcelColumnName(name = "비고")
-    String test6;
+    String temp;
 
     public CompanyBidPerformanceExcelDto() {
     }

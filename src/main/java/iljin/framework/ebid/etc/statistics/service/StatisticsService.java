@@ -66,7 +66,8 @@ public class StatisticsService {
 		ResultBody resultBody = new ResultBody();
 		List<Object> list = generalDao.selectGernalList("statistics.selectBiInfoList", params);
 		resultBody.setData(list);
-        return resultBody;
+		
+		return resultBody;
 	}
 	
 	/**

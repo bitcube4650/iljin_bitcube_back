@@ -25,63 +25,91 @@
 	 	</if>
 	</select>
 	
-	<select id="selectBiInfoList" resultType="camel">
-		/* statistics.selectBiInfoList */
-		SELECT
-        IF(is_rollup = 1,
-        '계',
-        INTERRELATED_NM) AS INTERRELATED_NM,
-        CNT,
-        BD_AMT,
-        SUCC_AMT,
-        M_AMT,
-        INTERRELATED_CUST_CODE,
-        '' as temp
-    	FROM
-        (	SELECT
-            IFNULL(A.INTERRELATED_NM,
-            'Gye') AS INTERRELATED_NM,
-            COUNT(BI_NO) AS CNT,
-            SUM(A.BD_AMT) as BD_AMT,
-            SUM(A.SUCC_AMT) as SUCC_AMT,
-            SUM(A.BD_AMT) - SUM(A.SUCC_AMT) as M_AMT,
-            A.INTERRELATED_CUST_CODE,
-            CASE               
-                WHEN A.INTERRELATED_CUST_CODE IS NULL THEN 1              
-                ELSE 0          
-            END AS is_rollup      
-        	FROM
-            (  SELECT
-                AA.BI_NO,
-                BB.INTERRELATED_NM,
-                AA.BD_AMT,
-                AA.SUCC_AMT,
-                AA.INTERRELATED_CUST_CODE               
-            	FROM
-                t_bi_info_mat AA                   
-            	inner join
-                t_co_interrelated BB 
-                    on AA.INTERRELATED_CUST_CODE = BB.INTERRELATED_CUST_CODE                
-            	WHERE
-                AA.ING_TAG = 'A5'                  
-                AND DATE(AA.UPDATE_DATE) BETWEEN #{startDay} AND #{endDay}  
-                <if test="coInters != null and coInters.size() > 0">
-	                AND AA.INTERRELATED_CUST_CODE IN(
-	                <foreach item="coInter" collection="coInters" separator=",">
+	
+	<select id="selectBiInfoList_count" resultType="int">
+	/* statistics.selectBiInfoList_count */
+		SELECT	COUNT(1)
+		FROM(
+			SELECT	IFNULL(A.INTERRELATED_NM, 'Gye') AS INTERRELATED_NM
+			,		COUNT(BI_NO) AS CNT
+			,		SUM(A.BD_AMT) as BD_AMT
+			,		SUM(A.SUCC_AMT) as SUCC_AMT
+			,		SUM(A.BD_AMT) - SUM(A.SUCC_AMT) as M_AMT
+			,		A.INTERRELATED_CUST_CODE
+			,		CASE
+						WHEN A.INTERRELATED_CUST_CODE IS NULL
+						THEN 1
+						ELSE 0
+					END AS is_rollup
+			FROM(
+				SELECT	AA.BI_NO
+				,		BB.INTERRELATED_NM
+				,		AA.BD_AMT
+				,		AA.SUCC_AMT
+				,		AA.INTERRELATED_CUST_CODE
+				FROM	T_BI_INFO_MAT AA
+				INNER JOIN T_CO_INTERRELATED BB
+					ON	AA.INTERRELATED_CUST_CODE = BB.INTERRELATED_CUST_CODE
+				WHERE	AA.ING_TAG = 'A5'
+				AND DATE(AA.UPDATE_DATE) BETWEEN #{startDay} AND #{endDay}
+				<if test="coInters != null and coInters.size() > 0">
+					AND AA.INTERRELATED_CUST_CODE IN(
+					<foreach item="coInter" collection="coInters" separator=",">
 						#{coInter}
 					</foreach>
-                	)  
-                </if>
-            	GROUP BY
-                AA.INTERRELATED_CUST_CODE,
-                AA.bi_no          
-            ) AS A      
-        	GROUP BY
-            A.INTERRELATED_CUST_CODE WITH ROLLUP  
-        ) AS B  
-        ORDER BY
-            is_rollup,
-            INTERRELATED_NM
+					)
+				</if>
+				GROUP BY AA.INTERRELATED_CUST_CODE, AA.BI_NO
+			) AS A
+			GROUP BY A.INTERRELATED_CUST_CODE WITH ROLLUP
+		) AS B
+		ORDER BY is_rollup, INTERRELATED_NM
+	</select>
+	
+	<select id="selectBiInfoList" resultType="camel">
+	/* statistics.selectBiInfoList */
+		SELECT	IF(is_rollup = 1,'계',INTERRELATED_NM) AS INTERRELATED_NM
+		,		CNT
+		,		BD_AMT
+		,		SUCC_AMT
+		,		M_AMT
+		,		INTERRELATED_CUST_CODE
+		,		'' as temp
+		FROM(
+			SELECT	IFNULL(A.INTERRELATED_NM, 'Gye') AS INTERRELATED_NM
+			,		COUNT(BI_NO) AS CNT
+			,		SUM(A.BD_AMT) as BD_AMT
+			,		SUM(A.SUCC_AMT) as SUCC_AMT
+			,		SUM(A.BD_AMT) - SUM(A.SUCC_AMT) as M_AMT
+			,		A.INTERRELATED_CUST_CODE
+			,		CASE
+						WHEN A.INTERRELATED_CUST_CODE IS NULL
+						THEN 1
+						ELSE 0
+					END AS is_rollup
+			FROM(
+				SELECT	AA.BI_NO
+				,		BB.INTERRELATED_NM
+				,		AA.BD_AMT
+				,		AA.SUCC_AMT
+				,		AA.INTERRELATED_CUST_CODE
+				FROM	T_BI_INFO_MAT AA
+				INNER JOIN T_CO_INTERRELATED BB
+					ON	AA.INTERRELATED_CUST_CODE = BB.INTERRELATED_CUST_CODE
+				WHERE	AA.ING_TAG = 'A5'
+				AND DATE(AA.UPDATE_DATE) BETWEEN #{startDay} AND #{endDay}
+				<if test="coInters != null and coInters.size() > 0">
+					AND AA.INTERRELATED_CUST_CODE IN(
+					<foreach item="coInter" collection="coInters" separator=",">
+						#{coInter}
+					</foreach>
+					)
+				</if>
+				GROUP BY AA.INTERRELATED_CUST_CODE, AA.BI_NO
+			) AS A
+			GROUP BY A.INTERRELATED_CUST_CODE WITH ROLLUP
+		) AS B
+		ORDER BY is_rollup, INTERRELATED_NM
 	</select>
 	
 	<select id="biInfoDetailList_count" resultType="int">
