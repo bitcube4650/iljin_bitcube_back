@@ -147,6 +147,15 @@
 		,		tbim.EST_OPENER as EST_OPENER_ID 
 		,		tbim.EST_BIDDER as EST_BIDDER_ID 
 		,		tbim.GONGO_ID
+		,		tbim.ITEM_CODE
+		,		tbim.SUCC_DECI_METH AS SUCC_DECI_METH_CODE
+		,		tbim.MAT_DEPT
+		, 		tbim.MAT_PROC
+		, 		tbim.MAT_CLS
+		,		tbim.MAT_FACTORY
+		, 		tbim.MAT_FACTORY_LINE 
+		,		tbim.MAT_FACTORY_CNT  
+		,		tcu.DEPT_NAME
 		from t_bi_info_mat tbim 
 		left outer join t_co_user tcu 
 			on tbim.GONGO_ID = tcu.USER_ID 
@@ -227,6 +236,7 @@
 		select	tbu.FILE_FLAG 
 		,		tbu.FILE_NM 
 		,		tbu.FILE_PATH 
+		,		tbu.FILE_ID
 		from t_bi_upload tbu 
 		where tbu.USE_YN = 'Y' 
 		and tbu.FILE_FLAG in (<foreach collection="fileFlag" item="item" separator=",">#{item}</foreach>) 

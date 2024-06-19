@@ -535,204 +535,336 @@ public final class ExcelUtils implements ExcelSupport {
 
 	//전자입찰>입찰계획>입찰계획상세 Excel DownLoad
 	public void createBidProgressDetailExcel(BidProgressResponseDto param, HttpServletResponse response) throws IOException {
-		Map<String, Object> result = param.getResult();					 //엑셀 모든 컬럼
-		List<Map<String, Object>> custContent = param.getCustContent();	 //입찰참가업체 컬럼
-		List<Map<String, Object>> tableContent = param.getTableContent();   //직접등록시 내역사항에 들어가는 세부사항 컬럼
-		List<Map<String, Object>> fileContent = param.getFileContent();	 //파일등록시 내역사항에 들어가는 파일리스트 컬럼
-		InputStream fis = null;
-		DecimalFormat decimalFormat = new DecimalFormat("#,###");
-		
-		String insModeFlag = String.valueOf(result.get("insMode"));
-		
-		if("직접입력".equals(insModeFlag)) {
-			fis = getClass().getResourceAsStream("/menual/bidProgressItemDetail.xlsx");
-		}else {
-			fis = getClass().getResourceAsStream("/menual/bidProgressDetail.xlsx");
-		}
-		
-		XSSFWorkbook xssfWorkBook = new XSSFWorkbook(fis);
-		XSSFSheet xssfSheet = xssfWorkBook.getSheetAt(0);
+	  	Map<String, Object> result = param.getResult();                     //엑셀 모든 컬럼
+        List<Map<String, Object>> custContent = param.getCustContent();     //입찰참가업체 컬럼
+        List<Map<String, Object>> tableContent = param.getTableContent();   //직접등록시 내역사항에 들어가는 세부사항 컬럼
+        List<Map<String, Object>> fileContent = param.getFileContent();     //파일등록시 내역사항에 들어가는 파일리스트 컬럼
+        InputStream fis = null;
+        DecimalFormat decimalFormat = new DecimalFormat("#,###");
+        
+        String insModeFlag = String.valueOf(result.get("insMode"));
+        
+        if("2".equals(insModeFlag)) {
+        	fis = getClass().getResourceAsStream("/menual/bidProgressItemDetail.xlsx");
+        }else {
+        	fis = getClass().getResourceAsStream("/menual/bidProgressDetail.xlsx");
+        }
+    	
+        XSSFWorkbook xssfWorkBook = new XSSFWorkbook(fis);
+        XSSFSheet xssfSheet = xssfWorkBook.getSheetAt(0);
 
-		String fileName = param.getFileName();
-		fileName = URLEncoder.encode(fileName,"UTF-8").replaceAll("\\+", "%20");
+        String fileName = param.getFileName();
+        fileName = URLEncoder.encode(fileName,"UTF-8").replaceAll("\\+", "%20");
 
-		
-		/*
-		 *  입찰참가 업체 컬럼 생성
-		 */
-		StringBuilder custNameBuilder = new StringBuilder();
-		int index = 0;
+        
+        /*
+         *  입찰참가 업체 컬럼 생성
+         */
+        StringBuilder custNameBuilder = new StringBuilder();
+        int index = 0;
 
-		for(Map<String, Object> map : custContent) {
-			custNameBuilder.append(map.get("custName"));
-			// 다음 요소가 있으면 쉼표 추가
-			if (++index < custContent.size()) {
-				custNameBuilder.append(", ");
-			}
-		}
+        for(Map<String, Object> map : custContent) {
+            custNameBuilder.append(map.get("custName"));
+            // 다음 요소가 있으면 쉼표 추가
+            if (++index < custContent.size()) {
+                custNameBuilder.append(", ");
+            }
+        }
 
-		/*
-		 *  Flag : 직접등록, 파일등록
-		 *  직접등록시 내역사항에 세부사항   들어감
-		 *  파일등록시 내역사항에 파일리스트 들어감
-		 */
-		
-		StringBuilder insModeContentBuilder = new StringBuilder();
+        /*
+         *  Flag : 직접등록, 파일등록
+         *  직접등록시 내역사항에 세부사항   들어감
+         *  파일등록시 내역사항에 파일리스트 들어감
+         */
+        
+        StringBuilder insModeContentBuilder = new StringBuilder();
 
-		if(!"직접입력".equals(insModeFlag)) {//파일입력인 경우
-			//파일등록시 내역사항에 들어가는 파일리스트
-			index = 0;
-			for(Map<String, Object> map : fileContent) {
-				insModeContentBuilder.append(map.get("fileNm"));
-				// 다음 요소가 있으면 공백 추가
-				if (++index < fileContent.size()) {
-					insModeContentBuilder.append("\n");
-				}
-			}
-		}
-		
-		/*
-		 ** 입찰 기본정보
-		 */
-		String biNo		 = CommonUtils.getString(result.get("biNo"), "");			 //입찰번호
-		String biName	   = CommonUtils.getString(result.get("biName"), "");		   //입찰명
-		String itemName	 = CommonUtils.getString(result.get("itemName"), "");		 //품목
-		String biMode	   = CommonUtils.getString(result.get("biMode"), "");		   //입찰방식
-		String bidJoinSpec  = CommonUtils.getString(result.get("bidJoinSpec"), "");	  //입찰참가자격
-		String specialCond  = CommonUtils.getString(result.get("specialCond"), "");	  //특수조건
-		String spotDate	 = CommonUtils.getString(result.get("spotDate"), "");		 //현장설명일시
-		String spotArea	 = CommonUtils.getString(result.get("spotArea"), "");		 //현장설명장소
-		String succDeciMeth = CommonUtils.getString(result.get("succDeciMeth"), "");	 //낙찰자결정방법
-		String custName	 = CommonUtils.getString(custNameBuilder, "가입회원사 전체"); //입찰참가업체 -> 일반경쟁입찰 일 경우, default로 가입회원사 전체
-		String amtBasis	 = CommonUtils.getString(result.get("amtBasis"), "");		 //금액기준
-		String payCond	  = CommonUtils.getString(result.get("payCond"), "");		  //결제조건
-		
-		String bdAmt		= CommonUtils.getString(result.get("bdAmt"), "");//예산금액
-		
-		if (StringUtils.isNotBlank(bdAmt)) {
-			BigInteger amount = new BigInteger(bdAmt);
-			bdAmt = CommonUtils.getString(decimalFormat.format(amount), "");
-		}
-		
-		String cuser		= CommonUtils.getString(result.get("cuser"), "");			//입찰담당자
+        if("1".equals(insModeFlag)) {//파일입력인 경우
+            insModeContentBuilder.append(fileContent.stream()
+                    .filter(map -> "K".equals(map.get("fileFlag")))
+                    .collect(Collectors.toList()).get(0).get("fileNm"));
+        }
+        
+        /*
+         ** 입찰 기본정보
+         */
+        String biNo         = CommonUtils.getString(result.get("biNo"), "");             //입찰번호
+        String biName       = CommonUtils.getString(result.get("biName"), "");           //입찰명
+        String itemName     = CommonUtils.getString(result.get("itemName"), "");         //품목
+        String biMode       = CommonUtils.getString(result.get("biMode"), "");           //입찰방식
+        String bidJoinSpec  = CommonUtils.getString(result.get("bidJoinSpec"), "");      //입찰참가자격
+        String specialCond  = CommonUtils.getString(result.get("specialCond"), "");      //특수조건
+        String spotDate     = CommonUtils.getString(result.get("spotDate"), "");         //현장설명일시
+        String spotArea     = CommonUtils.getString(result.get("spotArea"), "");         //현장설명장소
+        String succDeciMeth = CommonUtils.getString(result.get("succDeciMeth"), "");     //낙찰자결정방법
+        String custName     = CommonUtils.getString(custNameBuilder, "가입회원사 전체"); //입찰참가업체 -> 일반경쟁입찰 일 경우, default로 가입회원사 전체
+        String amtBasis     = CommonUtils.getString(result.get("amtBasis"), "");         //금액기준
+        String payCond      = CommonUtils.getString(result.get("payCond"), "");          //결제조건
+        
+        String bdAmt        = CommonUtils.getString(result.get("bdAmt"), "");//예산금액
+        
+        if (StringUtils.isNotBlank(bdAmt)) {
+            BigInteger amount = new BigInteger(bdAmt);
+            bdAmt = CommonUtils.getString(decimalFormat.format(amount), "");
+        }
+        
+        String cuser        = CommonUtils.getString(result.get("damdangName"), "");            //입찰담당자
 
-		/*
-		 ** 입찰 공고 추가등록 사항
-		 */
-		String estStartDate	= CommonUtils.getString(result.get("estStartDate"), "");  //제출 시작일시
-		String estCloseDate	= CommonUtils.getString(result.get("estCloseDate"), "");  //제출 마감일시
-		String estOpener	   = CommonUtils.getString(result.get("estOpener"), "");	 //개찰자
-		String gongoId		 = CommonUtils.getString(result.get("gongoId"), "");	   //입찰 공고자
-		String estBidder	   = CommonUtils.getString(result.get("estBidder"), "");	 //낙찰자
-		String openAtt1		= CommonUtils.getString(result.get("openAtt1"), "");	  //입회자1
-		String openAtt2		= CommonUtils.getString(result.get("openAtt2"), "");	  //입회자2
-		String supplyCond	  = CommonUtils.getString(result.get("supplyCond"), "");	//납품 조건
-		String insMode		 = CommonUtils.getString(result.get("insMode"), "");	   //내역 방식
-		String insModeContent  = CommonUtils.getString(insModeContentBuilder, "");	   //내역사항
+        /*
+         ** 입찰 공고 추가등록 사항
+         */
+        String estStartDate    = CommonUtils.getString(result.get("estStartDate"), "");  //제출 시작일시
+        String estCloseDate    = CommonUtils.getString(result.get("estCloseDate"), "");  //제출 마감일시
+        String estOpener       = CommonUtils.getString(result.get("estOpener"), "");     //개찰자
+        String gongoId         = CommonUtils.getString(result.get("gongoId"), "");       //입찰 공고자
+        String estBidder       = CommonUtils.getString(result.get("estBidder"), "");     //낙찰자
+        String openAtt1        = CommonUtils.getString(result.get("openAtt1"), "");      //입회자1
+        String openAtt2        = CommonUtils.getString(result.get("openAtt2"), "");      //입회자2
+        String supplyCond      = CommonUtils.getString(result.get("supplyCond"), "");    //납품 조건
+        String insMode         = CommonUtils.getString(result.get("insMode"), "");       //내역 방식
+        String insModeContent  = CommonUtils.getString(insModeContentBuilder, "");       //세부내역
 
-		/*
-		** 입찰 기본정보
-		 */
-		xssfSheet.getRow(3).getCell(1).setCellValue(biNo);		  //입찰번호
-		xssfSheet.getRow(4).getCell(1).setCellValue(biName);		//입찰명
-		xssfSheet.getRow(5).getCell(1).setCellValue(itemName);	  //품목
-		xssfSheet.getRow(6).getCell(1).setCellValue(biMode);		//입찰방식
-		xssfSheet.getRow(7).getCell(1).setCellValue(bidJoinSpec);   //입찰참가자격
-		xssfSheet.getRow(8).getCell(1).setCellValue(specialCond);   //특수조건
-		xssfSheet.getRow(9).getCell(1).setCellValue(spotDate);	  //현장설명일시
-		xssfSheet.getRow(10).getCell(1).setCellValue(spotArea);	 //현장설명장소
-		xssfSheet.getRow(11).getCell(1).setCellValue(succDeciMeth); //낙찰자결정방법
-		xssfSheet.getRow(12).getCell(1).setCellValue(custName);	 //입찰참가업체
-		xssfSheet.getRow(13).getCell(1).setCellValue(amtBasis);	 //금액기준
-		xssfSheet.getRow(14).getCell(1).setCellValue(payCond);	  //결제조건
-		xssfSheet.getRow(15).getCell(1).setCellValue(bdAmt);		//예산금액
-		xssfSheet.getRow(16).getCell(1).setCellValue(cuser);		//입찰담당자
-	   /*
-	   ** 입찰 공고 추가등록 사항
-		*/
-		xssfSheet.getRow(19).getCell(1).setCellValue(estStartDate);  //제출시작일시
-		xssfSheet.getRow(20).getCell(1).setCellValue(estCloseDate);  //제출마감일시
-		xssfSheet.getRow(21).getCell(1).setCellValue(estOpener);	 //개찰자
-		xssfSheet.getRow(22).getCell(1).setCellValue(gongoId);	   //입찰공고자
-		xssfSheet.getRow(23).getCell(1).setCellValue(estBidder);	 //낙찰자
-		xssfSheet.getRow(24).getCell(1).setCellValue(openAtt1);	  //입회자1
-		xssfSheet.getRow(25).getCell(1).setCellValue(openAtt2);	  //입회자2
-		xssfSheet.getRow(26).getCell(1).setCellValue(supplyCond);	//납품조건
-		xssfSheet.getRow(27).getCell(1).setCellValue(insMode);	   //내역방식
-		
-		if("직접입력".equals(insModeFlag)) {
-			//셀 테두리 얇은선으로 설정
-			CellStyle cellStyle = xssfWorkBook.createCellStyle();
-			cellStyle.setBorderTop(BorderStyle.THIN);
-			cellStyle.setBorderBottom(BorderStyle.THIN);
-			cellStyle.setBorderLeft(BorderStyle.THIN);
-			cellStyle.setBorderRight(BorderStyle.THIN);
-			cellStyle.setAlignment(HorizontalAlignment.CENTER);
-			
-			int startIdx = 29;
-			//직접등록시 내역사항에 들어가는 세부사항
-			for(Map<String, Object> map : tableContent) {
-				Row newRow = xssfSheet.createRow(startIdx);
-				
-				String name = CommonUtils.getString(map.get("name"), "");//품목명
-				String ssize = CommonUtils.getString(map.get("ssize"), "");//규격
-				String unitcode = CommonUtils.getString(map.get("unitcode"), "");//단위
-				BigInteger orderUc =  BigInteger.valueOf((int)map.get("orderUc"));//실행단가
-				BigInteger orderQty = BigInteger.valueOf((int)map.get("orderQty"));//수량
-				String strOrderUc = decimalFormat.format(orderUc);
-				BigInteger  itemTotal = orderQty.multiply(orderUc) ;//합계
-				String strItemTotal = decimalFormat.format(itemTotal);
+        /*
+        ** 입찰 기본정보
+         */
+        xssfSheet.getRow(3).getCell(1).setCellValue(biNo);          //입찰번호
+        xssfSheet.getRow(4).getCell(1).setCellValue(biName);        //입찰명
+        xssfSheet.getRow(5).getCell(1).setCellValue(itemName);      //품목
+        xssfSheet.getRow(6).getCell(1).setCellValue(biMode);        //입찰방식
+        xssfSheet.getRow(7).getCell(1).setCellValue(bidJoinSpec);   //입찰참가자격
+        xssfSheet.getRow(8).getCell(1).setCellValue(specialCond);   //특수조건
+        xssfSheet.getRow(9).getCell(1).setCellValue(spotDate);      //현장설명일시
+        xssfSheet.getRow(10).getCell(1).setCellValue(spotArea);     //현장설명장소
+        xssfSheet.getRow(11).getCell(1).setCellValue(succDeciMeth); //낙찰자결정방법
+        xssfSheet.getRow(12).getCell(1).setCellValue(custName);     //입찰참가업체
+        xssfSheet.getRow(13).getCell(1).setCellValue(amtBasis);     //금액기준
+        xssfSheet.getRow(14).getCell(1).setCellValue(payCond);      //결제조건
+        xssfSheet.getRow(15).getCell(1).setCellValue(bdAmt);        //예산금액
+        xssfSheet.getRow(16).getCell(1).setCellValue(cuser);        //입찰담당자
+       /*
+       ** 입찰 공고 추가등록 사항
+        */
+        xssfSheet.getRow(19).getCell(1).setCellValue(estStartDate);  //제출시작일시
+        xssfSheet.getRow(20).getCell(1).setCellValue(estCloseDate);  //제출마감일시
+        xssfSheet.getRow(21).getCell(1).setCellValue(estOpener);     //개찰자
+        xssfSheet.getRow(22).getCell(1).setCellValue(gongoId);       //입찰공고자
+        xssfSheet.getRow(23).getCell(1).setCellValue(estBidder);     //낙찰자
+        xssfSheet.getRow(24).getCell(1).setCellValue(openAtt1);      //입회자1
+        xssfSheet.getRow(25).getCell(1).setCellValue(openAtt2);      //입회자2
+        xssfSheet.getRow(26).getCell(1).setCellValue(supplyCond);    //납품조건
+        xssfSheet.getRow(27).getCell(1).setCellValue(insMode);       //내역방식
+        
+        if("2".equals(insModeFlag)) {
+        	//셀 테두리 얇은선으로 설정
+        	CellStyle cellStyle = xssfWorkBook.createCellStyle();
+        	cellStyle.setBorderTop(BorderStyle.THIN);
+        	cellStyle.setBorderBottom(BorderStyle.THIN);
+        	cellStyle.setBorderLeft(BorderStyle.THIN);
+        	cellStyle.setBorderRight(BorderStyle.THIN);
+        	cellStyle.setAlignment(HorizontalAlignment.CENTER);
+        	
+        	int startIdx = 29;
+        	//직접등록시 내역사항에 들어가는 세부사항
+            for(Map<String, Object> map : tableContent) {
+            	Row newRow = xssfSheet.createRow(startIdx);
+            	
+            	String name = CommonUtils.getString(map.get("name"), "");//품목명
+            	String ssize = CommonUtils.getString(map.get("ssize"), "");//규격
+            	String unitcode = CommonUtils.getString(map.get("unitcode"), "");//단위
+            	BigInteger orderUc =  BigInteger.valueOf((int)map.get("orderUc"));//실행단가
+            	BigInteger orderQty = BigInteger.valueOf((int)map.get("orderQty"));//수량
+            	String strOrderUc = decimalFormat.format(orderUc);
+            	BigInteger  itemTotal = orderQty.multiply(orderUc) ;//합계
+            	String strItemTotal = decimalFormat.format(itemTotal);
 
-				
-				Cell cell1 = newRow.createCell(1);
-				cell1.setCellValue(name);
-				Cell cell2 = newRow.createCell(2);
-				cell2.setCellValue(ssize);
-				Cell cell3 = newRow.createCell(3);
-				cell3.setCellValue(unitcode);
-				Cell cell4 = newRow.createCell(4);
-				cell4.setCellValue(strOrderUc);
-				Cell cell5 = newRow.createCell(5);
-				cell5.setCellValue(decimalFormat.format(orderQty));
-				Cell cell6 = newRow.createCell(6);
-				cell6.setCellValue(strItemTotal);
-				
-				//셀 테두리 적용
-				cell1.setCellStyle(cellStyle);
-				cell2.setCellStyle(cellStyle);
-				cell3.setCellStyle(cellStyle);
-				
-				//밑에 3개의 셀만 숫자라서 오른쪽 정렬
-				CellStyle cellStyleRight = xssfWorkBook.createCellStyle();
-				cellStyleRight.setBorderTop(BorderStyle.THIN);
-				cellStyleRight.setBorderBottom(BorderStyle.THIN);
-				cellStyleRight.setBorderLeft(BorderStyle.THIN);
-				cellStyleRight.setBorderRight(BorderStyle.THIN);
-				cellStyleRight.setAlignment(HorizontalAlignment.RIGHT);
-				cell4.setCellStyle(cellStyleRight);
-				cell5.setCellStyle(cellStyleRight);
-				cell6.setCellStyle(cellStyleRight);
-				
-				//내역사항 셀 밑에 테두리 두께 적용
-				if(startIdx == 28+tableContent.size()) {
-					CellStyle cellStyle2 = xssfWorkBook.createCellStyle();
-					cellStyle2.setBorderBottom(BorderStyle.THIN);
-					Cell cell = newRow.createCell(0);
-					cell.setCellStyle(cellStyle2);
-				}
-				
-				startIdx++;
-			}
-			
-			
-			//내역사항 셀 세로 합치기
-			CellRangeAddress mergedRegion = new CellRangeAddress(28, 28+tableContent.size(), 0, 0); 
-			xssfSheet.addMergedRegion(mergedRegion); 
+            	
+            	Cell cell1 = newRow.createCell(1);
+            	cell1.setCellValue(name);
+            	Cell cell2 = newRow.createCell(2);
+            	cell2.setCellValue(ssize);
+            	Cell cell3 = newRow.createCell(3);
+            	cell3.setCellValue(unitcode);
+            	Cell cell4 = newRow.createCell(4);
+            	cell4.setCellValue(strOrderUc);
+            	Cell cell5 = newRow.createCell(5);
+            	cell5.setCellValue(decimalFormat.format(orderQty));
+            	Cell cell6 = newRow.createCell(6);
+            	cell6.setCellValue(strItemTotal);
+            	
+            	//셀 테두리 적용
+            	cell1.setCellStyle(cellStyle);
+            	cell2.setCellStyle(cellStyle);
+            	cell3.setCellStyle(cellStyle);
+            	
+            	//밑에 3개의 셀만 숫자라서 오른쪽 정렬
+            	CellStyle cellStyleRight = xssfWorkBook.createCellStyle();
+            	cellStyleRight.setBorderTop(BorderStyle.THIN);
+            	cellStyleRight.setBorderBottom(BorderStyle.THIN);
+            	cellStyleRight.setBorderLeft(BorderStyle.THIN);
+            	cellStyleRight.setBorderRight(BorderStyle.THIN);
+            	cellStyleRight.setAlignment(HorizontalAlignment.RIGHT);
+            	cell4.setCellStyle(cellStyleRight);
+            	cell5.setCellStyle(cellStyleRight);
+            	cell6.setCellStyle(cellStyleRight);
+            	
+            	//내역사항 셀 밑에 테두리 두께 적용
+            	if(startIdx == 28+tableContent.size()) {
+            		CellStyle cellStyle2 = xssfWorkBook.createCellStyle();
+                    cellStyle2.setBorderBottom(BorderStyle.THIN);
+            		Cell cell = newRow.createCell(0);
+            		cell.setCellStyle(cellStyle2);
+            	}
+            	
+            	startIdx++;
+            }
+            
+            //내역사항 셀 세로 합치기
+            CellRangeAddress mergedRegion = new CellRangeAddress(28, 28+tableContent.size(), 0, 0); 
+            xssfSheet.addMergedRegion(mergedRegion); 
 
-			
-			
-		}else {
-			xssfSheet.getRow(28).getCell(1).setCellValue(insModeContent);//내역사항
+           	List<Map<String,Object>> innerFileList = fileContent.stream()
+                    .filter(map -> "0".equals(map.get("fileFlag")))
+                    .collect(Collectors.toList());
+        	
+        	List<Map<String,Object>> outerFileList = fileContent.stream()
+                    .filter(map -> "1".equals(map.get("fileFlag")))
+                    .collect(Collectors.toList());
+        	
+        	if(innerFileList.size() > 0 || outerFileList.size() > 0) {
+    	        StringBuilder fileNmBuilder = new StringBuilder();
+    	        
+    	        int lastRowNum = xssfSheet.getLastRowNum() + 1; 
+    	        Row newRow = xssfSheet.createRow(lastRowNum); 
+
+    	        Cell cell0 = newRow.createCell(0);
+    	        Cell cell1 = newRow.createCell(1);
+       	        Cell cell2 = newRow.createCell(2);
+       	        Cell cell3 = newRow.createCell(3);
+       	        Cell cell4 = newRow.createCell(4);
+       	        Cell cell5 = newRow.createCell(5);
+       	        Cell cell6 = newRow.createCell(6);
+    	        
+    	        cell0.setCellValue("첨부파일");
+
+        		if(innerFileList.size() > 0) {
+        			fileNmBuilder.append("대내용\n");
+        	        for(Map<String, Object> map : innerFileList) {
+        	        	fileNmBuilder.append(map.get("fileNm"));
+        	        	fileNmBuilder.append("\n");
+        	        }
+
+        		}
+        		
+        		if(outerFileList.size() > 0) {
+        			fileNmBuilder.append( innerFileList.size() > 0 ? "\n대외용\n" : "대외용\n");
+        	        for(Map<String, Object> map : outerFileList) {
+        	        	fileNmBuilder.append(map.get("fileNm"));
+        	        	fileNmBuilder.append("\n");
+        	        }
+        		}
+        		
+        		RichTextString richText = xssfWorkBook.getCreationHelper().createRichTextString(fileNmBuilder.toString());
+
+        		cell1.setCellValue(CommonUtils.getString(richText, ""));
+        		xssfSheet.addMergedRegion(new CellRangeAddress(lastRowNum, lastRowNum, 1, 6));
+        		CellStyle style = xssfWorkBook.createCellStyle();
+        		style.setWrapText(true);
+        		style.setBorderLeft(BorderStyle.THIN);
+        		style.setBorderRight(BorderStyle.THIN);
+        		style.setBorderTop(BorderStyle.THIN);
+        		style.setBorderBottom(BorderStyle.THIN);
+        		style.setVerticalAlignment(VerticalAlignment.TOP);
+        		cell0.setCellStyle(style);
+        		cell1.setCellStyle(style);
+        		cell2.setCellStyle(style);
+        		cell3.setCellStyle(style);
+        		cell4.setCellStyle(style);
+        		cell5.setCellStyle(style);
+        		cell6.setCellStyle(style);
+        		newRow.setHeightInPoints(409.60f);
+        	}
+        		
+            
+        }else {
+        	xssfSheet.getRow(28).getCell(1).setCellValue(insModeContent);//세부내역
+        	List<Map<String,Object>> innerFileList = fileContent.stream()
+                    .filter(Objects::nonNull) 
+                    .filter(map -> "0".equals(map.get("fileFlag")))
+                    .collect(Collectors.toList());    
+        	
+        	List<Map<String,Object>> outerFileList = fileContent.stream()
+                    .filter(Objects::nonNull) 
+                    .filter(map -> "1".equals(map.get("fileFlag")))
+                    .collect(Collectors.toList());
+        	
+        	if(innerFileList.size() > 0 || outerFileList.size() > 0) {
+    	        StringBuilder fileNmBuilder = new StringBuilder();
+    			
+    	        
+    	        Row row29 = xssfSheet.getRow(29);
+    	        if (row29 == null) {
+    	            row29 = xssfSheet.createRow(29);
+    	        }
+    	        Cell cell0 = row29.getCell(0);
+    	        if (cell0 == null) {
+    	            cell0 = row29.createCell(0);
+    	        }
+    	        cell0.setCellValue("첨부파일");
+    	        
+    	        
+        		if(innerFileList.size() > 0) {
+        			fileNmBuilder.append("대내용\n");
+        	        for(Map<String, Object> map : innerFileList) {
+        	        	fileNmBuilder.append(map.get("fileNm"));
+        	        	fileNmBuilder.append("\n");
+        	        }
+
+        		}
+        		
+        		if(outerFileList.size() > 0) {
+        			fileNmBuilder.append( innerFileList.size() > 0 ? "\n대외용\n" : "대외용\n");
+        	        for(Map<String, Object> map : outerFileList) {
+        	        	fileNmBuilder.append(map.get("fileNm"));
+        	        	fileNmBuilder.append("\n");
+        	        }
+        		}
+        		Cell cell = row29.createCell(1);
+        		Cell cell2 = row29.createCell(2);
+				Cell cell3 = row29.createCell(3);
+				Cell cell4 = row29.createCell(4);
+				Cell cell5 = row29.createCell(5);
+				Cell cell6 = row29.createCell(6);
+				Cell cell7 = row29.createCell(7);
+				Cell cell8 = row29.createCell(8);
+				Cell cell9 = row29.createCell(9);
+				Cell cell10 = row29.createCell(10);				
+        		
+        		RichTextString richText = xssfWorkBook.getCreationHelper().createRichTextString(fileNmBuilder.toString());
+        		
+
+        		row29.getCell(1).setCellValue(CommonUtils.getString(richText, ""));
+        		xssfSheet.addMergedRegion(new CellRangeAddress(29, 29, 1, 10));
+        		CellStyle style = xssfWorkBook.createCellStyle();
+        		style.setWrapText(true);
+        		style.setBorderLeft(BorderStyle.THIN);
+        		style.setBorderRight(BorderStyle.THIN);
+        		style.setBorderTop(BorderStyle.THIN);
+        		style.setBorderBottom(BorderStyle.THIN);
+        		style.setVerticalAlignment(VerticalAlignment.TOP);
+        		cell0.setCellStyle(style);
+        		cell.setCellStyle(style);
+        		cell2.setCellStyle(style);
+        		cell3.setCellStyle(style);
+        		cell4.setCellStyle(style);
+        		cell5.setCellStyle(style);
+        		cell6.setCellStyle(style);
+        		cell7.setCellStyle(style);
+        		cell8.setCellStyle(style);
+        		cell9.setCellStyle(style);
+        		cell10.setCellStyle(style);
+        		row29.setHeightInPoints(409.60f);
+
+        	}
 		}
 
 		response.setCharacterEncoding("UTF-8");

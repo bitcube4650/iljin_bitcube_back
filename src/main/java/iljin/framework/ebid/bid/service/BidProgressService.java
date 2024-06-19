@@ -296,7 +296,7 @@ public class BidProgressService {
             custMap.put("biNo", biNo);
             custMap.put("userId", userId);
                 for (Map<String, Object> data : custContent) {
-                	String custCode = (String) data.get("custCode");
+                	String custCode = data.get("custCode").toString();
                 	
                 	Optional<Map<String, Object>> userInfoOptional = custUserInfo.stream()
                             .filter(userInfo -> custCode.equals(userInfo.get("custCode")))
@@ -342,9 +342,6 @@ public class BidProgressService {
         Map<String,Object> changeFileCheck = (Map<String, Object>) bidContent.get("changeFileCheck");
     	Map<String,Object> fileMap = new HashMap<>();
     	fileMap.put("biNo", biNo);
-    	        
-        
-
 		
 		int innerFilesSize = innerFiles.size();
 		int outerFilesSize = outerFiles.size();
@@ -368,7 +365,6 @@ public class BidProgressService {
 	         	fileMap.put("fileFlag", "0");
 	         	fileMap.put("delInnerFiles", bidContent.get("delInnerFiles") );
 	            generalDao.deleteGernal("bid.deleteTBiUpload", fileMap);
-
 				
 			}
 		}
@@ -392,7 +388,6 @@ public class BidProgressService {
 	         	fileMap.put("fileFlag", "1");
 	         	fileMap.put("delOuterFiles", bidContent.get("delOuterFiles") );
 	            generalDao.deleteGernal("bid.deleteTBiUpload", fileMap);
-
 				
 			}
 		}
@@ -424,7 +419,7 @@ public class BidProgressService {
             // 파일 등록 시 내역직접등록 내역은 삭제
             generalDao.deleteGernal("bid.deleteTBiSpecMat", fileMap);
             
-        	String insFileCheck = changeFileCheck.get("insFileCheck").toString();
+        	String insFileCheck = bidContent.get("insFileCheck").toString();
         	
         	// Y는 기존에 있는 파일 그대로 저장되는 거라 따로 수정할 필요 없어서 Y 아닌 경우만 처리
         	if(!"Y".equals(insFileCheck)){
