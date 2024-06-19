@@ -114,95 +114,102 @@
 	
 	<select id="biInfoDetailList_count" resultType="int">
 		/* statistics.biInfoDetailList_count */
-		SELECT
-	        COUNT(*) AS TOTAL_COUNT  
-	    FROM
-        (   SELECT 1       
-	        FROM t_bi_info_mat tbim          
-	        INNER JOIN	t_co_interrelated tci 
-                ON tbim.INTERRELATED_CUST_CODE = tci.INTERRELATED_CUST_CODE          
-	        INNER JOIN	t_co_item tcitem 
-                ON tbim.ITEM_CODE = tcitem.ITEM_CODE          
-	        INNER JOIN t_bi_info_mat_cust tbimc 
-                ON tbim.BI_NO = tbimc.BI_NO    
-	        WHERE  tbim.ING_TAG = 'A5'          
-            AND DATE(tbim.UPDATE_DATE) BETWEEN #{startDay} AND #{endDay}
-            <if test="coInters != null and coInters.size() > 0">
-           		AND tbim.INTERRELATED_CUST_CODE IN(
-	            <foreach item="coInter" collection="coInters" separator=",">
+		SELECT	COUNT(1)
+		FROM (
+			SELECT	1
+			FROM	T_BI_INFO_MAT A
+			INNER JOIN T_CO_INTERRELATED B
+				ON A.INTERRELATED_CUST_CODE = B.INTERRELATED_CUST_CODE
+			INNER JOIN T_CO_ITEM C
+				ON A.ITEM_CODE = C.ITEM_CODE
+			INNER JOIN T_BI_INFO_MAT_CUST D
+				ON A.BI_NO = D.BI_NO
+			WHERE A.ING_TAG = 'A5'
+			AND DATE(A.UPDATE_DATE) BETWEEN #{startDay} AND #{endDay}
+			<if test="coInters != null and coInters.size() > 0">
+				AND A.INTERRELATED_CUST_CODE IN(
+				<foreach item="coInter" collection="coInters" separator=",">
 					#{coInter}
 				</foreach>
-	            )  
-            </if>
-           <if test="itemCode != null and itemCode != ''">
-            AND tbim.ITEM_CODE = #{itemCode}
-            </if>
-	        GROUP BY tbim.BI_NO   
-        ) AS cnt
-	
+				)
+			</if>
+			<if test="itemCode != null and itemCode != ''">
+				AND A.ITEM_CODE = #{itemCode}
+			</if>
+			GROUP BY A.BI_NO
+		) AS cnt
 	</select>
 	
 	<select id="biInfoDetailList" resultType="camel">
 		/* statistics.biInfoDetailList*/
-		SELECT
-        tbim.BI_NO AS BI_NO,
-        tbim.BI_NAME AS BI_NAME,
-        tcitem.ITEM_NAME AS ITEM_NAME,
-        IFNULL(tbim.BD_AMT,0) AS BD_AMT,
-        IFNULL(tbim.SUCC_AMT,0) AS SUCC_AMT,
-        IFNULL(tbim.REAL_AMT, 0) AS REAL_AMT,
-        (
-            SELECT COUNT(*)
-            FROM t_bi_info_mat_cust tbimc3
-            WHERE tbimc3.BI_NO = tbim.BI_NO
-            GROUP BY BI_NO
-        ) AS CUST_CNT,
-        (
-            SELECT MAX(tccm2.CUST_NAME)
-            FROM t_co_cust_master tccm2
-            INNER JOIN t_bi_info_mat_cust tbimc2 ON tccm2.CUST_CODE = tbimc2.CUST_CODE
-            WHERE tbimc2.BI_NO = tbimc.BI_NO
-            AND tbimc2.SUCC_YN = 'Y'
-        ) AS CUST_NAME,
-        DATE_FORMAT(tbim.EST_START_DATE, '%Y-%m-%d') AS EST_START_DATE,
-        DATE_FORMAT(tbim.EST_CLOSE_DATE, '%Y-%m-%d') AS EST_CLOSE_DATE,
-        IFNULL(MAX(tbimc.ESMT_AMT),0) AS ESMT_AMT_MAX,
-       IFNULL( CASE
-            WHEN MAX(tbimc.ESMT_AMT) = MIN(tbimc.ESMT_AMT) THEN 0
-            ELSE MIN(tbimc.ESMT_AMT)
-        END,0) AS ESMT_AMT_MIN,
-         IFNULL((
-	        MAX(tbimc.ESMT_AMT) 			-	
-            CASE
-		        WHEN MAX(tbimc.ESMT_AMT) = MIN(tbimc.ESMT_AMT) THEN 0
-		        ELSE MIN(tbimc.ESMT_AMT)
-       		END 
-       	),0) AS ESMT_AMT_DEV,
-         IFNULL((
-            SELECT SUM(tbimc1.BI_ORDER)
-            FROM t_bi_info_mat_cust tbimc1
-            WHERE tbimc1.BI_NO = tbimc.BI_NO
-            AND tbimc1.SUCC_YN = 'Y'
-        ),0) AS RE_BID_CNT
-    	FROM t_bi_info_mat tbim
-        INNER JOIN t_co_interrelated tci ON tbim.INTERRELATED_CUST_CODE = tci.INTERRELATED_CUST_CODE
-        INNER JOIN t_co_item tcitem ON tbim.ITEM_CODE = tcitem.ITEM_CODE
-        INNER JOIN t_bi_info_mat_cust tbimc ON tbim.BI_NO = tbimc.BI_NO    WHERE
-        tbim.ING_TAG = 'A5'
-         AND DATE(tbim.UPDATE_DATE) BETWEEN #{startDay} AND #{endDay}
-         <if test="coInters != null and coInters.size() > 0">
-	         AND tbim.INTERRELATED_CUST_CODE IN(
-	         <foreach item="coInter" collection="coInters" separator=",">
+		SELECT	A.BI_NO
+		,		A.BI_NAME
+		,		C.ITEM_NAME
+		,		IFNULL(A.BD_AMT,0)							AS BD_AMT
+		,		IFNULL(A.SUCC_AMT,0)						AS SUCC_AMT
+		,		IFNULL(A.REAL_AMT, 0)						AS REAL_AMT
+		,		(
+					SELECT	COUNT(1)
+					FROM	T_BI_INFO_MAT_CUST A1
+					WHERE	A1.BI_NO = A.BI_NO
+					GROUP BY A.BI_NO
+				)												AS CUST_CNT
+		,		(
+					SELECT	MAX(A1.CUST_NAME)
+					FROM	T_CO_CUST_MASTER A1
+					INNER JOIN T_BI_INFO_MAT_CUST B1
+						ON A1.CUST_CODE = B1.CUST_CODE
+					WHERE B1.BI_NO = D.BI_NO
+					AND B1.SUCC_YN = 'Y'
+				)												AS CUST_NAME
+		,		DATE_FORMAT(A.EST_START_DATE, '%Y-%m-%d')	AS EST_START_DATE
+		,		DATE_FORMAT(A.EST_CLOSE_DATE, '%Y-%m-%d')	AS EST_CLOSE_DATE
+		,		IFNULL(MAX(D.ESMT_AMT),0)					AS ESMT_AMT_MAX
+		,		IFNULL(
+						CASE
+							WHEN MAX(D.ESMT_AMT) = MIN(D.ESMT_AMT)
+							THEN 0
+							ELSE MIN(D.ESMT_AMT)
+						END
+				,0)												AS ESMT_AMT_MIN
+		,		IFNULL(
+					(
+						MAX(D.ESMT_AMT) - CASE
+												WHEN MAX(D.ESMT_AMT) = MIN(D.ESMT_AMT) THEN 0
+												ELSE MIN(D.ESMT_AMT)
+											END
+					)
+				,0)												AS ESMT_AMT_DEV
+		,		IFNULL(
+					(
+						SELECT	SUM(C1.BI_ORDER)
+						FROM	T_BI_INFO_MAT_CUST C1
+						WHERE	C1.BI_NO = D.BI_NO
+							AND	C1.SUCC_YN = 'Y'
+					)
+				,0)												AS RE_BID_CNT
+		FROM	T_BI_INFO_MAT A
+		INNER JOIN T_CO_INTERRELATED B
+			ON	A.INTERRELATED_CUST_CODE = B.INTERRELATED_CUST_CODE
+		INNER JOIN T_CO_ITEM C
+			ON	A.ITEM_CODE = C.ITEM_CODE
+		INNER JOIN T_BI_INFO_MAT_CUST D
+			ON	A.BI_NO = D.BI_NO
+		WHERE	A.ING_TAG = 'A5'
+		AND		DATE(A.UPDATE_DATE) BETWEEN #{startDay} AND #{endDay}
+		<if test="coInters != null and coInters.size() > 0">
+			AND A.INTERRELATED_CUST_CODE IN(
+			<foreach item="coInter" collection="coInters" separator=",">
 				#{coInter}
 			</foreach>
-	         )  
-         </if>
-        <if test="itemCode != null and itemCode != ''">
-         AND tbim.ITEM_CODE = #{itemCode}
-         </if>
-		GROUP BY tbim.BI_NO
+			)
+		</if>
+		<if test="itemCode != null and itemCode != ''">
+		AND		A.ITEM_CODE = #{itemCode}
+		</if>
+		GROUP BY A.BI_NO
 		<if test="excel == null">
-		LIMIT ${offset}, ${pageSize}
+			LIMIT ${offset}, ${pageSize}
 		</if>
 	</select>
 	
