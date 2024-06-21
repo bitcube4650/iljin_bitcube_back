@@ -347,7 +347,7 @@ public class BidProgressService {
 		int outerFilesSize = outerFiles.size();
 		
         // 첨부파일 대내용
-		if(bidContent.containsKey("delInnerFilesAll")){
+		if("Y".equals(bidContent.get("delInnerFilesAll").toString())){
 			
          	fileMap.put("fileFlag", "0");
             generalDao.deleteGernal("bid.deleteTBiUpload", fileMap);
@@ -361,16 +361,18 @@ public class BidProgressService {
 
 			}
 			
-			if(bidContent.containsKey("delInnerFiles")) {
+			List<Object> delInnerFiles = (List<Object>) bidContent.get("delInnerFiles");
+			
+			if(delInnerFiles.size() > 0) {
 	         	fileMap.put("fileFlag", "0");
-	         	fileMap.put("delInnerFiles", bidContent.get("delInnerFiles") );
+	         	fileMap.put("delInnerFiles", delInnerFiles);
 	            generalDao.deleteGernal("bid.deleteTBiUpload", fileMap);
 				
 			}
 		}
 		
         // 첨부파일 대외용
-		if(bidContent.containsKey("delOuterFilesAll")){
+		if("Y".equals(bidContent.get("delOuterFilesAll").toString()) ){
 			
          	fileMap.put("fileFlag", "1");
             generalDao.deleteGernal("bid.deleteTBiUpload", fileMap);
@@ -383,10 +385,11 @@ public class BidProgressService {
 				}
 
 			}
+			List<Object> delOuterFiles = (List<Object>) bidContent.get("delOuterFiles");
 			
-			if(bidContent.containsKey("delOuterFiles")) {
+			if(delOuterFiles.size() > 0) {
 	         	fileMap.put("fileFlag", "1");
-	         	fileMap.put("delOuterFiles", bidContent.get("delOuterFiles") );
+	         	fileMap.put("delOuterFiles", delOuterFiles);
 	            generalDao.deleteGernal("bid.deleteTBiUpload", fileMap);
 				
 			}
