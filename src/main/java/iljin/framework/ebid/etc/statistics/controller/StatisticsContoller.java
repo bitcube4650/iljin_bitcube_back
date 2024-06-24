@@ -13,6 +13,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,45 +21,74 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import iljin.framework.core.dto.ResultBody;
+import iljin.framework.core.security.user.CustomUserDetails;
+import iljin.framework.ebid.custom.controller.CustController;
 import iljin.framework.ebid.etc.statistics.service.StatisticsService;
 import iljin.framework.ebid.etc.util.GeneralDao;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/api/v1/statistics")
 @CrossOrigin
+@Slf4j
 public class StatisticsContoller {
 
 	@Autowired
-    private StatisticsService statisticsService;
+	private StatisticsService statisticsService;
 		
-    @Autowired
-    GeneralDao generalDao;
-    
-	//계열사 리스트 조회
-	
-	@PostMapping("/coInterList")
-	public ResultBody selectCoInterList(@RequestBody Map<String, Object> params) throws Exception {
+	@Autowired
+	GeneralDao generalDao;
 
-		return statisticsService.selectCoInterList(params);
+	//계열사 리스트 조회
+	@PostMapping("/coInterList")
+	public ResultBody selectCoInterList(@RequestBody Map<String, Object> params) {
+		ResultBody resultBody = new ResultBody();
+		try {
+			resultBody = statisticsService.selectCoInterList(params);
+		} catch (Exception e) {
+			resultBody.setCode("ERROR");
+			resultBody.setStatus(500);
+			resultBody.setMsg("계열사 리스트 조회 중 오류가 발생하였습니다.");
+			log.error("{} Error : {}", this.getClass(), e.getMessage());
+		}
+		
+		return resultBody;
 	}
 	
 	
 	//회사별 입찰실적 리스트 조회
 	@PostMapping("/biInfoList")
-	public ResultBody selectBiInfoList(@RequestBody Map<String, Object> params) throws Exception {
-
-		return statisticsService.selectBiInfoList(params);
+	public ResultBody selectBiInfoList(@RequestBody Map<String, Object> params, @AuthenticationPrincipal CustomUserDetails user) {
+		ResultBody resultBody = new ResultBody();
+		try {
+			resultBody = statisticsService.selectBiInfoList(params, user);
+		} catch (Exception e) {
+			resultBody.setCode("ERROR");
+			resultBody.setStatus(500);
+			resultBody.setMsg("회사별 입찰실적 리스트 조회 중 오류가 발생하였습니다.");
+			log.error("{} Error : {}", this.getClass(), e.getMessage());
+		}
+		return resultBody;
 	}
-	
+
 	/**
 	 * 입찰실적 상세내역 리스트
 	 * @param params
 	 * @return
 	 */
 	@PostMapping("/biInfoDetailList")
-	public ResultBody biInfoDetailList(@RequestBody Map<String, Object> params) {
+	public ResultBody biInfoDetailList(@RequestBody Map<String, Object> params, @AuthenticationPrincipal CustomUserDetails user) {
+		ResultBody resultBody = new ResultBody();
 
-		return statisticsService.biInfoDetailList(params);
+		try {
+			resultBody = statisticsService.biInfoDetailList(params, user);
+		} catch (Exception e) {
+			resultBody.setCode("ERROR");
+			resultBody.setStatus(500);
+			resultBody.setMsg("입찰실적 상세내역 리스트 조회 중 오류가 발생하였습니다.");
+			log.error("{} Error : {}", this.getClass(), e.getMessage());
+		}
+		return resultBody;
 	}
 	
 	
