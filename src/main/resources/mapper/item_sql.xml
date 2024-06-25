@@ -4,8 +4,8 @@
 <mapper namespace="item">
 	<select id="selectItemGrpList" resultType="camel">
 		/* item.selectItemGrpList */
-		SELECT	item_grp_cd
-		,		grp_nm 
+		SELECT	item_grp_cd AS value
+		,		grp_nm AS name
 		FROM	T_CO_ITEM_GRP
 	</select>
 	
