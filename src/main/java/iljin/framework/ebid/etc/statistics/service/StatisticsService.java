@@ -128,9 +128,12 @@ public class StatisticsService {
 		
 		//세션 정보 조회
 		UserDetails principal = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-
+		Optional<TCoUser> userOptional = tCoUserRepository.findById(principal.getUsername());
+		
 		String userId = principal.getUsername();
+		String userAuth = userOptional.get().getUserAuth();
 		params.put("userId", userId);
+		params.put("userAuth", userAuth);
 
 		ResultBody resultBody = new ResultBody();
 		List<Object> list = generalDao.selectGernalList("statistics.bidPresentList", params);
